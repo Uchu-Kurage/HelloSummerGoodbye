@@ -32,7 +32,7 @@ offset_top = -250.0
 offset_right = 150.0
 offset_bottom = -130.0
 mouse_filter = 2
-theme_type_variation = &"PaperPanel"
+theme_type_variation = &"SignBoard"
 
 [node name="Label" type="Label" parent="Sign/Board"]
 layout_mode = 2

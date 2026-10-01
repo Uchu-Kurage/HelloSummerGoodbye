@@ -61,6 +61,14 @@ func _build_card() -> void:
 	var top := PanelContainer.new()
 	top.theme_type_variation = &"DateCardTop"
 	v.add_child(top)
+	# 日めくりのとじ穴
+	var holes := Control.new()
+	holes.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holes.draw.connect(func():
+		var r := UiTokens.CARD_HOLE
+		for x in [holes.size.x * 0.14, holes.size.x * 0.86]:
+			holes.draw_circle(Vector2(x, r + 4), r, UiTokens.INK_SOFT))
+	top.add_child(holes)
 	_card_month = Label.new()
 	_card_month.theme_type_variation = &"DateMonthLabel"
 	_card_month.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -203,6 +211,8 @@ func _build_message() -> void:
 	_msg_text = Label.new()
 	_msg_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_msg_text.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
+	_msg_text.custom_minimum_size.y = UiTokens.FONT_BODY * UiTokens.LINE_HEIGHT_RATIO * 2
+	_msg_text.draw.connect(_draw_ruled_lines)
 	v.add_child(_msg_text)
 	_msg_mark = Label.new()
 	_msg_mark.text = Strings.CONTINUE_MARK
@@ -210,6 +220,15 @@ func _build_message() -> void:
 	_msg_mark.size_flags_vertical = Control.SIZE_SHRINK_END
 	h.add_child(_msg_mark)
 	_msg.hide()
+
+
+## ノートの罫線。文字の行にそろえて引く
+func _draw_ruled_lines() -> void:
+	var lh := UiTokens.FONT_BODY * UiTokens.LINE_HEIGHT_RATIO
+	var n := maxi(1, floori(_msg_text.size.y / lh))
+	for i in n:
+		var y := roundf((i + 1) * lh - lh * 0.2)
+		_msg_text.draw_line(Vector2(0, y), Vector2(_msg_text.size.x, y), UiTokens.PAPER_DARK, 2.0)
 
 
 func show_message(item: ItemData) -> void:

@@ -117,7 +117,7 @@ func _build_tin() -> void:
 	_scroll.add_child(_grid)
 
 	var detail := PanelContainer.new()
-	detail.theme_type_variation = &"PaperPanel"
+	detail.theme_type_variation = &"TinLiner"
 	detail.custom_minimum_size = Vector2(DETAIL_WIDTH, 0)
 	body.add_child(detail)
 	var dv := VBoxContainer.new()

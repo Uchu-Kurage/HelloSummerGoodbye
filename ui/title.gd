@@ -27,38 +27,49 @@ func _ready() -> void:
 	_camera.position = Vector2(640, 360)
 
 
+## 景色を主役にする：パネルは置かず、右上に縦書きのタイトル、下の道の上に案内とメニュー
 func _build_ui() -> void:
-	var v := VBoxContainer.new()
-	v.set_anchors_preset(Control.PRESET_FULL_RECT)
-	v.alignment = BoxContainer.ALIGNMENT_CENTER
-	v.add_theme_constant_override("separation", UiTokens.SPACE_L)
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ui.add_child(v)
-
-	var title_panel := PanelContainer.new()
-	title_panel.theme_type_variation = &"PaperPanel"
-	title_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	title_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(title_panel)
+	var titles := HBoxContainer.new()
+	titles.anchor_left = 1.0
+	titles.anchor_right = 1.0
+	titles.offset_right = -UiTokens.SCREEN_MARGIN - UiTokens.SPACE_L * 2
+	titles.offset_top = UiTokens.SCREEN_MARGIN + UiTokens.SPACE_M
+	titles.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	titles.add_theme_constant_override("separation", UiTokens.SPACE_M)
+	titles.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(titles)
+	# 縦書きは右から左へ読むので、添え書きを左、タイトルを右に置く
+	var sub := Label.new()
+	sub.text = _vertical(Strings.GAME_SUBTITLE.replace(" ", ""))
+	sub.theme_type_variation = &"SubVerticalLabel"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.size_flags_vertical = Control.SIZE_SHRINK_END
+	titles.add_child(sub)
 	var title := Label.new()
-	title.text = Strings.GAME_TITLE
-	title.theme_type_variation = &"TitleLabel"
+	title.text = _vertical(Strings.GAME_TITLE)
+	title.theme_type_variation = &"TitleVerticalLabel"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.custom_minimum_size.x = 420
-	title_panel.add_child(title)
+	titles.add_child(title)
 
-	var below := Control.new()
-	below.custom_minimum_size = Vector2(0, 220)
-	below.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(below)
+	# 道の帯（画面の下から 40px の高さ）に案内とメニューを置く
+	var band := Control.new()
+	band.anchor_left = 0.0
+	band.anchor_right = 1.0
+	band.anchor_top = 1.0
+	band.anchor_bottom = 1.0
+	band.offset_top = -UiTokens.SCREEN_MARGIN - UiTokens.TOUCH_MIN
+	band.offset_bottom = -UiTokens.SCREEN_MARGIN
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(band)
 
 	_prompt = Label.new()
 	_prompt.theme_type_variation = &"HeadingLabel"
 	_prompt.text = Strings.START_PROMPT_TOUCH if DisplayServer.is_touchscreen_available() else Strings.START_PROMPT_KEY
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_prompt.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_prompt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_prompt.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	below.add_child(_prompt)
+	band.add_child(_prompt)
 	_prompt.modulate.a = 0.0
 	_pulse = create_tween().set_loops().set_trans(UiTokens.TRANS)
 	_pulse.tween_property(_prompt, "modulate:a", 1.0, UiTokens.TIME_PULSE).set_ease(Tween.EASE_OUT)
@@ -67,18 +78,25 @@ func _build_ui() -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	below.add_child(center)
+	band.add_child(center)
 	_menu_panel = PanelContainer.new()
-	_menu_panel.theme_type_variation = &"PaperPanel"
-	_menu_panel.custom_minimum_size = Vector2(320, 0)
+	_menu_panel.theme_type_variation = &"PlainPanel"
 	center.add_child(_menu_panel)
 	_list = MenuList.new()
+	_list.vertical = false
 	_menu_panel.add_child(_list)
 	_add_item(Strings.MENU_START, _on_start)
 	# ブラウザではタブを閉じられないので「おわる」は出さない
 	if not OS.has_feature("web"):
 		_add_item(Strings.MENU_QUIT, func(): get_tree().quit())
 	_menu_panel.hide()
+
+
+static func _vertical(text: String) -> String:
+	var chars := PackedStringArray()
+	for c in text:
+		chars.append(c)
+	return "\n".join(chars)
 
 
 func _add_item(text: String, cb: Callable) -> void:

@@ -3,6 +3,8 @@ class_name Strings
 ## キーボードとタッチで変わるものは *_KEY / *_TOUCH の両方を置く。
 
 const GAME_TITLE := "なつやすみ"
+## タイトルに縦書きで添える一言
+const GAME_SUBTITLE := "いなかで すごした とおかかん"
 const START_PROMPT_TOUCH := "タップして はじめる"
 const START_PROMPT_KEY := "クリック または キーで はじめる"
 const MENU_START := "はじめる"

@@ -21,7 +21,9 @@ func _ready() -> void:
 		return
 	_sign_label.text = Strings.DATE_FULL % [day_data.month, day_data.day] + "\n" + day_data.title
 	if preview:
+		# タイトルの背景では景色だけを見せる
 		$Sign.hide()
+		$Props.hide()
 	else:
 		_spawn_items()
 	queue_redraw()

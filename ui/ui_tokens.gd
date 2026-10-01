@@ -22,6 +22,8 @@ const FONT_SMALL := 18
 const FONT_HEADING := 32
 const FONT_TITLE := 64
 const FONT_BIG_DATE := 56
+## 日めくりの札の日付の数字
+const FONT_CARD_DAY := 48
 const LINE_HEIGHT_RATIO := 1.6
 
 # --- 形と余白（スキル「4. 形と余白」） ---
@@ -34,6 +36,12 @@ const PANEL_RADIUS := 12
 const PANEL_BORDER := 2
 const PANEL_PADDING := 24
 const SHADOW_OFFSET := 3
+## 宝箱の枠・看板などパネルより小さい部品の角丸（パネルの 12px と差をつける）
+const SMALL_RADIUS := 6
+## お菓子の缶のふちの太さ
+const TIN_RIM := 6
+## 日めくりの札のとじ穴の半径
+const CARD_HOLE := 5
 const TOUCH_MIN := 72
 const TOUCH_GAP := 16
 
