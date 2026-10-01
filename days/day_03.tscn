@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="1"]
+
+[node name="Day03" instance=ExtResource("1")]
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(2300, 604)

@@ -1,0 +1,50 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://days/day_base.gd" id="1"]
+[ext_resource type="Script" path="res://world/prop_drawing.gd" id="2"]
+
+[node name="DayBase" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Boundary" type="Node2D" parent="."]
+
+[node name="Pole" type="Node2D" parent="Boundary"]
+position = Vector2(0, 604)
+script = ExtResource("2")
+
+[node name="Props" type="Node2D" parent="."]
+
+[node name="Tree" type="Node2D" parent="Props"]
+position = Vector2(2900, 604)
+script = ExtResource("2")
+kind = 1
+
+[node name="Sign" type="Node2D" parent="."]
+position = Vector2(520, 604)
+
+[node name="Post" type="Node2D" parent="Sign"]
+script = ExtResource("2")
+kind = 2
+
+[node name="Board" type="PanelContainer" parent="Sign"]
+offset_left = -150.0
+offset_top = -250.0
+offset_right = 150.0
+offset_bottom = -130.0
+mouse_filter = 2
+theme_type_variation = &"PaperPanel"
+
+[node name="Label" type="Label" parent="Sign/Board"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "7がつ 21にち
+到着の日"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ItemSpots" type="Node2D" parent="."]
+
+[node name="Spot1" type="Marker2D" parent="ItemSpots"]
+position = Vector2(2100, 604)
+
+[node name="Items" type="Node2D" parent="."]

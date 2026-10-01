@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_iwfgq"]
+
+[resource]
+script = ExtResource("1_iwfgq")
+id = &"marble"
+display_name = "ビー玉"
+description = "ぴかぴかの ビー玉。たからもの。"
+day_number = 2
+placeholder_color = Color(0.498039, 0.713726, 0.788235, 1)

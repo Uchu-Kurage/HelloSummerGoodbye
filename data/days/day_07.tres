@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DayData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_axmnx"]
+[ext_resource type="Resource" path="res://data/items/hozuki.tres" id="2_g6eb4"]
+[ext_resource type="Script" path="res://data/day_data.gd" id="3_rfe0m"]
+
+[resource]
+script = ExtResource("3_rfe0m")
+day_number = 7
+month = 8
+day = 16
+title = "お盆（送り火）"
+scene_path = "res://days/day_07.tscn"
+items = Array[ExtResource("1_axmnx")]([ExtResource("2_g6eb4")])
