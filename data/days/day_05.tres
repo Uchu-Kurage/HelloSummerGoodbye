@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DayData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_ffeh4"]
+[ext_resource type="Resource" path="res://data/items/festival_mask.tres" id="2_eitqv"]
+[ext_resource type="Script" path="res://data/day_data.gd" id="3_n8w1n"]
+
+[resource]
+script = ExtResource("3_n8w1n")
+day_number = 5
+month = 8
+day = 6
+title = "夏祭りの日"
+scene_path = "res://days/day_05.tscn"
+items = Array[ExtResource("1_ffeh4")]([ExtResource("2_eitqv")])

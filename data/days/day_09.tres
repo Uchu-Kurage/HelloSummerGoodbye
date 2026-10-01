@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DayData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_x3rv7"]
+[ext_resource type="Resource" path="res://data/items/straw_hat.tres" id="2_i4lae"]
+[ext_resource type="Script" path="res://data/day_data.gd" id="3_sgk06"]
+
+[resource]
+script = ExtResource("3_sgk06")
+day_number = 9
+month = 8
+day = 30
+title = "最後の夜"
+scene_path = "res://days/day_09.tscn"
+items = Array[ExtResource("1_x3rv7")]([ExtResource("2_i4lae")])

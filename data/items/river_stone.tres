@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_8yxw4"]
+
+[resource]
+script = ExtResource("1_8yxw4")
+id = &"river_stone"
+display_name = "川のきれいな石"
+description = "つめたくて、すべすべ。"
+day_number = 3
+placeholder_color = Color(0.603922, 0.647059, 0.607843, 1)

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DayData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_axu43"]
+[ext_resource type="Resource" path="res://data/items/river_stone.tres" id="2_dd2l1"]
+[ext_resource type="Script" path="res://data/day_data.gd" id="3_iudbu"]
+
+[resource]
+script = ExtResource("3_iudbu")
+day_number = 3
+month = 7
+day = 27
+title = "川の日"
+scene_path = "res://days/day_03.tscn"
+items = Array[ExtResource("1_axu43")]([ExtResource("2_dd2l1")])

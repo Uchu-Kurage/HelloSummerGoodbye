@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_52313"]
+
+[resource]
+script = ExtResource("1_52313")
+id = &"onigiri_wrap"
+display_name = "おにぎりの包み"
+description = "おばあちゃんが にぎってくれた。"
+day_number = 10
+placeholder_color = Color(0.662745, 0.721569, 0.556863, 1)

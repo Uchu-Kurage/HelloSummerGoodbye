@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DayData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_u3syi"]
+[ext_resource type="Resource" path="res://data/items/bus_ticket.tres" id="2_bn2or"]
+[ext_resource type="Script" path="res://data/day_data.gd" id="3_2bme4"]
+
+[resource]
+script = ExtResource("3_2bme4")
+day_number = 1
+month = 7
+day = 21
+title = "到着の日"
+scene_path = "res://days/day_01.tscn"
+items = Array[ExtResource("1_u3syi")]([ExtResource("2_bn2or")])

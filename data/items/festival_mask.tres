@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_b2e5m"]
+
+[resource]
+script = ExtResource("1_b2e5m")
+id = &"festival_mask"
+display_name = "お祭りのお面"
+description = "よみせで かってもらった。"
+day_number = 5
+placeholder_color = Color(0.878431, 0.647059, 0.627451, 1)

@@ -1,0 +1,85 @@
+# main に push したら Web 書き出しを行い、GitHub Pages に公開する。
+# 事前にリポジトリの Settings → Pages → Build and deployment → Source を「GitHub Actions」にしておく。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # 開発に使っている Godot と同じバージョンにそろえる（project.godot の config/features も同じ）
+  GODOT_VERSION: 4.4.1
+  GODOT_RELEASE: stable
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}-web
+
+      - name: Download Godot and Web export templates
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -eu
+          V="${GODOT_VERSION}-${GODOT_RELEASE}"
+          BASE="https://github.com/godotengine/godot/releases/download/${V}"
+          mkdir -p ~/godot
+          curl -fsSL -o /tmp/godot.zip "${BASE}/Godot_v${V}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${V}_linux.x86_64 ~/godot/godot
+          curl -fsSL -o /tmp/templates.tpz "${BASE}/Godot_v${V}_export_templates.tpz"
+          # 使うのはスレッドなしの Web テンプレートだけ
+          unzip -q /tmp/templates.tpz 'templates/web_nothreads_*' 'templates/version.txt' -d /tmp/tpl
+          DEST=~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE}
+          mkdir -p "$DEST"
+          mv /tmp/tpl/templates/* "$DEST/"
+          rm /tmp/templates.tpz /tmp/godot.zip
+
+      - name: Import project
+        run: |
+          mkdir -p build/web
+          touch build/.gdignore
+          ~/godot/godot --headless --import
+
+      - name: Smoke test
+        run: timeout 300 ~/godot/godot --headless res://tools/smoke_test.tscn
+
+      - name: Export Web
+        run: |
+          ~/godot/godot --headless --export-release "Web" build/web/index.html
+          ls -la build/web
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

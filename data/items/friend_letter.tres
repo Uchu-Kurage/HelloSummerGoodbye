@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1_4dn4s"]
+
+[resource]
+script = ExtResource("1_4dn4s")
+id = &"friend_letter"
+display_name = "友達の置き手紙"
+description = "「また らいねん」って かいてあった。"
+day_number = 8
+placeholder_color = Color(0.913725, 0.882353, 0.788235, 1)
