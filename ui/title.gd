@@ -71,16 +71,22 @@ func _build_ui() -> void:
 	_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	band.add_child(_prompt)
 	_prompt.modulate.a = 0.0
-	_pulse = create_tween().set_loops().set_trans(UiTokens.TRANS)
-	_pulse.tween_property(_prompt, "modulate:a", 1.0, UiTokens.TIME_PULSE).set_ease(Tween.EASE_OUT)
-	_pulse.tween_property(_prompt, "modulate:a", 0.45, UiTokens.TIME_PULSE).set_ease(Tween.EASE_IN)
+	_pulse = create_tween().set_trans(UiTokens.TRANS)
+	if UiAnim.reduced():
+		# 動きを減らす設定のときは明滅させずに出したままにする
+		_pulse.tween_property(_prompt, "modulate:a", 1.0, UiTokens.TIME_FADE)
+	else:
+		_pulse.set_loops()
+		_pulse.tween_property(_prompt, "modulate:a", 1.0, UiTokens.TIME_PULSE).set_ease(Tween.EASE_OUT)
+		_pulse.tween_property(_prompt, "modulate:a", 0.45, UiTokens.TIME_PULSE).set_ease(Tween.EASE_IN)
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	band.add_child(center)
 	_menu_panel = PanelContainer.new()
-	_menu_panel.theme_type_variation = &"PlainPanel"
+	# 景色（道）の上でも文字が読めるよう、紙の小札を敷く
+	_menu_panel.theme_type_variation = &"PaperChip"
 	center.add_child(_menu_panel)
 	_list = MenuList.new()
 	_list.vertical = false
@@ -108,6 +114,7 @@ func _add_item(text: String, cb: Callable) -> void:
 
 func _process(delta: float) -> void:
 	_camera.position.x += SCROLL_SPEED * delta
+	_camera.position.y = CameraController.VIEW_BOTTOM_Y - get_viewport_rect().size.y / 2.0
 	var L := GameState.DAY_LENGTH_PX
 	var half := get_viewport_rect().size.x / 2.0
 	if _camera.position.x > L - half:

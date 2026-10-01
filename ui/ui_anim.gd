@@ -9,18 +9,20 @@ static func panel_in(c: Control, duration: float = T.TIME_PANEL) -> Tween:
 	c.show()
 	c.pivot_offset = c.size / 2.0
 	c.modulate.a = 0.0
-	c.scale = Vector2.ONE * T.PANEL_SCALE_FROM
+	# 動きを減らす設定のときは拡大せずフェードだけにする
+	c.scale = Vector2.ONE if reduced() else Vector2.ONE * T.PANEL_SCALE_FROM
 	var tw := c.create_tween().set_parallel().set_trans(T.TRANS).set_ease(Tween.EASE_OUT)
 	tw.tween_property(c, "modulate:a", 1.0, duration)
 	tw.tween_property(c, "scale", Vector2.ONE, duration)
 	return tw
 
 
-static func panel_out(c: Control, duration: float = T.TIME_PANEL) -> Tween:
+static func panel_out(c: Control, duration: float = T.TIME_PANEL_OUT) -> Tween:
 	c.pivot_offset = c.size / 2.0
 	var tw := c.create_tween().set_parallel().set_trans(T.TRANS).set_ease(Tween.EASE_IN)
 	tw.tween_property(c, "modulate:a", 0.0, duration)
-	tw.tween_property(c, "scale", Vector2.ONE * T.PANEL_SCALE_FROM, duration)
+	if not reduced():
+		tw.tween_property(c, "scale", Vector2.ONE * T.PANEL_SCALE_FROM, duration)
 	tw.chain().tween_callback(c.hide)
 	return tw
 
@@ -29,7 +31,7 @@ static func panel_out(c: Control, duration: float = T.TIME_PANEL) -> Tween:
 static func float_in(c: Control, base: Vector2) -> Tween:
 	c.show()
 	c.modulate.a = 0.0
-	c.position = base + Vector2(0, T.FLOAT_DISTANCE)
+	c.position = base if reduced() else base + Vector2(0, T.FLOAT_DISTANCE)
 	var tw := c.create_tween().set_parallel().set_trans(T.TRANS).set_ease(Tween.EASE_OUT)
 	tw.tween_property(c, "modulate:a", 1.0, T.TIME_SMALL)
 	tw.tween_property(c, "position", base, T.TIME_SMALL)
@@ -38,9 +40,16 @@ static func float_in(c: Control, base: Vector2) -> Tween:
 
 static func float_out(c: CanvasItem) -> Tween:
 	var tw := c.create_tween().set_trans(T.TRANS).set_ease(Tween.EASE_IN)
-	tw.tween_property(c, "modulate:a", 0.0, T.TIME_SMALL)
+	tw.tween_property(c, "modulate:a", 0.0, T.TIME_SMALL_OUT)
 	tw.tween_callback(c.hide)
 	return tw
+
+
+## 動きを減らす設定が有効か（ブラウザの prefers-reduced-motion）
+static func reduced() -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	var prefs := tree.root.get_node_or_null("DisplayPrefs") if tree else null
+	return prefs != null and prefs.reduced_motion
 
 
 static func fade(c: CanvasItem, to: float, duration: float = T.TIME_FADE) -> Tween:
