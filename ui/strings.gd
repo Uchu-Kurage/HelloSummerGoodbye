@@ -76,6 +76,14 @@ const DIVE_HINT_KEY := "Space を おしつづけて、「の！」で はなす
 const DIVE_COUNT_SE := "せー……"
 const DIVE_COUNT_NO := "の！"
 const DIVE_LATE_CALL := "はやく こいよー！"
+## 石切り（ミニゲーム）
+const ISHI_PICK_TOUCH := "なげる いしを タップ（%d／%d かいめ）"
+const ISHI_PICK_KEY := "やじるしで いしを えらんで けってい（%d／%d かいめ）"
+const ISHI_AIM_TOUCH := "がめんを おしつづけて うでを ひき、はなして なげる"
+const ISHI_AIM_KEY := "Space を おしつづけて うでを ひき、はなして なげる。Esc で えらびなおす"
+const ISHI_REPICK := "えらびなおす"
+## 1回も跳ねずに沈んだとき、タケルが笑う
+const ISHI_PLOP := "ぽちゃん！"
 ## 型抜き（ミニゲーム）
 const KATANUKI_HINT_TOUCH := "がめんを おしつづけて けずる。はなすと ひとやすみ"
 const KATANUKI_HINT_KEY := "Space を おしつづけて けずる。はなすと ひとやすみ"

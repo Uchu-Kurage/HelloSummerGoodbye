@@ -67,7 +67,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
 | `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
-| `@game base_build` / `@game katanuki` / `@game dive` | ミニゲームをして、終わったら続きへ（秘密基地づくり／型抜き／飛び込み） |
+| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game dive` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／飛び込み） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -91,6 +91,14 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 4日目以降のタケルは `auto_talk`（向こうから声をかけてくる）で、同じ日の中の段取り（屋台 → 帰り道など）は `takeru_d5_stall` のような小さなフラグで進めています。
 場面の小物は `world/scenery_prop.gd`（駄菓子屋・川原・秘密基地・夏祭り・バス停など）、夕立は `world/rain_zone.gd`、
 夜の灯り（提灯・街灯・送り火・星・懐中電灯）は `world/glow_layer.gd` の下に置くと暗くなりません。10日目のバスの場面は `world/bus_departure.gd` です。
+
+### ミニゲーム：石切り（3日目）
+
+- 画面：`ui/ishikiri_game.gd`（会話の `@game ishikiri`。ビー玉を渡したあと）。タケルのお手本（5回）→ 足もとの石を選ぶ → 押しつづけて腕を引き、離して投げる。3回
+- 石：`data/skip_stones/*.tres`（SkipStone：名前・いちばんうまいときの回数・選んだときのタケルの一言・仮の絵）
+- 跳ねる回数 ＝ 石の回数 ×「ちょうどいいところ」への近さ。ちょうどいいところは `SWEET_SPOT`（0.8 秒）、幅は `SWEET_WINDOW`（前後 0.12 秒）、ずれたときの減り方は `FALLOFF`
+- 結果（`GameState.ishikiri_best`・`ishikiri_result`、フラグ `ishikiri_win` / `ishikiri_draw` / `ishikiri_lose`）でタケルの一言が変わる。せりふは `data/npcs/takeru_river.tres`
+- 入力は `HoldInput`。「えらびなおす」ボタンの上のタッチは、押しつづけに数えない（`HoldInput.exclude`）
 
 ### ミニゲーム：秘密基地づくり（4日目）
 

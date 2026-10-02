@@ -41,6 +41,9 @@ var base_cell_piece: Dictionary = {}
 var _base_puzzle: BasePuzzle
 ## 飛び込み（7日目）の結果：&"perfect"（ぴったり）／&"early"（はやすぎ）／&"late"（おそい）。空ならまだ
 var dive_result := &""
+## 石切り（3日目）で3回投げたうち、いちばんよく跳ねた回数と、タケルとの勝負の結果（&"win"／&"draw"／&"lose"）。空ならまだ
+var ishikiri_best := 0
+var ishikiri_result := &""
 ## 型抜き（5日目）の結果：&"clean"（ぬけた）／&"broken"（われた）。空ならまだ
 var katanuki_result := &""
 
@@ -60,6 +63,8 @@ func reset() -> void:
 	base_cell_piece.clear()
 	dive_result = &""
 	katanuki_result = &""
+	ishikiri_best = 0
+	ishikiri_result = &""
 	current_day_index = 0
 	start_day_index = 0
 
@@ -192,6 +197,13 @@ func base_remove(piece: int) -> void:
 func set_dive_result(r: StringName) -> void:
 	dive_result = r
 	set_flag(StringName("dive_" + r))
+
+
+## 石切りの結果を記録する。会話で分けられるよう、フラグ ishikiri_win / ishikiri_draw / ishikiri_lose も立てる
+func set_ishikiri_best(n: int, r: StringName) -> void:
+	ishikiri_best = n
+	ishikiri_result = r
+	set_flag(StringName("ishikiri_" + r))
 
 
 ## 型抜きの結果を記録する。会話で分けられるよう、フラグ katanuki_clean / katanuki_broken も立てる
