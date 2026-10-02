@@ -242,6 +242,9 @@ func _play_base_build(hud: Hud) -> void:
 	var pz := GameState.base_puzzle()
 	await _wait(0.6)
 	check(GameState.base_cells.size() == 5, "takeru places the first piece (%d cells)" % GameState.base_cells.size())
+	var touch: TouchControls = hud.get_parent().get_node("TouchControls")
+	check(touch._suppressed, "top-right touch buttons hidden during the minigame")
+	check(GameState.base_puzzle().width() == 15 and GameState.base_puzzle().height() == 7, "puzzle layout loads")
 	check(game._line.text.contains(GameState.base_material(&"wood").takeru_line), "takeru comments on his piece")
 	# 骨組みのマスには置けない
 	game.select(1)
@@ -267,6 +270,7 @@ func _play_base_build(hud: Hud) -> void:
 		await _wait(0.1)
 		n += 1
 	check(not hud.is_in_minigame(), "base build finishes when all holes are filled")
+	check(not touch._suppressed, "top-right touch buttons come back after the minigame")
 
 
 ## 会話を最後まで送る。選択肢は最初のものを選び、宝箱から選ぶときは手もとの最初のものを選ぶ
