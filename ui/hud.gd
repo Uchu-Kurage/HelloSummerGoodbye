@@ -527,13 +527,14 @@ func _run_minigame(game_name: String) -> void:
 		return
 	var g: Control = MINIGAMES[game_name].new()
 	g.set("hud", self)
-	g.set("base", _nearest_in_group("secret_base"))
 	_minigame = g
-	_msg_mark.modulate.a = 0.0
+	# ミニゲームは専用の画面に切り替わる。会話のパネルはそのあいだ隠し、日付の札より手前に出す
+	UiAnim.panel_out(_msg)
 	_root.add_child(g)
 	await g.finished
 	g.queue_free()
 	_minigame = null
+	UiAnim.panel_in(_msg)
 	_step()
 
 
@@ -545,18 +546,9 @@ func minigame() -> Control:
 	return _minigame
 
 
-## ミニゲームなどから、いま話している人のせりふを1つ出す
-func say(text: String) -> void:
-	if is_talking() and text != "":
-		_show_line(text)
-
-
-func _nearest_in_group(group: String) -> Node2D:
-	var best: Node2D = null
-	for n in get_tree().get_nodes_in_group(group):
-		if player == null or best == null or absf(n.global_position.x - player.global_position.x) < absf(best.global_position.x - player.global_position.x):
-			best = n
-	return best
+## いま話している人の名前
+func speaker_name() -> String:
+	return _talk_data.display_name if _talk_data else ""
 
 
 ## 一言パネルの位置。拾ったときは右下（左寄りのプレイヤーを隠さない）、

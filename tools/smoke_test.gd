@@ -177,9 +177,8 @@ func _run() -> void:
 		check(str(paths.get(i, "")).ends_with("day_%02d_takeru.tscn" % (i + 1)), "day %d swapped: %s" % [i + 1, paths.get(i, "")])
 	check(max_rain > 0.9 and rain_after == 0.0, "day 4 rain falls and stops (max %.2f)" % max_rain)
 	check(rain_after_build == 0.0, "rain stops after the base is finished (%.2f)" % rain_after_build)
-	check(GameState.base_slots.size() == GameState.BASE_GAPS, "base: all gaps filled %s" % str(GameState.base_slots))
-	check(GameState.base_slot(0).id == &"wood" and GameState.base_slot(1).id == &"tin" and GameState.base_slot(3).id == &"sudare",
-		"base: materials remembered per gap")
+	check(GameState.base_cells.size() == GameState.base_puzzle().holes().size(), "base: every hole cell remembered")
+	check(GameState.base_cell(Vector2i(5, 0)).id == &"wood", "base: materials remembered per cell")
 	check(GameState.was_received(&"base_plaque"), "base plaque from takeru")
 	for i in [7, 8]:
 		var b := _base_in(paths, i)
@@ -237,28 +236,37 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	return out
 
 
-## 秘密基地づくり：はめ直しを1回してから、5か所を順にふさぐ（板・トタン・ブルーシート・すだれ・板）
+## 秘密基地づくり：ためしに置けない場所を押し、はめたピースを外してから、ヒントの一手どおりに最後まで埋める
 func _play_base_build(hud: Hud) -> void:
 	var game: BaseBuild = hud.minigame()
-	var mats := GameState.base_materials()
+	var pz := GameState.base_puzzle()
 	await _wait(0.6)
-	check(game.base != null, "base build finds the base")
-	# タッチと同じ：すき間を押す → 材料を押す
-	game._gaps[0].pressed.emit()
-	await _wait(0.2)
-	game._place(mats[2])
-	await _wait(0.2)
-	check(GameState.base_slot(0) == mats[2] and hud._msg_text.text == mats[2].takeru_line, "takeru comments on the material")
-	for i in GameState.BASE_GAPS:
-		game._gaps[i].pressed.emit()
-		await _wait(0.15)
-		game._place(mats[[0, 1, 2, 3, 0][i]])
-		await _wait(0.3)
+	check(GameState.base_cells.size() == 5, "takeru places the first piece (%d cells)" % GameState.base_cells.size())
+	check(game._line.text.contains(GameState.base_material(&"wood").takeru_line), "takeru comments on his piece")
+	# 骨組みのマスには置けない
+	game.select(1)
+	check(not game.place_held(Vector2i(4, 0)), "piece does not fit on the frame")
+	game._drop_held(false)
+	# タケルのピースを外して、もとにもどす
+	game.pick_up(0)
+	check(GameState.base_cells.is_empty() and game._held == 0, "placed piece can be picked up")
+	check(game.place_held_at(Vector2i(5, 0)), "picked piece can be placed again")
+	var guard := 0
+	while not GameState.base_done() and guard < 30:
+		guard += 1
+		var mv := game.next_move()
+		if mv.is_empty():
+			break
+		game.select(mv[0])
+		game._rot[mv[0]] = mv[1]
+		game.place_held_at(mv[2])
+		await _wait(0.2)
+	check(GameState.base_done(), "base build: all holes filled (%d moves)" % guard)
 	var n := 0
-	while hud.is_in_minigame() and n < 50:
+	while hud.is_in_minigame() and n < 80:
 		await _wait(0.1)
 		n += 1
-	check(not hud.is_in_minigame(), "base build finishes when all gaps are filled")
+	check(not hud.is_in_minigame(), "base build finishes when all holes are filled")
 
 
 ## 会話を最後まで送る。選択肢は最初のものを選び、宝箱から選ぶときは手もとの最初のものを選ぶ

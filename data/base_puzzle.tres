@@ -1,0 +1,81 @@
+[gd_resource type="Resource" script_class="BasePuzzle" load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://data/base_puzzle.gd" id="puzzle"]
+[ext_resource type="Script" path="res://data/base_piece.gd" id="piece"]
+[ext_resource type="Resource" path="res://data/base_materials/wood.tres" id="m_wood"]
+[ext_resource type="Resource" path="res://data/base_materials/tin.tres" id="m_tin"]
+[ext_resource type="Resource" path="res://data/base_materials/blue_sheet.tres" id="m_blue_sheet"]
+[ext_resource type="Resource" path="res://data/base_materials/sudare.tres" id="m_sudare"]
+
+[sub_resource type="Resource" id="p0"]
+script = ExtResource("piece")
+shape = "####/#..."
+material = ExtResource("m_wood")
+preplaced = true
+pre_origin = Vector2i(5, 0)
+
+[sub_resource type="Resource" id="p1"]
+script = ExtResource("piece")
+shape = "####"
+material = ExtResource("m_wood")
+
+[sub_resource type="Resource" id="p2"]
+script = ExtResource("piece")
+shape = "###"
+material = ExtResource("m_tin")
+
+[sub_resource type="Resource" id="p3"]
+script = ExtResource("piece")
+shape = "####"
+material = ExtResource("m_tin")
+
+[sub_resource type="Resource" id="p4"]
+script = ExtResource("piece")
+shape = "###"
+material = ExtResource("m_sudare")
+
+[sub_resource type="Resource" id="p5"]
+script = ExtResource("piece")
+shape = "####/#..."
+material = ExtResource("m_tin")
+
+[sub_resource type="Resource" id="p6"]
+script = ExtResource("piece")
+shape = "###/#.."
+material = ExtResource("m_wood")
+
+[sub_resource type="Resource" id="p7"]
+script = ExtResource("piece")
+shape = "###/#.."
+material = ExtResource("m_blue_sheet")
+
+[sub_resource type="Resource" id="p8"]
+script = ExtResource("piece")
+shape = "###/#.."
+material = ExtResource("m_sudare")
+
+[sub_resource type="Resource" id="p9"]
+script = ExtResource("piece")
+shape = "###/##."
+material = ExtResource("m_blue_sheet")
+
+[sub_resource type="Resource" id="p10"]
+script = ExtResource("piece")
+shape = "###/..#"
+material = ExtResource("m_wood")
+
+[sub_resource type="Resource" id="p11"]
+script = ExtResource("piece")
+shape = "###"
+material = ExtResource("m_blue_sheet")
+
+[sub_resource type="Resource" id="p12"]
+script = ExtResource("piece")
+shape = "###/.#."
+material = ExtResource("m_tin")
+
+[resource]
+script = ExtResource("puzzle")
+layout = PackedStringArray("AAAA#BBBBB#CCCC", "AAA##BBBBB##CCC", "###############", "#DDD#ooooo#EEE#", "#DDD#ooooo#EEE#", "#DDD#ooooo#EEE#", "#DDD#ooooo#EE##")
+pieces = Array[ExtResource("piece")]([SubResource("p0"), SubResource("p1"), SubResource("p2"), SubResource("p3"), SubResource("p4"), SubResource("p5"), SubResource("p6"), SubResource("p7"), SubResource("p8"), SubResource("p9"), SubResource("p10"), SubResource("p11"), SubResource("p12")])
+hint_line = "それ、まわしてみろよ。"

@@ -56,8 +56,15 @@ const ENDING_FOUND := "%dこ のうち %dこ みつけた。\nえらぶと く�
 const ENDING_RETRY := "もういちど"
 
 ## 秘密基地づくり（ミニゲーム）
-const BASE_PICK_GAP := "あまもりの すきまを えらんでね"
-const BASE_PICK_MATERIAL := "なにで ふさぐ？"
+const BASE_PICK_TOUCH := "ピースを えらんでね。はめた ピースは タップで はずせる"
+const BASE_PICK_KEY := "やじるしで ピースを えらんで けってい"
+const BASE_PLACE_TOUCH := "すきまを タップか ドラッグで はめる"
+const BASE_PLACE_KEY := "やじるしと けっていで はめる。R で まわす"
+const BASE_DONE := "あまもり、ぜんぶ ふさいだ！"
+const BASE_ROTATE := "まわす"
+const BASE_RETURN := "もどす"
+## 寄りの画面の上に出す、タケルのひとこと
+const SPEECH_FORMAT := "%s「%s」"
 
 const ROTATE_NOTICE := "よこむきにしてね"
 const ROTATE_SUB := "スマホを よこに すると あそべるよ"

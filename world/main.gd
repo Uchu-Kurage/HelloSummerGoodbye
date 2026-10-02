@@ -86,7 +86,7 @@ func _input(event: InputEvent) -> void:
 		SfxPlayer.play("accept")
 		pause_menu.open()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("open_box"):
+	elif event.is_action_pressed("open_box") and not hud.is_in_minigame():
 		box.open()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and OS.is_debug_build():
