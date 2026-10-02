@@ -9,6 +9,12 @@ const START_PROMPT_TOUCH := "タップして はじめる"
 const START_PROMPT_KEY := "クリック または キーで はじめる"
 const MENU_START := "はじめる"
 const MENU_QUIT := "おわる"
+## 開発用（デバッグ実行のときだけ出る）：ルートと日を選んで、その日へとぶ
+const MENU_DEBUG := "デバッグ"
+const DEBUG_TITLE := "ルートと ひを えらぶ"
+const DEBUG_ROUTE := "ルート：%s"
+const DEBUG_HINT := "ひを えらぶと、その ひの はじめから はじまるよ"
+const DEBUG_DAY := "%dにちめ"
 
 const PAUSE_TITLE := "ひとやすみ"
 const PAUSE_RESUME := "つづける"

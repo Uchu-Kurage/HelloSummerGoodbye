@@ -4,6 +4,8 @@ extends CanvasLayer
 
 signal box_requested
 signal title_requested
+## 開発用：ルートと日を選んでとぶ画面を開く（デバッグ実行のときだけ）
+signal debug_requested
 
 var is_open := false
 ## 宝箱を上に重ねている間 true（Esc は宝箱が受け取る）
@@ -45,6 +47,8 @@ func _ready() -> void:
 	_add_item(Strings.PAUSE_RESUME, close)
 	_add_item(Strings.PAUSE_BOX, func(): box_requested.emit())
 	_add_item(Strings.PAUSE_TITLE_SCREEN, func(): title_requested.emit())
+	if DebugJump.available():
+		_add_item(Strings.MENU_DEBUG, func(): debug_requested.emit())
 
 	_back = Button.new()
 	_back.text = Strings.BACK
