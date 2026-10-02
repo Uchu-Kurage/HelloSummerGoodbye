@@ -1,6 +1,6 @@
 class_name DebugJump
 extends CanvasLayer
-## 開発用（デバッグ実行のときだけ）：ルートと日を選んで、その日のはじめへとぶ。
+## 開発用（デバッグ実行か、Web 版の URL に ?debug をつけたときだけ）：ルートと日を選んで、その日のはじめへとぶ。
 ## タイトルの「デバッグ」と、ひとやすみの「デバッグ」から開く。
 ## とぶ前に、その日までにそのルートを通ったときの状態（フラグ・拾ったもの・手ばなしたもの）を作っておく。
 
@@ -48,9 +48,16 @@ var _back: Button
 var _route := 0
 
 
-## いまのデバッグ実行で使えるか（書き出した本番では出さない）
+## 使えるか：デバッグ実行のとき、または Web 版で URL に ?debug をつけたとき（ふつうに遊ぶ人には出さない）
 static func available() -> bool:
-	return OS.is_debug_build()
+	return OS.is_debug_build() or _url_has_debug()
+
+
+static func _url_has_debug() -> bool:
+	if not OS.has_feature("web"):
+		return false
+	# JavaScript の true は数の 1 で返ってくるので、1 か 0 にして比べる
+	return JavaScriptBridge.eval("new URLSearchParams(window.location.search).has('debug') ? 1 : 0", true) == 1
 
 
 ## そのルートで day_index の日のはじめに来たときの状態を作る（GameState はいったん空にする）
