@@ -103,7 +103,7 @@ func _build_card() -> void:
 func set_day(d: DayData) -> void:
 	_card_month.text = Strings.DATE_MONTH % d.month
 	_card_day.text = Strings.DATE_DAY % d.day
-	_card_title.text = d.title
+	_card_title.text = GameState.day_title(d)
 
 
 ## 札がめくれるように切り替える
@@ -355,6 +355,9 @@ func close_message() -> void:
 		return
 	_msg_open = false
 	if is_talking():
+		# 話し終えたらフラグを立てる（エンディングの分岐など）
+		for f in _talk_data.set_flags:
+			GameState.set_flag(f)
 		_talk_data = null
 		_talk_lines = []
 		if player:

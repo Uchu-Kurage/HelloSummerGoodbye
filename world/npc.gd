@@ -11,6 +11,7 @@ const BREATH_AMOUNT := 1.5
 
 var _t := 0.0
 var _facing := -1.0
+var _present := true
 var _player: Node2D
 @onready var _visual: Node2D = $Visual
 
@@ -24,6 +25,11 @@ func _ready() -> void:
 			s.texture = npc_data.sprite
 			s.offset = Vector2(0, -npc_data.sprite.get_height() / 2.0)
 			_visual.add_child(s)
+	# 出てくる条件に合わないときは、いないことにする（フラグが変わったら見直す）
+	_present = FlagCondition.met(npc_data.appear_if) if npc_data else true
+	visible = _present
+	monitoring = _present
+	GameState.flags_changed.connect(_on_flags_changed)
 	body_entered.connect(func(b): if b is Player: _player = b)
 	body_exited.connect(func(b): if b == _player: _player = null)
 	_visual.draw.connect(_draw_placeholder)
@@ -43,7 +49,21 @@ func _process(delta: float) -> void:
 
 
 func can_interact() -> bool:
-	return npc_data != null and not npc_data.lines.is_empty()
+	return _present and npc_data != null and not npc_data.lines.is_empty()
+
+
+func _on_flags_changed() -> void:
+	var want := FlagCondition.met(npc_data.appear_if) if npc_data else true
+	if want == _present:
+		return
+	_present = want
+	set_deferred("monitoring", want)
+	if want:
+		UiAnim.fade(self, 1.0, UiTokens.TIME_FADE)
+	else:
+		# そっといなくなる
+		notify_left()
+		UiAnim.fade(self, 0.0, UiTokens.TIME_FADE * 2)
 
 
 func bubble_text(touch: bool) -> String:
@@ -81,6 +101,10 @@ func _draw_placeholder() -> void:
 		Vector2(19 + lean, top), Vector2(-19 + lean, top)]), d.shirt_color)
 	var head := Vector2(lean * 1.6, top - head_r * 0.9)
 	v.draw_circle(head, head_r, d.skin_color)
-	# 横と後ろだけ残った髪
-	v.draw_arc(head, head_r, PI * 0.55, PI * 1.25, 12, d.hair_color, head_r * 0.35)
+	if d.hair_full:
+		# 頭の上から後ろまでの髪
+		v.draw_arc(head, head_r * 0.85, PI * 0.9, PI * 2.05, 16, d.hair_color, head_r * 0.45)
+	else:
+		# 横と後ろだけ残った髪
+		v.draw_arc(head, head_r, PI * 0.55, PI * 1.25, 12, d.hair_color, head_r * 0.35)
 	v.draw_circle(head + Vector2(head_r * 0.45, -head_r * 0.05), 2.5, WorldPalette.POLE)

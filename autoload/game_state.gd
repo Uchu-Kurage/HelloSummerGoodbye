@@ -3,6 +3,8 @@ extends Node
 
 signal item_collected(item: ItemData)
 signal day_changed(index: int)
+## フラグが立ったとき（日の場面の差し替え、NPC の出入りに使う）
+signal flags_changed
 
 ## 1日の横幅（px）。あとで調整する
 const DAY_LENGTH_PX := 3840.0
@@ -18,6 +20,8 @@ var current_day_index := 0
 var collected: Dictionary = {}
 ## 話しかけたことのある NPC の id
 var talked: Dictionary = {}
+## 立っているフラグ（エンディングの分岐など）。セーブはしない
+var flags: Dictionary = {}
 
 
 func _ready() -> void:
@@ -27,6 +31,7 @@ func _ready() -> void:
 func reset() -> void:
 	collected.clear()
 	talked.clear()
+	flags.clear()
 	current_day_index = 0
 
 
@@ -70,6 +75,43 @@ func has_talked(id: StringName) -> bool:
 
 func mark_talked(id: StringName) -> void:
 	talked[id] = true
+
+
+func has_flag(f: StringName) -> bool:
+	return flags.has(f)
+
+
+func set_flag(f: StringName) -> void:
+	if flags.has(f):
+		return
+	flags[f] = true
+	flags_changed.emit()
+
+
+## その日に使う差し替え（なければ null）
+func day_variant(d: DayData) -> DayVariant:
+	for v in d.variants:
+		if v and FlagCondition.met(v.condition):
+			return v
+	return null
+
+
+func day_scene_path(d: DayData) -> String:
+	var v := day_variant(d)
+	return v.scene_path if v and v.scene_path != "" else d.scene_path
+
+
+func day_title(d: DayData) -> String:
+	var v := day_variant(d)
+	return v.title if v and v.title != "" else d.title
+
+
+## いまのフラグで迎えるエンディング（条件に合う最初のもの）
+func current_ending() -> EndingData:
+	for e in day_list.endings:
+		if e and FlagCondition.met(e.condition):
+			return e
+	return null
 
 
 func all_items() -> Array[ItemData]:

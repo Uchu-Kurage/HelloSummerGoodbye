@@ -9,7 +9,9 @@ var _list: MenuList
 
 func _ready() -> void:
 	$Paper.color = UiTokens.PAPER_DARK
-	_box.header_caption.text = Strings.ENDING_TITLE
+	var ending := GameState.current_ending()
+	_box.header_caption.text = ending.title if ending and ending.title != "" else Strings.ENDING_TITLE
+	_box.ending_message = ending.message if ending else ""
 	_box.header_caption.theme_type_variation = &"EndingTitleLabel"
 	_list = MenuList.new()
 	_list.vertical = false
