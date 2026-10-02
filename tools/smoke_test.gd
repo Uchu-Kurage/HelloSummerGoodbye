@@ -101,7 +101,7 @@ func _run() -> void:
 	var rain_after := -1.0
 	var stood_still_checked := false
 	var takeru_left_day7 := false
-	var skip_day := 6  # この日のアイテムはわざと拾わない
+	var skip_day := 7  # この日のアイテムはわざと拾わない
 	var rain_after_build := -1.0
 	var max_cam := -INF
 	var cam_back := false
@@ -224,6 +224,37 @@ func _run() -> void:
 		check(buried.size() == 1 and notes.get(buried[0], "") == Strings.BURIED_NOTE, "ending slot: buried item")
 		check(end_box._slots[-1].item.id == &"takeru_hat" and end_box._slots[-1].collected, "hat appears last")
 
+	# 飛び込み：ぴったりで跳び、タケルの一言とラムネ
+	check(GameState.dive_result == &"perfect" and GameState.has_flag(&"dive_perfect"), "dive: jumped together (%s)" % GameState.dive_result)
+	check(GameState.was_received(&"ramune_bottle"), "dive: ramune after the dive")
+	# はやすぎ・おそいは、飛び込みの画面だけで確かめる
+	var keep_dive := GameState.flags.duplicate()
+	var early := DiveGame.new()
+	get_tree().root.add_child(early)
+	await _play_dive(early, false)
+	check(GameState.dive_result == &"early", "dive: released too early -> early")
+	early.queue_free()
+	var late := DiveGame.new()
+	get_tree().root.add_child(late)
+	var n2 := 0
+	while late.phase != DiveGame.Phase.WAIT and n2 < 100:
+		await get_tree().process_frame
+		n2 += 1
+	late._hold.press()
+	n2 = 0
+	while not late._called and n2 < 2000:
+		await get_tree().process_frame
+		n2 += 1
+	check(late.result == &"late" and late._called, "dive: holding too long -> takeru jumps first and calls")
+	late._hold.release()
+	n2 = 0
+	while late.phase != DiveGame.Phase.DONE and n2 < 2000:
+		await get_tree().process_frame
+		n2 += 1
+	check(GameState.dive_result == &"late", "dive: still jumps when released late")
+	late.queue_free()
+	GameState.flags = keep_dive
+
 	# なつみの分岐とふつうのエンディングは、データの上で確かめる
 	var keep_flags := GameState.flags.duplicate()
 	GameState.flags.clear()
@@ -256,6 +287,24 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	var out: String = SecretBase.Mode.keys()[b.mode] if b else ""
 	scene.free()
 	return out
+
+
+## 飛び込み：押しつづけて、タケルの「の！」で離す（perfect = false なら、すぐ離す）
+func _play_dive(game: DiveGame, perfect: bool) -> void:
+	var n := 0
+	while game.phase != DiveGame.Phase.WAIT and n < 100:
+		await get_tree().process_frame
+		n += 1
+	game._hold.press()
+	n = 0
+	while perfect and not game._said_no and n < 600:
+		await get_tree().process_frame
+		n += 1
+	game._hold.release()
+	n = 0
+	while is_instance_valid(game) and game.phase != DiveGame.Phase.DONE and n < 2000:
+		await get_tree().process_frame
+		n += 1
 
 
 ## 秘密基地づくり：ためしに置けない場所を押し、はめたピースを外してから、ヒントの一手どおりに最後まで埋める
@@ -300,7 +349,9 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 	var guard := 0
 	while hud.is_talking() and guard < 300:
 		guard += 1
-		if hud.is_in_minigame():
+		if hud.minigame() is DiveGame:
+			await _play_dive(hud.minigame(), true)
+		elif hud.is_in_minigame():
 			await _play_base_build(hud)
 		elif box.is_open:
 			await _wait(0.8)

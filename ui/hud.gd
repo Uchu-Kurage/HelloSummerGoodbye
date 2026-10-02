@@ -22,6 +22,7 @@ const MENU_ITEM := preload("res://ui/components/menu_item.tscn")
 ## 会話の @game で始めるミニゲーム
 const MINIGAMES := {
 	"base_build": preload("res://ui/base_build.gd"),
+	"dive": preload("res://ui/dive_game.gd"),
 }
 
 var player: Player

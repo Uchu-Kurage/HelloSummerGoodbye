@@ -63,6 +63,13 @@ const BASE_PLACE_KEY := "やじるしと けっていで はめる。R で ま�
 const BASE_DONE := "あまもり、ぜんぶ ふさいだ！"
 const BASE_ROTATE := "まわす"
 const BASE_RETURN := "もどす"
+## 飛び込み（ミニゲーム）
+const DIVE_HINT_TOUCH := "がめんを おしつづけて、「の！」で はなす"
+const DIVE_HINT_KEY := "Space を おしつづけて、「の！」で はなす"
+## タケルのかけ声と、おそいときに下から呼ぶ声
+const DIVE_COUNT_SE := "せー……"
+const DIVE_COUNT_NO := "の！"
+const DIVE_LATE_CALL := "はやく こいよー！"
 ## 寄りの画面の上に出す、タケルのひとこと
 const SPEECH_FORMAT := "%s「%s」"
 
