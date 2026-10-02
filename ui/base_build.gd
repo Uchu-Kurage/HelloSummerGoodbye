@@ -47,6 +47,7 @@ var _tray: GridContainer
 var _slots: Array[Button] = []
 var _rotate: Button
 var _return: Button
+var _pause: Button
 var _status: Label
 
 
@@ -67,7 +68,9 @@ func _ready() -> void:
 	_refresh()
 	modulate.a = 0.0
 	UiAnim.fade(self, 1.0, UiTokens.TIME_FADE)
-	InputMode.mode_changed.connect(func(_t): _refresh())
+	InputMode.mode_changed.connect(func(_t):
+		_kb_board = _board.has_focus() and InputMode.keyboard
+		_refresh())
 	if InputMode.keyboard:
 		_focus_tray()
 
@@ -102,7 +105,8 @@ func _build() -> void:
 	_board.focus_mode = Control.FOCUS_ALL
 	_board.draw.connect(_draw_board)
 	_board.gui_input.connect(_on_board_input)
-	_board.focus_entered.connect(func(): _kb_board = true; _board.queue_redraw())
+	# 盤のカーソルはキーボードのときだけ（タップやクリックで盤にフォーカスが移っても出さない）
+	_board.focus_entered.connect(func(): _kb_board = InputMode.keyboard; _board.queue_redraw())
 	_board.focus_exited.connect(func(): _kb_board = false; _board.queue_redraw())
 	_board.set_drag_forwarding(_board_drag, _board_can_drop, _board_drop)
 	left.add_child(_board)
@@ -139,6 +143,10 @@ func _build() -> void:
 	row.add_child(_rotate)
 	_return = _button(Strings.BASE_RETURN, func(): _drop_held(true))
 	row.add_child(_return)
+	# 右上の「たからばこ」「ひとやすみ」はトレーと重なるので隠し、ひとやすみだけここに置く（タッチのときだけ）
+	_pause = _button(Strings.BUTTON_PAUSE, func(): TouchControls.fire_action(&"pause"))
+	row.add_child(_pause)
+	get_tree().call_group("touch_controls", "set_suppressed", true)
 	_tray = GridContainer.new()
 	_tray.columns = TRAY_COLUMNS
 	_tray.add_theme_constant_override("h_separation", UiTokens.TOUCH_GAP)
@@ -433,6 +441,7 @@ func _refresh() -> void:
 		(b.get_child(0) as Control).queue_redraw()
 	_rotate.disabled = _held < 0
 	_return.disabled = _held < 0
+	_pause.visible = InputMode.touch
 	if _done:
 		_status.text = Strings.BASE_DONE
 	elif _held >= 0:
@@ -582,6 +591,10 @@ func _board_can_drop(pos: Vector2, data: Variant) -> bool:
 func _board_drop(pos: Vector2, data: Variant) -> void:
 	_held = data["piece"]
 	place_held(_cell_at(pos))
+
+
+func _exit_tree() -> void:
+	get_tree().call_group("touch_controls", "set_suppressed", false)
 
 
 func _notification(what: int) -> void:

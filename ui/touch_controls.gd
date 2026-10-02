@@ -9,11 +9,14 @@ var _positions: Dictionary = {}
 var _pressed_action := &""
 var _buttons: HBoxContainer
 var _shown := false
+## ミニゲームなど、専用の画面が自分のボタンを出しているあいだは隠す
+var _suppressed := false
 
 
 func _ready() -> void:
 	layer = 20
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group("touch_controls")
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -58,9 +61,15 @@ static func fire_action(action: StringName) -> void:
 	Input.parse_input_event(up)
 
 
+## 右上のボタンを隠す（ミニゲームの画面が、自分の「ひとやすみ」を出すとき）
+func set_suppressed(v: bool) -> void:
+	_suppressed = v
+	_refresh_buttons()
+
+
 ## タッチ操作のときだけ出す。ゲームが止まっている間は隠す
 func _refresh_buttons() -> void:
-	var want := InputMode.touch and not get_tree().paused
+	var want := InputMode.touch and not get_tree().paused and not _suppressed
 	if want == _shown:
 		return
 	_shown = want
