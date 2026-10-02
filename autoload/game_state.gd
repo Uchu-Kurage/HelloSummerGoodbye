@@ -16,6 +16,8 @@ var day_list: DayList
 var current_day_index := 0
 ## id -> 拾った順の番号
 var collected: Dictionary = {}
+## 話しかけたことのある NPC の id
+var talked: Dictionary = {}
 
 
 func _ready() -> void:
@@ -24,6 +26,7 @@ func _ready() -> void:
 
 func reset() -> void:
 	collected.clear()
+	talked.clear()
 	current_day_index = 0
 
 
@@ -59,6 +62,14 @@ func collect(item: ItemData) -> void:
 
 func is_collected(id: StringName) -> bool:
 	return collected.has(id)
+
+
+func has_talked(id: StringName) -> bool:
+	return talked.has(id)
+
+
+func mark_talked(id: StringName) -> void:
+	talked[id] = true
 
 
 func all_items() -> Array[ItemData]:

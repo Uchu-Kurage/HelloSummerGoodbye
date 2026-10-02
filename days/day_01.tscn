@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_base.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://world/house.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="3"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa.tres" id="4"]
 
 [node name="Day01" instance=ExtResource("1")]
 
@@ -10,3 +12,7 @@ position = Vector2(2100, 604)
 
 [node name="House" parent="Props" instance=ExtResource("2")]
 position = Vector2(1150, 604)
+
+[node name="Grandpa" parent="Props" instance=ExtResource("3")]
+position = Vector2(1300, 604)
+npc_data = ExtResource("4")

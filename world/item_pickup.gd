@@ -1,10 +1,12 @@
 class_name ItemPickup
-extends Area2D
-## 拾えるアイテム。プレイヤーが範囲に入ると HUD（グループ pickup_listener）に知らせる。
+extends Interactable
+## 拾えるアイテム。近づくと「E」／「ひろう」の吹き出しが出る。
 
 const BOB_HEIGHT := 6.0
 const BOB_SPEED := 2.2
 const ICON_SIZE := 44.0
+## 拾ったときに立ち止まる時間
+const PICKUP_HOLD := 0.6
 
 var item: ItemData
 var _picked := false
@@ -13,8 +15,7 @@ var _t := 0.0
 
 
 func _ready() -> void:
-	body_entered.connect(_on_body_entered)
-	body_exited.connect(_on_body_exited)
+	super()
 	if item and item.icon:
 		var s := Sprite2D.new()
 		s.texture = item.icon
@@ -39,13 +40,22 @@ func _process(delta: float) -> void:
 	_visual.position.y = -40.0 + sin(_t * BOB_SPEED) * BOB_HEIGHT
 
 
-## HUD が吹き出しを出す位置（画面座標）
-func bubble_screen_position() -> Vector2:
-	return get_global_transform_with_canvas() * Vector2(0, -110)
-
-
-func can_pick() -> bool:
+func can_interact() -> bool:
 	return not _picked
+
+
+func bubble_text(touch: bool) -> String:
+	return Strings.PICKUP_TOUCH if touch else Strings.PICKUP_KEY
+
+
+func interact(hud: Node) -> void:
+	if _picked:
+		return
+	pick()
+	SfxPlayer.play("pickup")
+	if hud.player:
+		hud.player.hold(PICKUP_HOLD)
+	hud.show_item_message(item)
 
 
 func pick() -> void:
@@ -53,24 +63,9 @@ func pick() -> void:
 		return
 	_picked = true
 	set_deferred("monitoring", false)
-	get_tree().call_group("pickup_listener", "on_pickup_exited", self)
+	notify_left()
 	GameState.collect(item)
 	var tw := create_tween().set_parallel().set_trans(UiTokens.TRANS).set_ease(Tween.EASE_OUT)
 	tw.tween_property(_visual, "position:y", _visual.position.y - 60.0, UiTokens.TIME_PANEL * 2)
 	tw.tween_property(_visual, "modulate:a", 0.0, UiTokens.TIME_PANEL * 2)
 	tw.chain().tween_callback(queue_free)
-
-
-func _on_body_entered(body: Node) -> void:
-	if body is Player and not _picked:
-		get_tree().call_group("pickup_listener", "on_pickup_entered", self)
-
-
-func _on_body_exited(body: Node) -> void:
-	if body is Player:
-		get_tree().call_group("pickup_listener", "on_pickup_exited", self)
-
-
-func _exit_tree() -> void:
-	if not _picked and is_inside_tree():
-		get_tree().call_group("pickup_listener", "on_pickup_exited", self)

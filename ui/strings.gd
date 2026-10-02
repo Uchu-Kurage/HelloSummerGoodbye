@@ -27,6 +27,8 @@ const BUTTON_PAUSE := "ひとやすみ"
 const PICKUP_KEY := "E"
 const PICKUP_TOUCH := "ひろう"
 const PICKED_FORMAT := "%s を ひろった"
+const TALK_KEY := "E"
+const TALK_TOUCH := "はなす"
 
 const WALK_HINT_KEY := "→ / D で あるく"
 const WALK_HINT_TOUCH := "がめんの みぎを おしつづけると あるく"
