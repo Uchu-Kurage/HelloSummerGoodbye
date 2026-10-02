@@ -3,11 +3,13 @@ extends Button
 ## メニューの項目。キーボードで選んでいるときだけ ACCENT の色と「●」の印を出す。
 ## タッチでは押した瞬間に決定する（Button の pressed）。
 
+## 見た目の種類（テーマの型）。選んでいるときは末尾に Selected をつけた型を使う
+var variation := &"MenuItem"
 var _mark: Label
 
 
 func _ready() -> void:
-	theme_type_variation = &"MenuItem"
+	theme_type_variation = variation
 	custom_minimum_size.y = UiTokens.TOUCH_MIN
 	focus_mode = Control.FOCUS_ALL
 	_mark = Label.new()
@@ -34,5 +36,5 @@ func _on_focus_entered() -> void:
 
 func _refresh() -> void:
 	var marked := has_focus() and InputMode.keyboard
-	theme_type_variation = &"MenuItemSelected" if marked else &"MenuItem"
+	theme_type_variation = StringName(variation + "Selected") if marked else variation
 	_mark.visible = marked

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+
+[sub_resource type="Resource" id="appear"]
+script = ExtResource("2")
+forbid_any = Array[StringName]([&"route_natsumi"])
+
+[resource]
+script = ExtResource("1")
+id = &"takeru_river"
+display_name = "タケル"
+lines = Array[String](["@if_flag route_takeru given", "お、きたな。", "@if_has marble ask", "#no", "なんだ。まあいいや、またな。", "@end", "#ask", "@choice わたす:give | わたさない:no", "#give", "@take marble タケルに あげた", "……これ、すげえ きれいじゃん。", "いいの？ じゃあ、これやる。", "このへんで いちばん すべすべのやつ。", "@give river_stone", "@flag route_takeru", "@end", "#given", "このへんで いちばん すべすべのやつ。"])
+appear_if = SubResource("appear")
+placeholder_color = Color(0.659, 0.357, 0.271, 1)
+height = 140.0
+skin_color = Color(0.776, 0.557, 0.384, 1)
+hair_color = Color(0.129, 0.114, 0.102, 1)
+shirt_color = Color(0.914, 0.890, 0.827, 1)
+pants_color = Color(0.243, 0.353, 0.478, 1)
+hair_full = true

@@ -18,6 +18,11 @@ func can_interact() -> bool:
 	return true
 
 
+## プレイヤーが動けないとき（バスに乗っているなど）でも使えるか
+func works_while_locked() -> bool:
+	return false
+
+
 ## 吹き出しの文言（キーボード用・タッチ用）
 func bubble_text(touch: bool) -> String:
 	return ""

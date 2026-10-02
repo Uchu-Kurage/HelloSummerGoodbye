@@ -1,14 +1,28 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://data/item_data.gd" id="1_11kb6"]
-[ext_resource type="Resource" path="res://data/items/friend_letter.tres" id="2_e4254"]
-[ext_resource type="Script" path="res://data/day_data.gd" id="3_ndmyc"]
+[ext_resource type="Script" path="res://data/item_data.gd" id="item_script"]
+[ext_resource type="Resource" path="res://data/items/friend_letter.tres" id="item_base"]
+[ext_resource type="Script" path="res://data/day_data.gd" id="day_script"]
+[ext_resource type="Script" path="res://data/day_variant.gd" id="v_script"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="c_script"]
+[ext_resource type="Resource" path="res://data/items/takeru_letter.tres" id="item_takeru"]
+
+[sub_resource type="Resource" id="cond_takeru"]
+script = ExtResource("c_script")
+require_all = Array[StringName]([&"route_takeru"])
+
+[sub_resource type="Resource" id="var_takeru"]
+script = ExtResource("v_script")
+condition = SubResource("cond_takeru")
+scene_path = "res://days/variants/day_08_takeru.tscn"
+items = Array[ExtResource("item_script")]([ExtResource("item_takeru")])
 
 [resource]
-script = ExtResource("3_ndmyc")
+script = ExtResource("day_script")
 day_number = 8
 month = 8
 day = 20
 title = "静かな日"
 scene_path = "res://days/day_08.tscn"
-items = Array[ExtResource("1_11kb6")]([ExtResource("2_e4254")])
+items = Array[ExtResource("item_script")]([ExtResource("item_base")])
+variants = Array[ExtResource("v_script")]([SubResource("var_takeru")])

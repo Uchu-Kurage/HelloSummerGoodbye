@@ -12,6 +12,8 @@ const BREATH_AMOUNT := 1.5
 var _t := 0.0
 var _facing := -1.0
 var _present := true
+## @leave で立ち去ったあと（フラグが変わっても戻ってこない）
+var _left := false
 var _player: Node2D
 @onready var _visual: Node2D = $Visual
 
@@ -30,7 +32,7 @@ func _ready() -> void:
 	visible = _present
 	monitoring = _present
 	GameState.flags_changed.connect(_on_flags_changed)
-	body_entered.connect(func(b): if b is Player: _player = b)
+	body_entered.connect(_on_player_near)
 	body_exited.connect(func(b): if b == _player: _player = null)
 	_visual.draw.connect(_draw_placeholder)
 
@@ -52,14 +54,47 @@ func can_interact() -> bool:
 	return _present and npc_data != null and not npc_data.lines.is_empty()
 
 
+func _on_player_near(b: Node) -> void:
+	if not b is Player:
+		return
+	_player = b
+	# 向こうから声をかけてくる人は、はじめて近づいたときに話しはじめる
+	if npc_data and npc_data.auto_talk and can_interact() and not GameState.has_talked(npc_data.id):
+		get_tree().call_group("interact_listener", "request_auto_talk", self)
+
+
+## 近づいたら話しはじめるのを待っているか
+func wants_auto_talk() -> bool:
+	return npc_data != null and npc_data.auto_talk and can_interact() and not GameState.has_talked(npc_data.id)
+
+
+## そっと立ち去る（会話の @leave）。右へ少し歩きながら消える
+func leave() -> void:
+	if _left:
+		return
+	_left = true
+	_present = false
+	_player = null
+	_facing = 1.0
+	set_deferred("monitoring", false)
+	notify_left()
+	var tw := create_tween().set_parallel().set_trans(UiTokens.TRANS).set_ease(Tween.EASE_IN)
+	if not UiAnim.reduced():
+		tw.tween_property(self, "position:x", position.x + 160.0, UiTokens.TIME_FADE * 3)
+	tw.tween_property(self, "modulate:a", 0.0, UiTokens.TIME_FADE * 3)
+	tw.chain().tween_callback(hide)
+
+
 func _on_flags_changed() -> void:
 	var want := FlagCondition.met(npc_data.appear_if) if npc_data else true
-	if want == _present:
+	if _left or want == _present:
 		return
 	_present = want
 	set_deferred("monitoring", want)
 	if want:
-		UiAnim.fade(self, 1.0, UiTokens.TIME_FADE)
+		if not visible:
+			modulate.a = 0.0
+		UiAnim.fade(self, 1.0, UiTokens.TIME_FADE * 2)
 	else:
 		# そっといなくなる
 		notify_left()
@@ -78,7 +113,7 @@ func interact(hud: Node) -> void:
 	if talked and not npc_data.repeat_lines.is_empty():
 		lines = npc_data.repeat_lines
 	GameState.mark_talked(npc_data.id)
-	hud.start_talk(npc_data, lines)
+	hud.start_talk(npc_data, lines, self)
 
 
 ## 仮の姿（絵が入るまで）。足もとが原点、+x が向いている方向

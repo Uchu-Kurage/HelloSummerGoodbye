@@ -3,9 +3,12 @@ extends Control
 ## 宝箱画面。お菓子の缶を開けたような見た目。day_list の全アイテムの枠を並べる。
 ## ゲーム中（ending_mode = false）：開いている間はゲームを止める。Tab / Esc / もどる で閉じる。
 ## エンディング（ending_mode = true）：ふたが開き、拾ったアイテムが1つずつ順に現れる。
+## えらぶとき（pick）：手もとにあるものを1つ選ぶ。会話の @bury（タイムカプセルに入れる）で使う。
 
 signal closed
 signal reveal_finished
+## pick で選んだもの（もどったときは null）
+signal picked(item: ItemData)
 
 ## 列の数は画面の幅に合わせて MIN_COLUMNS〜MAX_COLUMNS で決める
 const MAX_COLUMNS := 5
@@ -39,6 +42,9 @@ var _tween: Tween
 ## エンディングで見出しの右に置く部品（もういちど など）
 var footer: HBoxContainer
 var header_caption: Label
+var _pick_mode := false
+var _pick_hint := ""
+var _pick_result: ItemData
 
 
 func _ready() -> void:
@@ -152,9 +158,9 @@ func _rebuild_slots() -> void:
 	var got := 0
 	for it in items:
 		var s := ItemSlot.new()
-		var has := GameState.is_collected(it.id)
-		got += 1 if has else 0
-		s.setup(it, has)
+		got += 1 if GameState.is_collected(it.id) else 0
+		# 手ばなしたもの（あげた・うめた）は、枠にそのひとことを出す
+		s.setup(it, GameState.holds(it.id), GameState.gone_note(it.id))
 		s.pressed.connect(_on_slot_pressed.bind(s))
 		s.focus_entered.connect(_on_slot_focused.bind(s))
 		_grid.add_child(s)
@@ -225,8 +231,26 @@ func last_row_slot() -> ItemSlot:
 
 
 func _on_slot_pressed(s: ItemSlot) -> void:
-	SfxPlayer.play("accept")
+	if _pick_mode and s.collected:
+		# えらぶときは、手もとにあるものを押したらそれに決める
+		SfxPlayer.play("accept")
+		_pick_result = s.item
+		close()
+		return
+	SfxPlayer.play("accept" if not _pick_mode else "cursor")
 	_select(s)
+
+
+## 手もとにあるものから1つ選ぶ。もどったら null
+func pick(title: String, hint: String) -> ItemData:
+	if is_open:
+		return null
+	_pick_mode = true
+	_pick_hint = hint
+	_pick_result = null
+	_title.text = title
+	open()
+	return await picked
 
 
 func _on_slot_focused(s: ItemSlot) -> void:
@@ -254,14 +278,15 @@ func _show_detail(s: ItemSlot) -> void:
 			_detail_date.text = ""
 			_detail_text.text = Strings.ENDING_FOUND % [_found[1], _found[0]]
 	elif s == null:
-		_detail_name.text = Strings.BOX_TITLE
+		_detail_name.text = _title.text
 		_detail_date.text = ""
-		_detail_text.text = Strings.BOX_HINT_SELECT
-	elif s.collected:
+		_detail_text.text = _pick_hint if _pick_mode else Strings.BOX_HINT_SELECT
+	elif s.collected or s.note != "":
 		var d := GameState.day_for_item(s.item)
+		var fmt := Strings.BOX_RECEIVED_ON if GameState.was_received(s.item.id) else Strings.BOX_PICKED_ON
 		_detail_name.text = s.item.display_name
-		_detail_date.text = Strings.BOX_PICKED_ON % [d.month, d.day] if d else ""
-		_detail_text.text = s.item.description
+		_detail_date.text = s.note if s.note != "" else (fmt % [d.month, d.day] if d else "")
+		_detail_text.text = s.item.text()
 	else:
 		_detail_name.text = Strings.BOX_EMPTY_NAME
 		_detail_date.text = ""
@@ -276,6 +301,8 @@ func open() -> void:
 	is_open = true
 	if not ending_mode:
 		get_tree().paused = true
+	if not _pick_mode and not ending_mode:
+		_title.text = Strings.BOX_TITLE
 	show()
 	await _rebuild_slots()
 	_place_lid()
@@ -296,11 +323,11 @@ func open() -> void:
 	_tween.tween_property(_lid, "modulate:a", 0.0, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
 	if ending_mode:
 		for s in _slots:
-			if s.collected:
+			if s.shows_content():
 				s.content.modulate.a = 0.0
 		var t := UiTokens.TIME_PANEL * 0.5 + UiTokens.TIME_LID
 		for s in _slots:
-			if not s.collected:
+			if not s.shows_content():
 				continue
 			s.content.pivot_offset = s.content.size / 2.0
 			s.content.scale = Vector2.ONE if still else Vector2.ONE * UiTokens.PANEL_SCALE_FROM
@@ -329,6 +356,9 @@ func close() -> void:
 		f.release_focus()
 	get_tree().paused = false
 	closed.emit()
+	if _pick_mode:
+		_pick_mode = false
+		picked.emit(_pick_result)
 	# 閉じるときは開くときより短く（ふたが下りる → 全体が消える）
 	_place_lid()
 	var drop := 0.0 if UiAnim.reduced() else 32.0

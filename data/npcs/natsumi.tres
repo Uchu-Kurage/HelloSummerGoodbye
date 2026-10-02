@@ -5,7 +5,7 @@
 
 [sub_resource type="Resource" id="appear"]
 script = ExtResource("2")
-forbid_any = Array[StringName]([&"route_kenta"])
+forbid_any = Array[StringName]([&"route_takeru"])
 
 [resource]
 script = ExtResource("1")

@@ -1,0 +1,38 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_06.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_dawn.tres" id="npc_takeru_dawn"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_trap.tres" id="npc_takeru_trap"]
+
+[node name="Day06_takeru" instance=ExtResource("base")]
+
+[node name="TakeruHouse" type="Node2D" parent="Props"]
+position = Vector2(1000, 604)
+script = ExtResource("prop")
+kind = 14
+
+[node name="Boxes" type="Node2D" parent="Props"]
+position = Vector2(1300, 604)
+script = ExtResource("prop")
+kind = 15
+
+[node name="Woods" type="Node2D" parent="Props"]
+position = Vector2(1550, 604)
+script = ExtResource("prop")
+kind = 7
+width = 700.0
+
+[node name="Kunugi" type="Node2D" parent="Props"]
+position = Vector2(2000, 604)
+script = ExtResource("prop")
+kind = 16
+
+[node name="Takeru" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1440, 604)
+npc_data = ExtResource("npc_takeru_dawn")
+
+[node name="TakeruTrap" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1870, 604)
+npc_data = ExtResource("npc_takeru_trap")

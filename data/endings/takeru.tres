@@ -5,11 +5,11 @@
 
 [sub_resource type="Resource" id="cond"]
 script = ExtResource("2")
-require_all = Array[StringName]([&"route_kenta"])
+require_all = Array[StringName]([&"route_takeru"])
 
 [resource]
 script = ExtResource("1")
-id = &"kenta"
+id = &"takeru"
 condition = SubResource("cond")
-title = "けんたと すごした なつ"
-message = "むしとりも、きんぎょすくいも、ぜんぶ おぼえてる。"
+title = "タケルと すごした なつ"
+message = "「やくそくだぞー！」"

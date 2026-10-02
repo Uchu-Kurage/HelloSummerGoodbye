@@ -29,6 +29,7 @@ func _ready() -> void:
 	camera.snap()
 	streamer.update_now()
 	hud.player = player
+	hud.box = box
 	hud.set_day(GameState.current_day())
 	hud.show_walk_hint()
 	pause_menu.box_requested.connect(_on_pause_box)
