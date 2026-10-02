@@ -22,6 +22,8 @@ const _MONTH_DAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 var day_list: DayList
 var current_day_index := 0
+## 本編をはじめる日（ふだんは 0。デバッグのジャンプで変える）
+var start_day_index := 0
 ## id -> 拾った順の番号
 var collected: Dictionary = {}
 ## 人から「もらった」アイテムの id（宝箱の「〜に もらった」の表示用）
@@ -56,6 +58,7 @@ func reset() -> void:
 	base_cell_piece.clear()
 	dive_result = &""
 	current_day_index = 0
+	start_day_index = 0
 
 
 func day_count() -> int:

@@ -15,6 +15,7 @@ var _menu_panel: PanelContainer
 var _list: MenuList
 var _started := false
 var _pulse: Tween
+var _debug: DebugJump
 
 
 func _ready() -> void:
@@ -92,6 +93,12 @@ func _build_ui() -> void:
 	_list.vertical = false
 	_menu_panel.add_child(_list)
 	_add_item(Strings.MENU_START, _on_start)
+	# 開発用：ルートと日を選んでとぶ（デバッグ実行のときだけ）
+	if DebugJump.available():
+		_add_item(Strings.MENU_DEBUG, _on_debug)
+		_debug = DebugJump.new()
+		_debug.closed.connect(_list.activate)
+		add_child(_debug)
 	# ブラウザではタブを閉じられないので「おわる」は出さない
 	if not OS.has_feature("web"):
 		_add_item(Strings.MENU_QUIT, func(): get_tree().quit())
@@ -147,3 +154,10 @@ func _on_start() -> void:
 		return
 	GameState.reset()
 	Transition.change_scene(MAIN_SCENE)
+
+
+func _on_debug() -> void:
+	if Transition.is_busy():
+		return
+	_list.deactivate()
+	_debug.open()

@@ -276,6 +276,48 @@ func _run() -> void:
 	var c1 := TimeOfDay.sky_color(0.4, 1.0)
 	check(c1.s < c0.s, "sky fades late summer")
 	await _wait(6.0)
+	await _check_debug_jump()
+
+
+## デバッグのジャンプ：ルートと日を選ぶと、そこまでの状態を作ってその日のはじめから始まる
+func _check_debug_jump() -> void:
+	DebugJump.apply(1, 7)
+	check(GameState.has_flag(&"route_takeru") and GameState.has_flag(&"takeru_d7_jump"), "debug: takeru flags up to day 7")
+	check(not GameState.holds(&"marble") and GameState.gone_note(&"marble") != "", "debug: marble given to takeru")
+	check(GameState.was_received(&"ramune_bottle") and GameState.dive_result == &"perfect", "debug: dive done before day 8")
+	check(GameState.is_collected(&"takeru_letter") == false and GameState.collected.size() == 7, "debug: items of days 1-7 (%d)" % GameState.collected.size())
+	DebugJump.apply(2, 4)
+	check(GameState.has_flag(&"route_natsumi") and not GameState.has_flag(&"route_takeru"), "debug: natsumi flags")
+	DebugJump.apply(0, 9)
+	check(GameState.flags.is_empty() and GameState.collected.size() == 9, "debug: default route keeps flags empty")
+	# 画面から：タイトルの「デバッグ」で、タケルの8日目を選ぶ
+	get_tree().change_scene_to_file("res://ui/title.tscn")
+	await _wait(0.5)
+	var title := get_tree().current_scene
+	var dj: DebugJump = null
+	for c in title.get_children():
+		if c is DebugJump:
+			dj = c
+	check(dj != null, "debug: title has the jump screen")
+	if dj == null:
+		return
+	title._on_debug()
+	await _wait(0.5)
+	check(dj.is_open, "debug: jump screen opens")
+	dj._route_items[1].pressed.emit()
+	dj._day_items[7].pressed.emit()
+	await _wait(1.5)
+	var main := get_tree().current_scene
+	check(main.name == "Main", "debug: jumped into the game")
+	if main.name != "Main":
+		return
+	var streamer: DayStreamer = main.get_node("DayStreamer")
+	check(streamer.player_day_index() == 7 and GameState.current_day_index == 7, "debug: starts on day 8")
+	var day8: Node = null
+	for c in main.get_node("Days").get_children():
+		if c is DayBase and c.day_data == GameState.get_day(7):
+			day8 = c
+	check(day8 != null and day8.scene_file_path.ends_with("day_08_takeru.tscn"), "debug: takeru day 8 scene")
 
 
 ## その日の差し替えシーンに秘密基地があるか（あればモードの名前）

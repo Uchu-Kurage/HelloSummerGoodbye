@@ -19,13 +19,17 @@ const TITLE_SCENE := "res://ui/title.tscn"
 @onready var box: TreasureBox = $BoxLayer/TreasureBox
 @onready var debug_label: Label = $DebugLayer/DebugLabel
 
+var _debug: DebugJump
 var _changing_day := false
 var _ending := false
 
 
 func _ready() -> void:
-	GameState.current_day_index = 0
-	player.position = Vector2(START_X, Player.GROUND_Y)
+	# ふだんは1日目の左端から。デバッグのジャンプでは、その日のはじめから
+	var start := GameState.start_day_index
+	GameState.current_day_index = start
+	var x := START_X if start == 0 else start * GameState.DAY_LENGTH_PX + NEXT_DAY_START
+	player.position = Vector2(x, Player.GROUND_Y)
 	camera.snap()
 	streamer.update_now()
 	hud.player = player
@@ -35,6 +39,11 @@ func _ready() -> void:
 	pause_menu.box_requested.connect(_on_pause_box)
 	pause_menu.title_requested.connect(func(): Transition.change_scene(TITLE_SCENE))
 	box.closed.connect(_on_box_closed)
+	if DebugJump.available():
+		_debug = DebugJump.new()
+		_debug.closed.connect(_on_box_closed)
+		add_child(_debug)
+		pause_menu.debug_requested.connect(_on_pause_debug)
 	debug_label.visible = false
 
 
@@ -90,7 +99,7 @@ func _input(event: InputEvent) -> void:
 		box.open()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and OS.is_debug_build():
-		# 開発用：F3 で読み込み状況の表示、F4 で日の終わりの手前へ移動
+		# 開発用：F3 で読み込み状況の表示、F4 で日の終わりの手前へ移動（ルートと日を選んでとぶのは、ひとやすみの「デバッグ」）
 		if event.physical_keycode == KEY_F3:
 			debug_label.visible = not debug_label.visible
 		elif event.physical_keycode == KEY_F4:
@@ -103,6 +112,11 @@ func _input(event: InputEvent) -> void:
 func _on_pause_box() -> void:
 	pause_menu.cover()
 	box.open()
+
+
+func _on_pause_debug() -> void:
+	pause_menu.cover()
+	_debug.open()
 
 
 func _on_box_closed() -> void:
