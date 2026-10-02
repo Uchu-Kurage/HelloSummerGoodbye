@@ -18,7 +18,7 @@ position = Vector2(700, 604)
 [node name="BusStop" type="Node2D" parent="Props"]
 position = Vector2(1350, 604)
 script = ExtResource("prop")
-kind = 21
+kind = 20
 
 [node name="Board" type="PanelContainer" parent="Props/BusStop"]
 offset_left = -70.0

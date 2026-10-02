@@ -11,23 +11,23 @@
 [node name="TakeruHouse" type="Node2D" parent="Props"]
 position = Vector2(1000, 604)
 script = ExtResource("prop")
-kind = 14
+kind = 13
 
 [node name="Boxes" type="Node2D" parent="Props"]
 position = Vector2(1300, 604)
 script = ExtResource("prop")
-kind = 15
+kind = 14
 
 [node name="Woods" type="Node2D" parent="Props"]
 position = Vector2(1550, 604)
 script = ExtResource("prop")
-kind = 7
+kind = 6
 width = 700.0
 
 [node name="Kunugi" type="Node2D" parent="Props"]
 position = Vector2(2000, 604)
 script = ExtResource("prop")
-kind = 16
+kind = 15
 
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1440, 604)

@@ -164,6 +164,16 @@ func _buttons(theme: Theme) -> void:
 	_button(theme, "ChoiceItem", ch, ch_p, T.FONT_BODY, T.INK)
 	_button(theme, "ChoiceItemSelected", ch_s, ch_p, T.FONT_BODY, T.ACCENT_INK)
 
+	# 秘密基地づくりのすき間：景色（基地の絵）の上に重ねる、半分すけた紙の札。
+	# ふさいだすき間はさらにうすく、選んでいるすき間は ACCENT_INK の枠（印は「●」をスクリプトが出す）
+	var gap := flat(Color(T.PAPER, 0.45), T.PAPER, T.PANEL_BORDER, T.SMALL_RADIUS, T.SPACE_XS)
+	var gap_f := flat(Color(T.PAPER, 0.12), Color(T.PAPER, 0.6), T.PANEL_BORDER, T.SMALL_RADIUS, T.SPACE_XS)
+	var gap_s := flat(Color(T.PAPER, 0.7), T.ACCENT_INK, 3, T.SMALL_RADIUS, T.SPACE_XS)
+	var gap_p := flat(Color(T.PAPER_DARK, 0.8), T.PAPER_DARK, T.PANEL_BORDER, T.SMALL_RADIUS, T.SPACE_XS)
+	_button(theme, "GapButton", gap, gap_p, T.FONT_SMALL, T.INK)
+	_button(theme, "GapButtonFilled", gap_f, gap_p, T.FONT_SMALL, T.INK)
+	_button(theme, "GapButtonSelected", gap_s, gap_p, T.FONT_SMALL, T.INK)
+
 	# タッチ用のボタン（宝箱・ひとやすみ・もどる）
 	_button(theme, "TouchButton", normal, pressed, T.FONT_SMALL, T.INK)
 

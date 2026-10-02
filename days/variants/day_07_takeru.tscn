@@ -16,7 +16,7 @@ position = Vector2(1720, 604)
 [node name="DiveRock" type="Node2D" parent="Props"]
 position = Vector2(1500, 604)
 script = ExtResource("prop")
-kind = 17
+kind = 16
 
 [node name="Splash" type="Node2D" parent="Props"]
 position = Vector2(1820, 540)
@@ -29,17 +29,17 @@ npc_data = ExtResource("npc_takeru_dive")
 [node name="Okuribi1" type="Node2D" parent="Props"]
 position = Vector2(2450, 604)
 script = ExtResource("prop")
-kind = 18
+kind = 17
 
 [node name="Okuribi2" type="Node2D" parent="Props"]
 position = Vector2(2950, 604)
 script = ExtResource("prop")
-kind = 18
+kind = 17
 
 [node name="Okuribi3" type="Node2D" parent="Props"]
 position = Vector2(3400, 604)
 script = ExtResource("prop")
-kind = 18
+kind = 17
 
 [node name="TakeruRoad" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2760, 604)
@@ -51,14 +51,14 @@ script = ExtResource("glow")
 [node name="Okuribi1Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(2450, 604)
 script = ExtResource("prop")
-kind = 19
+kind = 18
 
 [node name="Okuribi2Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(2950, 604)
 script = ExtResource("prop")
-kind = 19
+kind = 18
 
 [node name="Okuribi3Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(3400, 604)
 script = ExtResource("prop")
-kind = 19
+kind = 18

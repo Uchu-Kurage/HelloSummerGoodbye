@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_09.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/secret_base.gd" id="secret_base"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
 [ext_resource type="Resource" path="res://data/npcs/takeru_capsule.tres" id="npc_takeru_capsule"]
 [ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
@@ -15,19 +16,18 @@ visible = false
 [node name="Woods" type="Node2D" parent="Props"]
 position = Vector2(300, 604)
 script = ExtResource("prop")
-kind = 7
+kind = 6
 width = 2000.0
 
 [node name="Base" type="Node2D" parent="Props"]
 position = Vector2(2700, 604)
-script = ExtResource("prop")
-kind = 5
-stage = 2
+script = ExtResource("secret_base")
+mode = 2
 
 [node name="Mound" type="Node2D" parent="Props"]
 position = Vector2(2880, 604)
 script = ExtResource("prop")
-kind = 24
+kind = 23
 show_on_event = "buried"
 
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
@@ -40,7 +40,7 @@ script = ExtResource("glow")
 [node name="Stars" type="Node2D" parent="Props/Glow"]
 position = Vector2(0, 604)
 script = ExtResource("prop")
-kind = 23
+kind = 22
 width = 3840.0
 
 [node name="Flashlight" type="Node2D" parent="Props/Glow"]

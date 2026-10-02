@@ -12,6 +12,8 @@ extends Node
 var _last_ambient := ""
 ## 雨の強さ（0.0〜1.0）。RainZone が set_rain で入れる
 var rain := 0.0
+## 雨の間の環境音。秘密基地の屋根をふさぐと「屋根をたたく雨」にかわる（set_rain_ambient）
+var rain_ambient := WorldPalette.RAIN_AMBIENT
 
 
 func _ready() -> void:
@@ -20,6 +22,12 @@ func _ready() -> void:
 
 func set_rain(amount: float) -> void:
 	rain = clampf(amount, 0.0, 1.0)
+	if rain <= 0.0:
+		rain_ambient = WorldPalette.RAIN_AMBIENT
+
+
+func set_rain_ambient(ambient_name: String) -> void:
+	rain_ambient = ambient_name if ambient_name != "" else WorldPalette.RAIN_AMBIENT
 
 
 func _process(_delta: float) -> void:
@@ -43,7 +51,7 @@ func apply(progress: float, season: float, tint: Color = Color.WHITE) -> void:
 		canvas_modulate.color = light
 	if background:
 		background.set_sky_color(sky)
-	var amb := WorldPalette.RAIN_AMBIENT if rain > 0.5 else ambient_for(season)
+	var amb := rain_ambient if rain > 0.5 else ambient_for(season)
 	if amb != _last_ambient:
 		_last_ambient = amb
 		SfxPlayer.set_ambient(amb)
