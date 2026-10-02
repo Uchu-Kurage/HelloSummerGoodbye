@@ -55,6 +55,10 @@ const ENDING_FOUND_TITLE := "なつの たからもの"
 const ENDING_FOUND := "%dこ のうち %dこ みつけた。\nえらぶと くわしく みられるよ"
 const ENDING_RETRY := "もういちど"
 
+## 秘密基地づくり（ミニゲーム）
+const BASE_PICK_GAP := "あまもりの すきまを えらんでね"
+const BASE_PICK_MATERIAL := "なにで ふさぐ？"
+
 const ROTATE_NOTICE := "よこむきにしてね"
 const ROTATE_SUB := "スマホを よこに すると あそべるよ"
 

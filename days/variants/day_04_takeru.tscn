@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_04.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/secret_base.gd" id="secret_base"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
 [ext_resource type="Resource" path="res://data/npcs/takeru_base.tres" id="npc_takeru_base"]
 [ext_resource type="Script" path="res://world/rain_zone.gd" id="rain"]
@@ -17,19 +18,18 @@ position = Vector2(2760, 604)
 [node name="Woods" type="Node2D" parent="Props"]
 position = Vector2(650, 604)
 script = ExtResource("prop")
-kind = 7
+kind = 6
 width = 1300.0
 
 [node name="Base" type="Node2D" parent="Props"]
 position = Vector2(2560, 604)
-script = ExtResource("prop")
-kind = 5
-stage = 0
+script = ExtResource("secret_base")
+mode = 0
 
 [node name="Thicket" type="Node2D" parent="Props"]
 position = Vector2(2230, 604)
 script = ExtResource("prop")
-kind = 6
+kind = 5
 
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2400, 604)
@@ -39,3 +39,4 @@ npc_data = ExtResource("npc_takeru_base")
 script = ExtResource("rain")
 from_x = 2000.0
 to_x = 3150.0
+stop_on_event = "rain_stop"

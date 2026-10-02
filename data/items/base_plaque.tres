@@ -9,3 +9,4 @@ display_name = "基地の木の札"
 description = "タケルが『かいいん』って かいた。"
 day_number = 4
 placeholder_color = Color(0.690, 0.541, 0.369, 1)
+on_ground = false

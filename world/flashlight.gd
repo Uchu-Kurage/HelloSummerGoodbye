@@ -25,7 +25,11 @@ func _draw() -> void:
 	if _player == null or not _player.visible:
 		return
 	var layer := get_parent() as CanvasLayer
-	var origin := _player.global_position - (layer.offset if layer else Vector2.ZERO) + Vector2(14, HAND_Y)
+	var local := _player.global_position - (layer.offset if layer else Vector2.ZERO)
+	# この日（夜の日）の中にいるときだけ照らす（前の日を歩いているあいだに、次の日が読み込まれていても）
+	if local.x < 0.0 or local.x > GameState.DAY_LENGTH_PX:
+		return
+	var origin := local + Vector2(14, HAND_Y)
 	var c := WorldPalette.FLASHLIGHT
 	draw_colored_polygon(PackedVector2Array([origin, origin + Vector2(REACH, -SPREAD * 0.4), origin + Vector2(REACH, SPREAD * 0.9)]), c)
 	draw_circle(origin + Vector2(REACH * 0.85, SPREAD * 0.3), SPREAD * 0.45, Color(c, c.a * 0.5))

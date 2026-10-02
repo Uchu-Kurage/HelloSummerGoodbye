@@ -1,15 +1,16 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_08.tscn" id="base"]
 [ext_resource type="PackedScene" path="res://world/house.tscn" id="house"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
 [ext_resource type="Resource" path="res://data/npcs/grandma.tres" id="npc_grandma"]
+[ext_resource type="Script" path="res://world/secret_base.gd" id="secret_base"]
 
 [node name="Day08_takeru" instance=ExtResource("base")]
 
 [node name="Spot1" parent="ItemSpots" index="0"]
-position = Vector2(2340, 604)
+position = Vector2(2200, 604)
 
 [node name="House" parent="Props" instance=ExtResource("house")]
 position = Vector2(800, 604)
@@ -17,7 +18,7 @@ position = Vector2(800, 604)
 [node name="Engawa" type="Node2D" parent="Props"]
 position = Vector2(800, 604)
 script = ExtResource("prop")
-kind = 20
+kind = 19
 
 [node name="Grandma" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1080, 604)
@@ -26,11 +27,10 @@ npc_data = ExtResource("npc_grandma")
 [node name="Woods" type="Node2D" parent="Props"]
 position = Vector2(1300, 604)
 script = ExtResource("prop")
-kind = 7
+kind = 6
 width = 700.0
 
 [node name="Base" type="Node2D" parent="Props"]
 position = Vector2(2200, 604)
-script = ExtResource("prop")
-kind = 5
-stage = 1
+script = ExtResource("secret_base")
+mode = 1

@@ -7,6 +7,8 @@ signal item_gone(item: ItemData)
 signal day_changed(index: int)
 ## フラグが立ったとき（日の場面の差し替え、NPC の出入りに使う）
 signal flags_changed
+## 秘密基地のすき間に材料をはめたとき
+signal base_changed
 
 ## 1日の横幅（px）。あとで調整する
 const DAY_LENGTH_PX := 3840.0
@@ -14,6 +16,15 @@ const DAY_LENGTH_PX := 3840.0
 const SUMMER_START := Vector2i(7, 20)
 const SUMMER_END := Vector2i(8, 31)
 const DAY_LIST_PATH := "res://data/day_list.tres"
+## 秘密基地づくりの材料（ミニゲームに並べる順）
+const BASE_MATERIAL_PATHS := [
+	"res://data/base_materials/wood.tres",
+	"res://data/base_materials/tin.tres",
+	"res://data/base_materials/blue_sheet.tres",
+	"res://data/base_materials/sudare.tres",
+]
+## 秘密基地のすき間の数（屋根3か所：左・中・右、壁2か所：左・右）
+const BASE_GAPS := 5
 const _MONTH_DAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 var day_list: DayList
@@ -28,10 +39,15 @@ var gone: Dictionary = {}
 var talked: Dictionary = {}
 ## 立っているフラグ（エンディングの分岐など）。セーブはしない
 var flags: Dictionary = {}
+## 秘密基地のすき間（0〜4）-> はめた材料の id。4日目に作り、8・9日目はこれで見た目を組み立てる
+var base_slots: Dictionary = {}
+var _base_materials: Array[BaseMaterial] = []
 
 
 func _ready() -> void:
 	day_list = load(DAY_LIST_PATH)
+	for path in BASE_MATERIAL_PATHS:
+		_base_materials.append(load(path))
 
 
 func reset() -> void:
@@ -40,6 +56,7 @@ func reset() -> void:
 	gone.clear()
 	talked.clear()
 	flags.clear()
+	base_slots.clear()
 	current_day_index = 0
 
 
@@ -132,6 +149,27 @@ func set_flag(f: StringName) -> void:
 		return
 	flags[f] = true
 	flags_changed.emit()
+
+
+func base_materials() -> Array[BaseMaterial]:
+	return _base_materials
+
+
+func base_material(id: StringName) -> BaseMaterial:
+	for m in _base_materials:
+		if m.id == id:
+			return m
+	return null
+
+
+## そのすき間にはめた材料（まだなら null）
+func base_slot(gap: int) -> BaseMaterial:
+	return base_material(base_slots.get(gap, &""))
+
+
+func set_base_slot(gap: int, material: BaseMaterial) -> void:
+	base_slots[gap] = material.id
+	base_changed.emit()
 
 
 ## その日に使う差し替え（なければ null）

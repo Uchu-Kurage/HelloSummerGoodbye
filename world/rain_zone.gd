@@ -8,12 +8,18 @@ extends Node2D
 @export var to_x := 2900.0
 ## 降りはじめ・やみはじめの、だんだん強く／弱くなる幅
 @export var ramp := 220.0
+## 空でなければ、会話の @event でこの名前が来たときに、その場で雨がやむ（そのあとは降らない）
+@export var stop_on_event := ""
+## 雨がやむまでの時間（秒）
+@export var stop_time := 1.6
 
 const STREAKS := 140
 const FALL_SPEED := 900.0
 const STREAK_LEN := 26.0
 
 var amount := 0.0
+var _stopped := false
+var _stop_k := 1.0
 var _t := 0.0
 var _player: Node2D
 
@@ -26,13 +32,20 @@ func _process(delta: float) -> void:
 		if _player == null:
 			return
 	var x := _player.global_position.x - global_position.x
-	var a := minf(smoothstep(from_x, from_x + ramp, x), 1.0 - smoothstep(to_x - ramp, to_x, x))
+	if _stopped:
+		_stop_k = maxf(0.0, _stop_k - delta / stop_time)
+	var a := minf(smoothstep(from_x, from_x + ramp, x), 1.0 - smoothstep(to_x - ramp, to_x, x)) * _stop_k
 	if not is_equal_approx(a, amount):
 		amount = a
 		get_tree().call_group("time_of_day", "set_rain", amount)
 	if not UiAnim.reduced():
 		_t += delta
 	queue_redraw()
+
+
+func on_talk_event(event_name: String) -> void:
+	if stop_on_event != "" and event_name == stop_on_event:
+		_stopped = true
 
 
 func _exit_tree() -> void:

@@ -19,6 +19,10 @@ const SPEAKER_MAX := 8
 ## 選択肢が出てすぐの決定は受けつけない（せりふを送るつもりで押しつづけて、うっかり選ばないように）
 const CHOICE_GUARD := 0.3
 const MENU_ITEM := preload("res://ui/components/menu_item.tscn")
+## 会話の @game で始めるミニゲーム
+const MINIGAMES := {
+	"base_build": preload("res://ui/base_build.gd"),
+}
 
 var player: Player
 ## 会話の @bury で開く宝箱（main が入れる）
@@ -45,6 +49,7 @@ var _choice_list: MenuList
 var _choosing := false
 var _choice_at := 0
 var _burying := false
+var _minigame: Control
 var _auto_pending: Array[Npc] = []
 var _msg: PanelContainer
 var _msg_swatch: ColorRect
@@ -397,6 +402,9 @@ func _run_command(e: String) -> _Step:
 		"bury":
 			_bury()
 			return _Step.WAIT
+		"game":
+			_run_minigame(a)
+			return _Step.WAIT
 		"leave":
 			if _talk_npc and is_instance_valid(_talk_npc):
 				_talk_npc.leave()
@@ -511,6 +519,46 @@ func _bury() -> void:
 	_open_message(Strings.PUT_IN_FORMAT % picked.display_name, picked.text(), picked.placeholder_color, picked.icon)
 
 
+## ミニゲームをして、終わったら会話の続きへ。会話のパネルは上に出したまま（タケルの一言を出す）
+func _run_minigame(game_name: String) -> void:
+	if not MINIGAMES.has(game_name):
+		push_warning("ミニゲームがない: " + game_name)
+		_step()
+		return
+	var g: Control = MINIGAMES[game_name].new()
+	g.set("hud", self)
+	g.set("base", _nearest_in_group("secret_base"))
+	_minigame = g
+	_msg_mark.modulate.a = 0.0
+	_root.add_child(g)
+	await g.finished
+	g.queue_free()
+	_minigame = null
+	_step()
+
+
+func is_in_minigame() -> bool:
+	return _minigame != null
+
+
+func minigame() -> Control:
+	return _minigame
+
+
+## ミニゲームなどから、いま話している人のせりふを1つ出す
+func say(text: String) -> void:
+	if is_talking() and text != "":
+		_show_line(text)
+
+
+func _nearest_in_group(group: String) -> Node2D:
+	var best: Node2D = null
+	for n in get_tree().get_nodes_in_group(group):
+		if player == null or best == null or absf(n.global_position.x - player.global_position.x) < absf(best.global_position.x - player.global_position.x):
+			best = n
+	return best
+
+
 ## 一言パネルの位置。拾ったときは右下（左寄りのプレイヤーを隠さない）、
 ## 会話のときは画面の上（話している人を隠さない）
 func _place_message(talk: bool) -> void:
@@ -564,7 +612,7 @@ func is_message_open() -> bool:
 
 ## 1回目：全文表示 → 2回目：次のせりふ（なければ閉じる）
 func advance_message() -> void:
-	if not _msg_open or _burying:
+	if not _msg_open or _burying or _minigame:
 		return
 	if _msg_text.visible_characters >= 0:
 		_msg_text.visible_characters = -1
@@ -622,7 +670,7 @@ func _update_message(delta: float) -> void:
 			SfxPlayer.tick()
 		if n >= total:
 			_msg_text.visible_characters = -1
-	if _msg_text.visible_characters < 0 and not _choosing:
+	if _msg_text.visible_characters < 0 and not _choosing and not _minigame:
 		if _msg_mark.modulate.a == 0.0:
 			UiAnim.fade(_msg_mark, 1.0, UiTokens.TIME_SMALL)
 		_msg_done_t += delta
@@ -701,6 +749,8 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _minigame:
+		return
 	if _choosing and event.is_action_pressed("interact"):
 		# E でも、選んでいる選択肢を決める
 		var f := get_viewport().gui_get_focus_owner()

@@ -64,7 +64,8 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@take marble タケルに あげた` | アイテムを手ばなす（宝箱とエンディングの枠に「タケルに あげた」と出る） |
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
-| `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶきなど） |
+| `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
+| `@game base_build` | ミニゲームをして、終わったら続きへ（いまは秘密基地づくり） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -88,6 +89,13 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 4日目以降のタケルは `auto_talk`（向こうから声をかけてくる）で、同じ日の中の段取り（屋台 → 帰り道など）は `takeru_d5_stall` のような小さなフラグで進めています。
 場面の小物は `world/scenery_prop.gd`（駄菓子屋・川原・秘密基地・夏祭り・バス停など）、夕立は `world/rain_zone.gd`、
 夜の灯り（提灯・街灯・送り火・星・懐中電灯）は `world/glow_layer.gd` の下に置くと暗くなりません。10日目のバスの場面は `world/bus_departure.gd` です。
+
+### ミニゲーム：秘密基地づくり（4日目）
+
+- 画面：`ui/base_build.gd`。基地の絵：`world/secret_base.gd`（4・8・9日目で使い回す。`mode` が BUILD／QUIET／NIGHT）
+- 材料は `data/base_materials/*.tres`（BaseMaterial：名前・仮の色・はめたときの音・屋根の雨の音・タケルの一言・夜の見え方）。材料を足すときは `.tres` を作り、`GameState.BASE_MATERIAL_PATHS` に足す
+- どのすき間に何をはめたかは `GameState.base_slots` に入り、8・9日目はそれで基地を描く
+- 本番の絵は BaseMaterial の `texture` に入れると、仮の絵のかわりに使われる
 
 ## 色や文字の大きさを変える
 

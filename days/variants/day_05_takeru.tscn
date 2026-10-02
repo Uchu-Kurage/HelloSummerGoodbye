@@ -12,18 +12,18 @@
 [node name="Torii" type="Node2D" parent="Props"]
 position = Vector2(700, 604)
 script = ExtResource("prop")
-kind = 8
+kind = 7
 
 [node name="Lanterns" type="Node2D" parent="Props"]
 position = Vector2(900, 604)
 script = ExtResource("prop")
-kind = 9
+kind = 8
 width = 1500.0
 
 [node name="Katanuki" type="Node2D" parent="Props"]
 position = Vector2(1300, 604)
 script = ExtResource("prop")
-kind = 11
+kind = 10
 
 [node name="Board" type="PanelContainer" parent="Props/Katanuki"]
 offset_left = -80.0
@@ -43,7 +43,7 @@ vertical_alignment = 1
 [node name="Kingyo" type="Node2D" parent="Props"]
 position = Vector2(1950, 604)
 script = ExtResource("prop")
-kind = 11
+kind = 10
 
 [node name="Board" type="PanelContainer" parent="Props/Kingyo"]
 offset_left = -120.0
@@ -63,12 +63,12 @@ vertical_alignment = 1
 [node name="Light1" type="Node2D" parent="Props"]
 position = Vector2(2850, 604)
 script = ExtResource("prop")
-kind = 12
+kind = 11
 
 [node name="Light2" type="Node2D" parent="Props"]
 position = Vector2(3450, 604)
 script = ExtResource("prop")
-kind = 12
+kind = 11
 
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1420, 604)
@@ -84,15 +84,15 @@ script = ExtResource("glow")
 [node name="LanternsGlow" type="Node2D" parent="Props/Glow"]
 position = Vector2(900, 604)
 script = ExtResource("prop")
-kind = 10
+kind = 9
 width = 1500.0
 
 [node name="Light1Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(2850, 604)
 script = ExtResource("prop")
-kind = 13
+kind = 12
 
 [node name="Light2Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(3450, 604)
 script = ExtResource("prop")
-kind = 13
+kind = 12

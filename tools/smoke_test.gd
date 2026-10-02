@@ -79,7 +79,8 @@ func _run() -> void:
 	var rain_after := -1.0
 	var stood_still_checked := false
 	var takeru_left_day7 := false
-	var skip_day := 3  # この日のアイテムはわざと拾わない
+	var skip_day := 6  # この日のアイテムはわざと拾わない
+	var rain_after_build := -1.0
 	var max_cam := -INF
 	var cam_back := false
 	Input.action_press("move_right")
@@ -103,6 +104,10 @@ func _run() -> void:
 			max_rain = maxf(max_rain, tod.rain)
 		if day == 4 and rain_after < 0.0:
 			rain_after = tod.rain
+		# 基地を仕上げて会話が終わると、まだ雨の場所にいても雨がやむ
+		if day == 3 and GameState.is_collected(&"base_plaque") and rain_after_build < 0.0:
+			await _wait(2.5)
+			rain_after_build = tod.rain
 		# 7日目：けんかのあと、タケルは帰ってしまう
 		if day == 6 and loaded.has(6):
 			var road := (loaded[6] as Node).get_node_or_null("Props/TakeruRoad") as Npc
@@ -171,6 +176,14 @@ func _run() -> void:
 	for i in range(3, 10):
 		check(str(paths.get(i, "")).ends_with("day_%02d_takeru.tscn" % (i + 1)), "day %d swapped: %s" % [i + 1, paths.get(i, "")])
 	check(max_rain > 0.9 and rain_after == 0.0, "day 4 rain falls and stops (max %.2f)" % max_rain)
+	check(rain_after_build == 0.0, "rain stops after the base is finished (%.2f)" % rain_after_build)
+	check(GameState.base_slots.size() == GameState.BASE_GAPS, "base: all gaps filled %s" % str(GameState.base_slots))
+	check(GameState.base_slot(0).id == &"wood" and GameState.base_slot(1).id == &"tin" and GameState.base_slot(3).id == &"sudare",
+		"base: materials remembered per gap")
+	check(GameState.was_received(&"base_plaque"), "base plaque from takeru")
+	for i in [7, 8]:
+		var b := _base_in(paths, i)
+		check(b != "", "base reused on day %d (%s)" % [i + 1, b])
 	for id in [&"takeru_base", &"takeru_festival", &"takeru_festival_home", &"takeru_dawn", &"takeru_trap", &"takeru_dive", &"takeru_okuribi", &"takeru_capsule"]:
 		check(GameState.has_talked(id), "takeru talks on his own: %s" % id)
 	check(not GameState.has_talked(&"natsumi"), "natsumi was not talked to")
@@ -213,12 +226,49 @@ func _run() -> void:
 	await _wait(6.0)
 
 
+## その日の差し替えシーンに秘密基地があるか（あればモードの名前）
+func _base_in(paths: Dictionary, day: int) -> String:
+	if not paths.has(day):
+		return ""
+	var scene: Node = (load(paths[day]) as PackedScene).instantiate()
+	var b := scene.get_node_or_null("Props/Base") as SecretBase
+	var out: String = SecretBase.Mode.keys()[b.mode] if b else ""
+	scene.free()
+	return out
+
+
+## 秘密基地づくり：はめ直しを1回してから、5か所を順にふさぐ（板・トタン・ブルーシート・すだれ・板）
+func _play_base_build(hud: Hud) -> void:
+	var game: BaseBuild = hud.minigame()
+	var mats := GameState.base_materials()
+	await _wait(0.6)
+	check(game.base != null, "base build finds the base")
+	# タッチと同じ：すき間を押す → 材料を押す
+	game._gaps[0].pressed.emit()
+	await _wait(0.2)
+	game._place(mats[2])
+	await _wait(0.2)
+	check(GameState.base_slot(0) == mats[2] and hud._msg_text.text == mats[2].takeru_line, "takeru comments on the material")
+	for i in GameState.BASE_GAPS:
+		game._gaps[i].pressed.emit()
+		await _wait(0.15)
+		game._place(mats[[0, 1, 2, 3, 0][i]])
+		await _wait(0.3)
+	var n := 0
+	while hud.is_in_minigame() and n < 50:
+		await _wait(0.1)
+		n += 1
+	check(not hud.is_in_minigame(), "base build finishes when all gaps are filled")
+
+
 ## 会話を最後まで送る。選択肢は最初のものを選び、宝箱から選ぶときは手もとの最初のものを選ぶ
 func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 	var guard := 0
 	while hud.is_talking() and guard < 300:
 		guard += 1
-		if box.is_open:
+		if hud.is_in_minigame():
+			await _play_base_build(hud)
+		elif box.is_open:
 			await _wait(0.8)
 			for sl in box._slots:
 				if sl.collected:

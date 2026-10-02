@@ -9,7 +9,6 @@ enum Kind {
 	RIVER,         ## 川の浅瀬（width の幅）
 	BIG_ROCK,      ## 川原の大きな岩（タケルが座る）
 	STONES,        ## 丸い石
-	SECRET_BASE,   ## 秘密基地（stage で少しずつ完成する）
 	THICKET,       ## しげみ
 	WOODS,         ## 雑木林（width の幅に木を並べる）
 	TORII,         ## 神社の鳥居
@@ -40,11 +39,6 @@ enum Kind {
 	set(v):
 		width = v
 		queue_redraw()
-## 秘密基地の完成の度合い（0：作りかけ／1：札がつく／2：旗が立つ）
-@export_range(0, 2) var stage := 0:
-	set(v):
-		stage = v
-		queue_redraw()
 
 ## 空でなければ、はじめは隠しておき、会話の @event でこの名前が来たら現れる
 @export var show_on_event := ""
@@ -70,7 +64,6 @@ func _draw() -> void:
 		Kind.RIVER: _river()
 		Kind.BIG_ROCK: _rock(Vector2(240, 96))
 		Kind.STONES: _stones()
-		Kind.SECRET_BASE: _secret_base()
 		Kind.THICKET: _thicket()
 		Kind.WOODS: _woods()
 		Kind.TORII: _torii()
@@ -154,31 +147,6 @@ func _stones() -> void:
 	for s in [[-60, 10, 18], [-20, 14, 12], [24, 8, 22], [70, 12, 14], [110, 6, 10]]:
 		draw_circle(Vector2(s[0], -s[2] * 0.6 + s[1]), s[2], P.STONE_LIGHT)
 		draw_arc(Vector2(s[0], -s[2] * 0.6 + s[1]), s[2], 0.2, PI - 0.2, 10, P.ROCK, 2.0)
-
-
-func _secret_base() -> void:
-	# 板の壁
-	for i in 6:
-		var c := P.WOOD if i % 2 == 0 else P.WOOD_DARK
-		draw_rect(Rect2(-150 + i * 50, -170 + (i % 3) * 6, 48, 170 - (i % 3) * 6), c)
-	draw_rect(Rect2(-60, -120, 90, 120), P.SHOP_DARK)
-	# トタンの屋根
-	_poly([Vector2(-180, -168), Vector2(180, -196), Vector2(186, -178), Vector2(-176, -150)], P.TIN_ROOF)
-	for i in 8:
-		var x := -170 + i * 44
-		draw_line(Vector2(x, -168 - i * 3.4), Vector2(x + 6, -152 - i * 3.4), P.TIN_ROOF_LINE, 2.0)
-	# ブルーシート
-	_poly([Vector2(90, -186), Vector2(186, -192), Vector2(196, -40), Vector2(150, -20), Vector2(100, -60)], P.BLUE_SHEET)
-	if stage >= 1:
-		# 「かいいん」の木の札
-		draw_rect(Rect2(-142, -110, 64, 30), P.SIGN_BOARD)
-		draw_rect(Rect2(-142, -110, 64, 30), P.WOOD_DARK, false, 2.0)
-		# 入口ののれんがわりの布
-		draw_rect(Rect2(-60, -120, 90, 36), P.CANOPY_STRIPE)
-	if stage >= 2:
-		# 屋根の上の旗
-		draw_line(Vector2(-150, -160), Vector2(-150, -260), P.WOOD_DARK, 4.0)
-		_poly([Vector2(-148, -258), Vector2(-90, -244), Vector2(-148, -228)], P.LANTERN)
 
 
 func _thicket() -> void:
