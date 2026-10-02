@@ -37,6 +37,8 @@ const DATE_FULL := "%dがつ %dにち"
 
 const ENDING_TITLE := "なつやすみ おしまい"
 const ENDING_COUNT := "たからもの %d / %d"
+const ENDING_FOUND_TITLE := "なつの たからもの"
+const ENDING_FOUND := "%dこ のうち %dこ みつけた。\nえらぶと くわしく みられるよ"
 const ENDING_RETRY := "もういちど"
 
 const ROTATE_NOTICE := "よこむきにしてね"

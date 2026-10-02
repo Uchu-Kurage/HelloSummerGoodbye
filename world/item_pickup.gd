@@ -34,7 +34,8 @@ func _draw_placeholder() -> void:
 func _process(delta: float) -> void:
 	if _picked:
 		return
-	_t += delta
+	if not UiAnim.reduced():
+		_t += delta
 	_visual.position.y = -40.0 + sin(_t * BOB_SPEED) * BOB_HEIGHT
 
 

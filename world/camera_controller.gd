@@ -5,7 +5,8 @@ extends Camera2D
 
 ## プレイヤーより少し先を見せる
 const LOOK_AHEAD := 160.0
-const VIEW_CENTER_Y := 360.0
+## 画面の下端をここにそろえる（地面と道がいつも見えるように。縦が狭い画面では空のほうが切れる）
+const VIEW_BOTTOM_Y := 720.0
 
 @export var player: Player
 @export var left_wall: StaticBody2D
@@ -46,7 +47,7 @@ func _follow() -> void:
 	var target := player.global_position.x + LOOK_AHEAD
 	_max_x = maxf(_max_x, target)
 	var x := clampf(_max_x, hw, maxf(hw, GameState.world_length() - hw))
-	position = Vector2(x, VIEW_CENTER_Y)
+	position = Vector2(x, VIEW_BOTTOM_Y - get_viewport_rect().size.y / 2.0 / zoom.y)
 	player.left_limit = left_edge() + 24.0
 	player.right_limit = GameState.world_length() - 40.0
 	if left_wall:

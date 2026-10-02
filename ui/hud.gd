@@ -4,6 +4,8 @@ extends CanvasLayer
 
 ## 拾ったときに立ち止まる時間
 const PICKUP_HOLD := 0.6
+## 一言パネルの左端（画面の幅に対する割合）
+const MESSAGE_LEFT := 0.44
 ## 歩き方の案内を消すまでに歩く距離
 const HINT_WALK_DISTANCE := 480.0
 
@@ -99,10 +101,12 @@ func set_day(d: DayData) -> void:
 func flip_to_day(d: DayData) -> void:
 	_card.pivot_offset = Vector2(_card.size.x / 2.0, 0)
 	var half := UiTokens.TIME_CARD_FLIP / 2.0
+	# 動きを減らす設定のときはめくらずに、文字を入れかえるだけ（フェード）
+	var prop := "modulate:a" if UiAnim.reduced() else "scale:y"
 	var tw := create_tween().set_trans(UiTokens.TRANS)
-	tw.tween_property(_card, "scale:y", 0.0, half).set_ease(Tween.EASE_IN)
+	tw.tween_property(_card, prop, 0.0, half).set_ease(Tween.EASE_IN)
 	tw.tween_callback(set_day.bind(d))
-	tw.tween_property(_card, "scale:y", 1.0, half).set_ease(Tween.EASE_OUT)
+	tw.tween_property(_card, prop, 1.0, half).set_ease(Tween.EASE_OUT)
 
 
 # --- 拾う吹き出し -------------------------------------------------------------
@@ -169,12 +173,13 @@ func _pick_current() -> void:
 func _build_message() -> void:
 	_msg = PanelContainer.new()
 	_msg.theme_type_variation = &"PaperPanel"
-	_msg.anchor_left = 0.5
-	_msg.anchor_right = 0.5
+	# プレイヤーは画面の左寄り（4割ほどの位置）にいるので、一言パネルは右寄りに置いて隠さない
+	_msg.anchor_left = MESSAGE_LEFT
+	_msg.anchor_right = 1.0
 	_msg.anchor_top = 1.0
 	_msg.anchor_bottom = 1.0
-	_msg.offset_left = -380
-	_msg.offset_right = 380
+	_msg.offset_left = 0
+	_msg.offset_right = -UiTokens.SCREEN_MARGIN
 	_msg.offset_bottom = -UiTokens.SCREEN_MARGIN
 	_msg.offset_top = -UiTokens.SCREEN_MARGIN - 150
 	_msg.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -299,7 +304,7 @@ func _update_message(delta: float) -> void:
 
 func _build_hint() -> void:
 	_hint = Label.new()
-	_hint.theme_type_variation = &"SoftLabel"
+	# 道の上に出るので INK_SOFT ではなく本文の色（コントラスト確保）
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.anchor_left = 0.0
 	_hint.anchor_right = 1.0

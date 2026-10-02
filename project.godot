@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 
 GameState="*res://autoload/game_state.gd"
 InputMode="*res://autoload/input_mode.gd"
+DisplayPrefs="*res://autoload/display_prefs.gd"
 SfxPlayer="*res://audio/sfx_player.gd"
 Transition="*res://ui/transition.tscn"
 RotateNotice="*res://ui/rotate_notice.tscn"

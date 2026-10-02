@@ -38,9 +38,10 @@ func _labels(theme: Theme) -> void:
 	_label(theme, "Label", T.FONT_BODY, T.INK)
 	_label(theme, "HeadingLabel", T.FONT_HEADING, T.INK)
 	_label(theme, "TitleLabel", T.FONT_TITLE, T.INK)
+	_label(theme, "EndingTitleLabel", T.FONT_ENDING_TITLE, T.INK)
 	_label(theme, "SmallLabel", T.FONT_SMALL, T.INK_SOFT)
 	_label(theme, "SoftLabel", T.FONT_BODY, T.INK_SOFT)
-	_label(theme, "AccentMarkLabel", T.FONT_SMALL, T.ACCENT)
+	_label(theme, "AccentMarkLabel", T.FONT_SMALL, T.ACCENT_INK)
 	_label(theme, "DateMonthLabel", T.FONT_SMALL, T.INK)
 	_label(theme, "DateDayLabel", T.FONT_CARD_DAY, T.INK)
 	theme.set_constant("line_spacing", "DateDayLabel", 0)
@@ -50,7 +51,9 @@ func _labels(theme: Theme) -> void:
 	# 縦書きのタイトル（1文字ずつ改行して並べる。字間は詰める）
 	_label(theme, "TitleVerticalLabel", T.FONT_TITLE, T.INK)
 	theme.set_constant("line_spacing", "TitleVerticalLabel", -roundi(T.FONT_TITLE * 0.15))
-	_label(theme, "SubVerticalLabel", T.FONT_BODY, T.INK_SOFT)
+	# 空・缶・道の上の文字は INK_SOFT だとコントラストが足りないので INK を使う
+	_label(theme, "SubVerticalLabel", T.FONT_BODY, T.INK)
+	_label(theme, "OnTinSmallLabel", T.FONT_SMALL, T.INK)
 	theme.set_constant("line_spacing", "SubVerticalLabel", -roundi(T.FONT_BODY * 0.1))
 	theme.set_constant("line_spacing", "RichTextLabel", line_spacing(T.FONT_BODY))
 
@@ -109,6 +112,11 @@ func _panels(theme: Theme) -> void:
 	body.content_margin_bottom = T.SPACE_S
 	_panel(theme, "DateCardBody", "PanelContainer", body)
 	_panel(theme, "PlainPanel", "PanelContainer", StyleBoxEmpty.new())
+	# 景色の上に置くメニューの小札（文字のコントラストを確保する。影なし）
+	var chip := flat(T.PAPER, T.PAPER_DARK, T.PANEL_BORDER, T.SMALL_RADIUS, 0)
+	chip.content_margin_left = T.SPACE_S
+	chip.content_margin_right = T.SPACE_S
+	_panel(theme, "PaperChip", "PanelContainer", chip)
 
 
 func _button_colors(theme: Theme, name: String, color: Color, disabled: Color = T.INK_SOFT) -> void:
@@ -143,7 +151,7 @@ func _buttons(theme: Theme) -> void:
 	var mi_p := mi.duplicate()
 	mi_p.bg_color = T.PAPER_DARK
 	_button(theme, "MenuItem", mi, mi_p, T.FONT_BODY, T.INK)
-	_button(theme, "MenuItemSelected", mi, mi_p, T.FONT_BODY, T.ACCENT)
+	_button(theme, "MenuItemSelected", mi, mi_p, T.FONT_BODY, T.ACCENT_INK)
 
 	# タッチ用のボタン（宝箱・ひとやすみ・もどる）
 	_button(theme, "TouchButton", normal, pressed, T.FONT_SMALL, T.INK)
@@ -164,8 +172,8 @@ func _buttons(theme: Theme) -> void:
 	_button(theme, "SlotEmpty", empty, empty_p, T.FONT_SMALL, T.INK_SOFT)
 	_button(theme, "SlotFilled", filled, filled_p, T.FONT_SMALL, T.INK)
 	var empty_s := empty.duplicate()
-	empty_s.border_color = T.ACCENT
+	empty_s.border_color = T.ACCENT_INK
 	empty_s.set_border_width_all(3)
-	var filled_s := flat(T.PAPER, T.ACCENT, 3, R, T.SPACE_XS)
+	var filled_s := flat(T.PAPER, T.ACCENT_INK, 3, R, T.SPACE_XS)
 	_button(theme, "SlotEmptySelected", empty_s, empty_p, T.FONT_SMALL, T.INK_SOFT)
 	_button(theme, "SlotFilledSelected", filled_s, filled_p, T.FONT_SMALL, T.INK)

@@ -7,7 +7,9 @@ extends Control
 signal closed
 signal reveal_finished
 
-const COLUMNS := 5
+## 列の数は画面の幅に合わせて MIN_COLUMNS〜MAX_COLUMNS で決める
+const MAX_COLUMNS := 5
+const MIN_COLUMNS := 3
 const VISIBLE_ROWS := 2
 const DETAIL_WIDTH := 300
 
@@ -22,6 +24,9 @@ var _lid: Panel
 var _grid: GridContainer
 var _scroll: ScrollContainer
 var _slots: Array[ItemSlot] = []
+var _cols := MAX_COLUMNS
+var _title: Label
+var _found := [0, 0]
 var _selected: ItemSlot
 var _detail_name: Label
 var _detail_date: Label
@@ -29,8 +34,8 @@ var _detail_text: Label
 var _back: Button
 var _count: Label
 var _tween: Tween
-## エンディングで tin の下に置く部品（もういちど など）
-var footer: VBoxContainer
+## エンディングで見出しの右に置く部品（もういちど など）
+var footer: HBoxContainer
 var header_caption: Label
 
 
@@ -49,16 +54,7 @@ func _ready() -> void:
 	_outer.alignment = BoxContainer.ALIGNMENT_CENTER
 	_outer.add_theme_constant_override("separation", UiTokens.SPACE_S)
 	_center.add_child(_outer)
-	header_caption = Label.new()
-	header_caption.theme_type_variation = &"TitleLabel"
-	header_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header_caption.visible = ending_mode
-	_outer.add_child(header_caption)
 	_build_tin()
-	footer = VBoxContainer.new()
-	footer.alignment = BoxContainer.ALIGNMENT_CENTER
-	footer.visible = ending_mode
-	_outer.add_child(footer)
 	_lid = Panel.new()
 	_lid.theme_type_variation = &"TinLid"
 	_lid.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -84,14 +80,20 @@ func _build_tin() -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", UiTokens.SPACE_S)
 	v.add_child(head)
-	var title := Label.new()
-	title.text = Strings.BOX_TITLE
-	title.theme_type_variation = &"HeadingLabel"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(title)
+	# エンディングでは見出しを「なつやすみ おしまい」にし、「もういちど」を見出しの右に置く
+	# （缶の外に見出しやボタンを足すと、小さい画面で縦にはみ出すため）
+	_title = Label.new()
+	_title.text = Strings.BOX_TITLE
+	_title.theme_type_variation = &"HeadingLabel"
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	head.add_child(_title)
+	header_caption = _title
 	_count = Label.new()
-	_count.theme_type_variation = &"SmallLabel"
+	_count.theme_type_variation = &"OnTinSmallLabel"
 	_count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# エンディングでは数を説明欄に出す（見出しの横幅を空けるため）
+	_count.visible = not ending_mode
 	head.add_child(_count)
 	_back = Button.new()
 	_back.text = Strings.BACK
@@ -102,6 +104,9 @@ func _build_tin() -> void:
 	_back.pressed.connect(close)
 	UiAnim.add_press_feedback(_back)
 	head.add_child(_back)
+	footer = HBoxContainer.new()
+	footer.visible = ending_mode
+	head.add_child(footer)
 
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", UiTokens.SPACE_M)
@@ -111,7 +116,7 @@ func _build_tin() -> void:
 	_scroll.follow_focus = true
 	body.add_child(_scroll)
 	_grid = GridContainer.new()
-	_grid.columns = COLUMNS
+	_grid.columns = _cols
 	_grid.add_theme_constant_override("h_separation", UiTokens.TOUCH_GAP)
 	_grid.add_theme_constant_override("v_separation", UiTokens.TOUCH_GAP)
 	_scroll.add_child(_grid)
@@ -125,7 +130,7 @@ func _build_tin() -> void:
 	detail.add_child(dv)
 	_detail_name = Label.new()
 	_detail_name.theme_type_variation = &"HeadingLabel"
-	_detail_name.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	_detail_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	dv.add_child(_detail_name)
 	_detail_date = Label.new()
 	_detail_date.theme_type_variation = &"SmallLabel"
@@ -153,27 +158,41 @@ func _rebuild_slots() -> void:
 		_grid.add_child(s)
 		_slots.append(s)
 	_count.text = Strings.ENDING_COUNT % [got, items.size()]
-	var rows := mini(ceili(items.size() / float(COLUMNS)), VISIBLE_ROWS)
-	_scroll.custom_minimum_size = Vector2(
-		COLUMNS * ItemSlot.SIZE.x + (COLUMNS - 1) * UiTokens.TOUCH_GAP,
-		rows * ItemSlot.SIZE.y + (rows - 1) * UiTokens.TOUCH_GAP)
+	_found = [got, items.size()]
+	_fit_grid(items.size())
 	await get_tree().process_frame
 	_link_focus()
 	_show_detail(null)
+
+
+## 画面の幅・高さに収まる列と行の数を決める（はみ出したぶんは縦にスクロール）
+func _fit_grid(count: int) -> void:
+	var vs := get_viewport_rect().size
+	var cell := ItemSlot.SIZE + Vector2(UiTokens.TOUCH_GAP, UiTokens.TOUCH_GAP)
+	var chrome := 2 * (UiTokens.SCREEN_MARGIN + UiTokens.PANEL_PADDING + UiTokens.TIN_RIM)
+	var avail_w := vs.x - chrome - DETAIL_WIDTH - UiTokens.SPACE_M + UiTokens.TOUCH_GAP
+	_cols = clampi(floori(avail_w / cell.x), MIN_COLUMNS, MAX_COLUMNS)
+	_grid.columns = _cols
+	var head_h := UiTokens.FONT_ENDING_TITLE * UiTokens.LINE_HEIGHT_RATIO if ending_mode else float(UiTokens.TOUCH_MIN)
+	var avail_h := vs.y - chrome - head_h - UiTokens.SPACE_S + UiTokens.TOUCH_GAP
+	var rows := clampi(floori(avail_h / cell.y), 1, VISIBLE_ROWS)
+	rows = mini(rows, ceili(count / float(_cols)))
+	_scroll.custom_minimum_size = Vector2(_cols * cell.x - UiTokens.TOUCH_GAP, rows * cell.y - UiTokens.TOUCH_GAP)
 
 
 func _link_focus() -> void:
 	var n := _slots.size()
 	for i in n:
 		var s := _slots[i]
-		var col := i % COLUMNS
+		var col := i % _cols
 		var left := _slots[i - 1] if col > 0 else s
-		var right := _slots[i + 1] if col < COLUMNS - 1 and i + 1 < n else s
-		var up := _slots[i - COLUMNS] if i - COLUMNS >= 0 else s
-		var down: Control = _slots[i + COLUMNS] if i + COLUMNS < n else s
-		var below := _footer_first()
-		if i + COLUMNS >= n and below:
-			down = below
+		var right := _slots[i + 1] if col < _cols - 1 and i + 1 < n else s
+		var up: Control = _slots[i - _cols] if i - _cols >= 0 else s
+		var down := _slots[i + _cols] if i + _cols < n else s
+		# 「もういちど」は見出しの右（上）にあるので、いちばん上の行から上へ移動すると届く
+		var above := _footer_first()
+		if i - _cols < 0 and above:
+			up = above
 		s.focus_neighbor_left = s.get_path_to(left)
 		s.focus_neighbor_right = s.get_path_to(right)
 		s.focus_neighbor_top = s.get_path_to(up)
@@ -200,7 +219,7 @@ func first_slot() -> ItemSlot:
 func last_row_slot() -> ItemSlot:
 	if _slots.is_empty():
 		return null
-	return _slots[(_slots.size() - 1) / COLUMNS * COLUMNS]
+	return _slots[(_slots.size() - 1) / _cols * _cols]
 
 
 func _on_slot_pressed(s: ItemSlot) -> void:
@@ -223,7 +242,11 @@ func _select(s: ItemSlot) -> void:
 
 
 func _show_detail(s: ItemSlot) -> void:
-	if s == null:
+	if s == null and ending_mode:
+		_detail_name.text = Strings.ENDING_FOUND_TITLE
+		_detail_date.text = ""
+		_detail_text.text = Strings.ENDING_FOUND % [_found[1], _found[0]]
+	elif s == null:
 		_detail_name.text = Strings.BOX_TITLE
 		_detail_date.text = ""
 		_detail_text.text = Strings.BOX_HINT_SELECT
@@ -259,8 +282,10 @@ func open() -> void:
 	# ふたが持ち上がって、すこし傾きながら消える
 	_lid.modulate.a = 1.0
 	_lid.rotation = 0.0
-	_tween.tween_property(_lid, "position:y", _lid.position.y - 48.0, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
-	_tween.tween_property(_lid, "rotation", -0.05, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
+	var still := UiAnim.reduced()
+	if not still:
+		_tween.tween_property(_lid, "position:y", _lid.position.y - 48.0, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
+		_tween.tween_property(_lid, "rotation", -0.05, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
 	_tween.tween_property(_lid, "modulate:a", 0.0, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
 	if ending_mode:
 		for s in _slots:
@@ -271,7 +296,7 @@ func open() -> void:
 			if not s.collected:
 				continue
 			s.content.pivot_offset = s.content.size / 2.0
-			s.content.scale = Vector2.ONE * UiTokens.PANEL_SCALE_FROM
+			s.content.scale = Vector2.ONE if still else Vector2.ONE * UiTokens.PANEL_SCALE_FROM
 			_tween.tween_property(s.content, "modulate:a", 1.0, UiTokens.TIME_ITEM_APPEAR).set_delay(t)
 			_tween.tween_property(s.content, "scale", Vector2.ONE, UiTokens.TIME_ITEM_APPEAR).set_delay(t)
 			_tween.tween_callback(SfxPlayer.play.bind("pickup")).set_delay(t)
@@ -297,16 +322,18 @@ func close() -> void:
 		f.release_focus()
 	get_tree().paused = false
 	closed.emit()
+	# 閉じるときは開くときより短く（ふたが下りる → 全体が消える）
 	_place_lid()
-	_lid.position.y -= 48.0
+	var drop := 0.0 if UiAnim.reduced() else 32.0
+	_lid.position.y -= drop
 	_lid.modulate.a = 0.0
 	_lid.show()
 	var tw := create_tween().set_parallel().set_trans(UiTokens.TRANS).set_ease(Tween.EASE_IN)
-	tw.tween_property(_lid, "position:y", _lid.position.y + 48.0, UiTokens.TIME_LID * 0.6)
-	tw.tween_property(_lid, "modulate:a", 1.0, UiTokens.TIME_LID * 0.6)
-	tw.tween_property(_outer, "modulate:a", 0.0, UiTokens.TIME_PANEL).set_delay(UiTokens.TIME_LID * 0.6)
-	tw.tween_property(_lid, "modulate:a", 0.0, UiTokens.TIME_PANEL).set_delay(UiTokens.TIME_LID * 0.6)
-	tw.tween_property(_shade, "modulate:a", 0.0, UiTokens.TIME_PANEL).set_delay(UiTokens.TIME_LID * 0.6)
+	tw.tween_property(_lid, "position:y", _lid.position.y + drop, UiTokens.TIME_LID_OUT)
+	tw.tween_property(_lid, "modulate:a", 1.0, UiTokens.TIME_LID_OUT)
+	tw.tween_property(_outer, "modulate:a", 0.0, UiTokens.TIME_PANEL_OUT).set_delay(UiTokens.TIME_LID_OUT)
+	tw.tween_property(_lid, "modulate:a", 0.0, UiTokens.TIME_PANEL_OUT).set_delay(UiTokens.TIME_LID_OUT)
+	tw.tween_property(_shade, "modulate:a", 0.0, UiTokens.TIME_PANEL_OUT).set_delay(UiTokens.TIME_LID_OUT)
 	await tw.finished
 	if not is_open:
 		hide()

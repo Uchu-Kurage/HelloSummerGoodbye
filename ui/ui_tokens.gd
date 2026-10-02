@@ -7,10 +7,13 @@ class_name UiTokens
 const PAPER := Color("#F6EEDC")
 const PAPER_DARK := Color("#E8DCC0")
 const INK := Color("#3B3226")
-const INK_SOFT := Color("#7A6E5D")
+## 紙の上で 4.5:1 以上になる濃さ（#7A6E5D から変更）
+const INK_SOFT := Color("#655A4B")
 const TIN := Color("#B9C4C9")
 const TIN_DARK := Color("#9AA7AD")
 const ACCENT := Color("#D9763F")
+## 紙の上の文字・印・選択の枠に使う濃い夕焼け色（紙の上で 5.3:1）。ACCENT は飾りだけに使う
+const ACCENT_INK := Color("#9C4A1F")
 const SKY := Color("#8EC5E0")
 const SHADE := Color(0, 0, 0, 0.45)
 const FADE := Color("#14110D")
@@ -21,6 +24,8 @@ const FONT_BODY := 24
 const FONT_SMALL := 18
 const FONT_HEADING := 32
 const FONT_TITLE := 64
+## エンディングの見出し（缶の上段に入れるのでタイトルより少し小さく。48〜64px の範囲）
+const FONT_ENDING_TITLE := 48
 const FONT_BIG_DATE := 56
 ## 日めくりの札の日付の数字
 const FONT_CARD_DAY := 48
@@ -42,13 +47,22 @@ const SMALL_RADIUS := 6
 const TIN_RIM := 6
 ## 日めくりの札のとじ穴の半径
 const CARD_HOLE := 5
+## 小さい画面（スマホ横向き）では基準の大きさを小さくして、文字とボタンを実寸で大きく見せる
+## 画面の高さ（CSS px 相当）がこれより低いとき 1024×576 を基準にする
+const COMPACT_SCREEN_HEIGHT := 520.0
+const BASE_SIZE := Vector2i(1280, 720)
+const COMPACT_BASE_SIZE := Vector2i(1024, 576)
 const TOUCH_MIN := 72
 const TOUCH_GAP := 16
 
 # --- 動き（スキル「5. 動き」）単位は秒 ---
 const TIME_SMALL := 0.2
+const TIME_SMALL_OUT := 0.14
 const TIME_PANEL := 0.25
+## 閉じる動きは開く動きの約 7 割（すばやく反応させる）
+const TIME_PANEL_OUT := 0.18
 const TIME_LID := 0.4
+const TIME_LID_OUT := 0.16
 const TIME_FADE := 0.4
 const TIME_DAY_CHANGE := 2.0
 const TIME_CARD_FLIP := 0.3
