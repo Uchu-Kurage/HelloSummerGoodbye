@@ -40,6 +40,14 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 日付表示・空の色の褪せ方（夏の進み具合）・宝箱の枠は、データから自動で決まります。
 
+## NPC（村の人）を足す
+
+1. `data/npcs/` に NpcData の `.tres` を作る（`grandpa.tres` をコピーして、名前・せりふ・色を書きかえると早い）
+2. 出したい日のシーン（例：`days/day_04.tscn`）を開き、`Props` の下に `world/npc.tscn` を置く
+3. 置いた Npc の `npc_data` に、作った `.tres` を入れる
+
+せりふは `lines`（最初に話しかけたとき）と `repeat_lines`（2回目以降）に、1つずつ短く書きます。
+
 ## 色や文字の大きさを変える
 
 1. スキル（`.claude/skills/summer-game-ui/SKILL.md`）の値を直す

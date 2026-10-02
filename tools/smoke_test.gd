@@ -86,9 +86,34 @@ func _run() -> void:
 		if camera.position.x < max_cam - 0.5:
 			cam_back = true
 		max_cam = maxf(max_cam, camera.position.x)
-		# アイテムの近くで拾う
 		var hud: Hud = main.get_node("HUD")
-		if hud._pickup and GameState.current_day_index != skip_day:
+		var target := hud.current_target()
+		# NPC に話しかけて、せりふを最後まで送る
+		if target is Npc:
+			Input.action_release("move_right")
+			var npc_data: NpcData = (target as Npc).npc_data
+			TouchControls.fire_action(&"interact")
+			await _wait(0.2)
+			check(hud.is_talking() and player.talking, "talk starts: %s" % npc_data.display_name)
+			var x0 := player.global_position.x
+			Input.action_press("move_right")
+			await _wait(0.3)
+			check(absf(player.global_position.x - x0) < 1.0, "player stands still while talking")
+			Input.action_release("move_right")
+			for i in npc_data.lines.size() * 2 + 2:
+				if not hud.is_talking():
+					break
+				TouchControls.fire_action(&"interact")
+				await _wait(0.1)
+			check(not hud.is_talking() and not player.talking, "talk ends after all lines")
+			check(GameState.has_talked(npc_data.id), "talk remembered")
+			# 話し終えたら、吹き出しの出ない先まで歩いて進める
+			Input.action_press("move_right")
+			while hud.current_target() is Npc:
+				await get_tree().physics_frame
+			continue
+		# アイテムの近くで拾う
+		if target is ItemPickup and GameState.current_day_index != skip_day:
 			Input.action_release("move_right")
 			TouchControls.fire_action(&"interact")
 			await _wait(0.3)

@@ -6,8 +6,10 @@ const WALK_SPEED := 240.0
 ## 足もとの高さ（地面）
 const GROUND_Y := 604.0
 
-## 立ち止まる演出・日の切り替わりの間は true
+## 日の切り替わりの間は true
 var locked := false
+## 会話の間は true（会話を閉じると歩ける）
+var talking := false
 ## カメラ画面の左端（見えない壁）。これより左へは行けない
 var left_limit := 0.0
 var right_limit := INF
@@ -34,7 +36,7 @@ func is_walking() -> bool:
 func _physics_process(delta: float) -> void:
 	_hold_left = maxf(0.0, _hold_left - delta)
 	var dir := 0.0
-	if not locked and _hold_left <= 0.0:
+	if not locked and not talking and _hold_left <= 0.0:
 		dir = Input.get_axis("move_left", "move_right")
 	velocity = Vector2(dir * WALK_SPEED, 0)
 	move_and_slide()
