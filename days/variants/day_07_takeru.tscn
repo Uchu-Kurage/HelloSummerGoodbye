@@ -1,0 +1,64 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_07.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/splash.gd" id="splash"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_dive.tres" id="npc_takeru_dive"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_okuribi.tres" id="npc_takeru_okuribi"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+
+[node name="Day07_takeru" instance=ExtResource("base")]
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(1720, 604)
+
+[node name="DiveRock" type="Node2D" parent="Props"]
+position = Vector2(1500, 604)
+script = ExtResource("prop")
+kind = 17
+
+[node name="Splash" type="Node2D" parent="Props"]
+position = Vector2(1820, 540)
+script = ExtResource("splash")
+
+[node name="Takeru" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1290, 604)
+npc_data = ExtResource("npc_takeru_dive")
+
+[node name="Okuribi1" type="Node2D" parent="Props"]
+position = Vector2(2450, 604)
+script = ExtResource("prop")
+kind = 18
+
+[node name="Okuribi2" type="Node2D" parent="Props"]
+position = Vector2(2950, 604)
+script = ExtResource("prop")
+kind = 18
+
+[node name="Okuribi3" type="Node2D" parent="Props"]
+position = Vector2(3400, 604)
+script = ExtResource("prop")
+kind = 18
+
+[node name="TakeruRoad" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2760, 604)
+npc_data = ExtResource("npc_takeru_okuribi")
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("glow")
+
+[node name="Okuribi1Glow" type="Node2D" parent="Props/Glow"]
+position = Vector2(2450, 604)
+script = ExtResource("prop")
+kind = 19
+
+[node name="Okuribi2Glow" type="Node2D" parent="Props/Glow"]
+position = Vector2(2950, 604)
+script = ExtResource("prop")
+kind = 19
+
+[node name="Okuribi3Glow" type="Node2D" parent="Props/Glow"]
+position = Vector2(3400, 604)
+script = ExtResource("prop")
+kind = 19

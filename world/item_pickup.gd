@@ -22,6 +22,13 @@ func _ready() -> void:
 		_visual.add_child(s)
 	_visual.draw.connect(_draw_placeholder)
 	_visual.queue_redraw()
+	# 会話でもらったなど、ほかのところで手に入ったら道からも消える
+	GameState.item_collected.connect(func(it: ItemData):
+		if item and it.id == item.id and not _picked:
+			_picked = true
+			set_deferred("monitoring", false)
+			notify_left()
+			UiAnim.fade(self, 0.0, UiTokens.TIME_FADE).tween_callback(queue_free))
 
 
 func _draw_placeholder() -> void:

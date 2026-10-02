@@ -13,11 +13,11 @@
 [ext_resource type="Resource" path="res://data/days/day_10.tres" id="11_wjh3a"]
 [ext_resource type="Script" path="res://data/day_list.gd" id="12_i11g1"]
 [ext_resource type="Script" path="res://data/ending_data.gd" id="e_script"]
-[ext_resource type="Resource" path="res://data/endings/kenta.tres" id="e_kenta"]
+[ext_resource type="Resource" path="res://data/endings/takeru.tres" id="e_takeru"]
 [ext_resource type="Resource" path="res://data/endings/natsumi.tres" id="e_natsumi"]
 [ext_resource type="Resource" path="res://data/endings/default.tres" id="e_default"]
 
 [resource]
 script = ExtResource("12_i11g1")
 days = Array[ExtResource("1_3s2qy")]([ExtResource("2_ia6f4"), ExtResource("3_vusuw"), ExtResource("4_ll7yd"), ExtResource("5_xl6vj"), ExtResource("6_rqm02"), ExtResource("7_straf"), ExtResource("8_gqcjs"), ExtResource("9_4qtun"), ExtResource("10_eob2v"), ExtResource("11_wjh3a")])
-endings = Array[ExtResource("e_script")]([ExtResource("e_kenta"), ExtResource("e_natsumi"), ExtResource("e_default")])
+endings = Array[ExtResource("e_script")]([ExtResource("e_takeru"), ExtResource("e_natsumi"), ExtResource("e_default")])

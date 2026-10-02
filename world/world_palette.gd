@@ -20,6 +20,48 @@ const PADDY_ROW := Color("#B4CC8C")
 const PADDY_PATH := Color("#C9B98E")
 const POLE_FAR := Color("#7E8A80")
 const WIRE := Color(0.25, 0.24, 0.22, 0.55)
+# 親友ルートの場所（駄菓子屋・川原・秘密基地・夏祭り・バス停など）
+const WOOD := Color("#8A6A4A")
+const WOOD_DARK := Color("#6B5038")
+const TIN_ROOF := Color("#8E979B")
+const TIN_ROOF_LINE := Color("#77818A")
+const BLUE_SHEET := Color("#5E86B0")
+const CARDBOARD := Color("#C49A62")
+const CARDBOARD_DARK := Color("#A87F4B")
+const SOIL := Color("#7A5E44")
+const WATER := Color("#7FA9B8")
+const WATER_DEEP := Color("#4F7C92")
+const WATER_LIGHT := Color("#B7D3DA")
+const ROCK := Color("#9A968C")
+const ROCK_DARK := Color("#7C786F")
+const STONE_LIGHT := Color("#C2BDB2")
+const CHALK := Color(0.95, 0.95, 0.9, 0.8)
+const MARBLE_BLUE := Color("#7FB6C9")
+const MARBLE_GREEN := Color("#9CCB9A")
+const SHOP_WALL := Color("#B8A07E")
+const SHOP_DARK := Color("#5B4C3E")
+const NOREN := Color("#4F6E8C")
+const FREEZER := Color("#EDEDE6")
+const WOODS_DARK := Color("#56734A")
+const WOODS_TRUNK := Color("#5E4A3A")
+const SHRINE_RED := Color("#B5563A")
+const CANOPY := Color("#E9DEC6")
+const CANOPY_STRIPE := Color("#B9775A")
+const LANTERN := Color("#E8B86A")
+const LANTERN_LINE := Color("#9C4A1F")
+const BANANA := Color("#E3C75A")
+const BEETLE := Color("#3E2A1E")
+const FIRE := Color("#E08A3C")
+const BUS_BODY := Color("#E6DDBF")
+const BUS_STRIPE := Color("#6F9686")
+const BUS_WINDOW := Color("#A9C3CE")
+const BIKE := Color("#4C5A66")
+# 夜の灯り（GlowLayer に描く。CanvasModulate で暗くならない）
+const LANTERN_GLOW := Color(1.0, 0.82, 0.5, 0.3)
+const LAMP_GLOW := Color(1.0, 0.93, 0.7, 0.28)
+const FIRE_GLOW := Color(1.0, 0.6, 0.3, 0.35)
+const STAR := Color(1.0, 0.98, 0.9, 0.85)
+const FLASHLIGHT := Color(1.0, 0.95, 0.75, 0.1)
 const PLAYER_BODY := Color("#F2F2F2")
 const PLAYER_SHORTS := Color("#4C6A92")
 const PLAYER_SKIN := Color("#E9C29C")
@@ -38,6 +80,14 @@ const TIME_KEYS := [
 	[0.88, Color(0.55, 0.52, 0.66), Color("#5D5A80")],
 	[1.00, Color(0.36, 0.38, 0.55), Color("#262B4A")],
 ]
+
+# --- 夕立（RainZone） ---
+## 雨のときに画面全体へかける色（暗く、少し青く）
+const RAIN_LIGHT := Color(0.72, 0.75, 0.82)
+const RAIN_SKY := Color("#8C949A")
+const RAIN_STREAK := Color(0.85, 0.9, 0.96, 0.55)
+## 雨の間の環境音（雨がやむと季節の蝉の声にもどる）
+const RAIN_AMBIENT := "rain"
 
 # --- 季節（summer_progress 0.0〜1.0） ---
 ## 夏の終わりに向けて空を褪せさせる量（彩度を何割落とすか）

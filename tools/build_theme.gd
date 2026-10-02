@@ -153,6 +153,17 @@ func _buttons(theme: Theme) -> void:
 	_button(theme, "MenuItem", mi, mi_p, T.FONT_BODY, T.INK)
 	_button(theme, "MenuItemSelected", mi, mi_p, T.FONT_BODY, T.ACCENT_INK)
 
+	# 会話の選択肢：紙の上で押せると分かるよう、うすい枠のある小札にする
+	var ch := flat(T.PAPER, T.PAPER_DARK, T.PANEL_BORDER, T.SMALL_RADIUS, T.SPACE_XS)
+	ch.content_margin_left = T.SPACE_L
+	ch.content_margin_right = T.SPACE_L
+	var ch_p := ch.duplicate()
+	ch_p.bg_color = T.PAPER_DARK
+	var ch_s := ch.duplicate()
+	ch_s.border_color = T.ACCENT_INK
+	_button(theme, "ChoiceItem", ch, ch_p, T.FONT_BODY, T.INK)
+	_button(theme, "ChoiceItemSelected", ch_s, ch_p, T.FONT_BODY, T.ACCENT_INK)
+
 	# タッチ用のボタン（宝箱・ひとやすみ・もどる）
 	_button(theme, "TouchButton", normal, pressed, T.FONT_SMALL, T.INK)
 

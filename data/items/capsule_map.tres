@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"capsule_map"
+display_name = "タイムカプセルの地図"
+description = "バツじるしが ずれてる きがする。"
+day_number = 9
+placeholder_color = Color(0.851, 0.780, 0.612, 1)
+on_ground = false

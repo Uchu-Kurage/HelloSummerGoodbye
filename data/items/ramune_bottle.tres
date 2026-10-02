@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ramune_bottle"
+display_name = "ラムネのびん"
+description = "ふたりで のんだ。からっぽ。"
+day_number = 7
+placeholder_color = Color(0.549, 0.765, 0.788, 1)

@@ -1,0 +1,27 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_10.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/bus_departure.gd" id="bus"]
+[ext_resource type="Script" path="res://world/bus_window.gd" id="window"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_bike.tres" id="takeru_bike"]
+
+[node name="Day10_takeru" instance=ExtResource("base")]
+
+[node name="Slope" type="Node2D" parent="Props"]
+position = Vector2(1250, 604)
+script = ExtResource("prop")
+kind = 22
+width = 900.0
+z_index = -1
+
+[node name="Bus" type="Node2D" parent="Props"]
+position = Vector2(1350, 604)
+script = ExtResource("bus")
+takeru = ExtResource("takeru_bike")
+bus_offset = 660.0
+
+[node name="Window" type="Area2D" parent="Props/Bus"]
+monitoring = false
+monitorable = false
+script = ExtResource("window")

@@ -31,10 +31,12 @@ func _ready() -> void:
 
 func _spawn_items() -> void:
 	var spots: Array[Node] = $ItemSpots.get_children()
-	var n := day_data.items.size()
+	var items := GameState.day_items(day_data)
+	var n := items.size()
 	for i in n:
-		var item := day_data.items[i]
-		if GameState.is_collected(item.id):
+		var item := items[i]
+		# 人からもらうものは道に置かない
+		if GameState.is_collected(item.id) or not item.on_ground:
 			continue
 		var p: ItemPickup = PICKUP_SCENE.instantiate()
 		p.item = item
@@ -43,6 +45,13 @@ func _spawn_items() -> void:
 		else:
 			p.position = Vector2(GameState.DAY_LENGTH_PX * (i + 1) / (n + 1), GROUND_Y)
 		$Items.add_child(p)
+
+
+## 会話の @event を、Props の下の小物に知らせる（水しぶき、バスの出発など）
+func on_talk_event(event_name: String) -> void:
+	for c in $Props.get_children():
+		if c.has_method("on_talk_event"):
+			c.on_talk_event(event_name)
 
 
 func _draw() -> void:

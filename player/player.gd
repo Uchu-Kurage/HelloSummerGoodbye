@@ -21,6 +21,7 @@ var _facing := 1.0
 
 
 func _ready() -> void:
+	add_to_group("player")
 	_visual.draw.connect(_draw_body)
 
 

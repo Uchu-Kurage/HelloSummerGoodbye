@@ -1,20 +1,22 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=11 format=3]
 
-[ext_resource type="Script" path="res://data/item_data.gd" id="1_ffeh4"]
-[ext_resource type="Resource" path="res://data/items/festival_mask.tres" id="2_eitqv"]
-[ext_resource type="Script" path="res://data/day_data.gd" id="3_n8w1n"]
+[ext_resource type="Script" path="res://data/item_data.gd" id="item_script"]
+[ext_resource type="Resource" path="res://data/items/festival_mask.tres" id="item_base"]
+[ext_resource type="Script" path="res://data/day_data.gd" id="day_script"]
 [ext_resource type="Script" path="res://data/day_variant.gd" id="v_script"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="c_script"]
+[ext_resource type="Resource" path="res://data/items/broken_katanuki.tres" id="item_takeru"]
 
-[sub_resource type="Resource" id="cond_kenta"]
+[sub_resource type="Resource" id="cond_takeru"]
 script = ExtResource("c_script")
-require_all = Array[StringName]([&"route_kenta"])
+require_all = Array[StringName]([&"route_takeru"])
 
-[sub_resource type="Resource" id="var_kenta"]
+[sub_resource type="Resource" id="var_takeru"]
 script = ExtResource("v_script")
-condition = SubResource("cond_kenta")
-scene_path = "res://days/variants/day_05_kenta.tscn"
-title = "けんたと 夏祭り"
+condition = SubResource("cond_takeru")
+scene_path = "res://days/variants/day_05_takeru.tscn"
+items = Array[ExtResource("item_script")]([ExtResource("item_takeru")])
+time_from = 0.5
 
 [sub_resource type="Resource" id="cond_natsumi"]
 script = ExtResource("c_script")
@@ -27,11 +29,11 @@ scene_path = "res://days/variants/day_05_natsumi.tscn"
 title = "なつみと 夏祭り"
 
 [resource]
-script = ExtResource("3_n8w1n")
+script = ExtResource("day_script")
 day_number = 5
 month = 8
 day = 6
 title = "夏祭りの日"
 scene_path = "res://days/day_05.tscn"
-items = Array[ExtResource("1_ffeh4")]([ExtResource("2_eitqv")])
-variants = Array[ExtResource("v_script")]([SubResource("var_kenta"), SubResource("var_natsumi")])
+items = Array[ExtResource("item_script")]([ExtResource("item_base")])
+variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi")])

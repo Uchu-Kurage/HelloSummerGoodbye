@@ -2,6 +2,8 @@ extends Node
 ## ゲーム全体の状態（拾ったアイテム、現在の日など）。セーブはしない。
 
 signal item_collected(item: ItemData)
+## アイテムを手ばなしたとき（人にあげた・うめた）
+signal item_gone(item: ItemData)
 signal day_changed(index: int)
 ## フラグが立ったとき（日の場面の差し替え、NPC の出入りに使う）
 signal flags_changed
@@ -18,6 +20,10 @@ var day_list: DayList
 var current_day_index := 0
 ## id -> 拾った順の番号
 var collected: Dictionary = {}
+## 人から「もらった」アイテムの id（宝箱の「〜に もらった」の表示用）
+var received: Dictionary = {}
+## 手ばなしたアイテム：id -> 宝箱の枠に出すひとこと（「タケルにあげた」「うめた」など）
+var gone: Dictionary = {}
 ## 話しかけたことのある NPC の id
 var talked: Dictionary = {}
 ## 立っているフラグ（エンディングの分岐など）。セーブはしない
@@ -30,6 +36,8 @@ func _ready() -> void:
 
 func reset() -> void:
 	collected.clear()
+	received.clear()
+	gone.clear()
 	talked.clear()
 	flags.clear()
 	current_day_index = 0
@@ -58,15 +66,53 @@ func set_current_day(index: int) -> void:
 	day_changed.emit(index)
 
 
-func collect(item: ItemData) -> void:
+func collect(item: ItemData, from_someone := false) -> void:
 	if is_collected(item.id):
 		return
 	collected[item.id] = collected.size()
+	if from_someone:
+		received[item.id] = true
 	item_collected.emit(item)
 
 
 func is_collected(id: StringName) -> bool:
 	return collected.has(id)
+
+
+## いま手もとにあるか（拾って、まだ手ばなしていない）
+func holds(id: StringName) -> bool:
+	return collected.has(id) and not gone.has(id)
+
+
+func was_received(id: StringName) -> bool:
+	return received.has(id)
+
+
+## アイテムを手ばなす。宝箱の枠には note を出す
+func give_away(item: ItemData, note: String) -> void:
+	if not holds(item.id):
+		return
+	gone[item.id] = note
+	item_gone.emit(item)
+
+
+func gone_note(id: StringName) -> String:
+	return gone.get(id, "")
+
+
+## id からアイテムを探す（ルートの差し替えのアイテムも含む）
+func find_item(id: StringName) -> ItemData:
+	for d in day_list.days:
+		for it in d.items:
+			if it and it.id == id:
+				return it
+		for v in d.variants:
+			if v == null:
+				continue
+			for it in v.items:
+				if it and it.id == id:
+					return it
+	return null
 
 
 func has_talked(id: StringName) -> bool:
@@ -106,6 +152,29 @@ func day_title(d: DayData) -> String:
 	return v.title if v and v.title != "" else d.title
 
 
+## その日に拾える／もらえるアイテム（ルートの差し替えがあればそちら）
+func day_items(d: DayData) -> Array[ItemData]:
+	var v := day_variant(d)
+	return v.items if v and not v.items.is_empty() else d.items
+
+
+## その日の進み具合（0.0〜1.0）を時間帯（朝 0.00〜夜 1.00）に直す
+func day_time(d: DayData, progress: float) -> float:
+	var v := day_variant(d)
+	if v == null:
+		return progress
+	return lerpf(v.time_from, v.time_to, progress)
+
+
+## 朝の色の上書き（なければ白）。dawn_until に向けて少しずつ消える
+func day_tint(d: DayData, progress: float) -> Color:
+	var v := day_variant(d)
+	if v == null or v.dawn_tint == Color.WHITE:
+		return Color.WHITE
+	var k := 1.0 - smoothstep(0.0, maxf(v.dawn_until, 0.001), progress)
+	return Color.WHITE.lerp(v.dawn_tint, k)
+
+
 ## いまのフラグで迎えるエンディング（条件に合う最初のもの）
 func current_ending() -> EndingData:
 	for e in day_list.endings:
@@ -114,8 +183,12 @@ func current_ending() -> EndingData:
 	return null
 
 
+## 宝箱に並べる全アイテム（いまのフラグで決まるルートのもの）
 func all_items() -> Array[ItemData]:
-	return day_list.get_all_items()
+	var out: Array[ItemData] = []
+	for d in day_list.days:
+		out.append_array(day_items(d))
+	return out
 
 
 func day_for_item(item: ItemData) -> DayData:

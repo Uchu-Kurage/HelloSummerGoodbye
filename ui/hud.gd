@@ -11,7 +11,18 @@ const TALK_RIGHT := 0.72
 ## 歩き方の案内を消すまでに歩く距離
 const HINT_WALK_DISTANCE := 480.0
 
+## 会話が最後まで終わったとき（run_talk の待ち合わせに使う）
+signal talk_finished
+
+## 「名前：せりふ」の名前として扱う長さ（これより後ろの「：」はせりふの一部）
+const SPEAKER_MAX := 8
+## 選択肢が出てすぐの決定は受けつけない（せりふを送るつもりで押しつづけて、うっかり選ばないように）
+const CHOICE_GUARD := 0.3
+const MENU_ITEM := preload("res://ui/components/menu_item.tscn")
+
 var player: Player
+## 会話の @bury で開く宝箱（main が入れる）
+var box: TreasureBox
 
 var _root: Control
 var _card: PanelContainer
@@ -28,6 +39,13 @@ var _target: Interactable
 var _talk_lines: Array[String] = []
 var _talk_index := 0
 var _talk_data: NpcData
+var _talk_npc: Npc
+var _next_show: ItemData
+var _choice_list: MenuList
+var _choosing := false
+var _choice_at := 0
+var _burying := false
+var _auto_pending: Array[Npc] = []
 var _msg: PanelContainer
 var _msg_swatch: ColorRect
 var _msg_icon: TextureRect
@@ -194,7 +212,7 @@ func _place_bubble() -> void:
 func _interact_current() -> void:
 	if _target == null or not is_instance_valid(_target) or not _target.can_interact():
 		return
-	if _msg_open or (player and (player.locked or player.talking)):
+	if _msg_open or (player and (player.talking or (player.locked and not _target.works_while_locked()))):
 		return
 	_target.interact(self)
 
@@ -209,10 +227,14 @@ func _build_message() -> void:
 	_msg.add_to_group("touch_ui")
 	_msg.gui_input.connect(_on_msg_gui_input)
 	_root.add_child(_msg)
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", UiTokens.SPACE_S)
+	outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_msg.add_child(outer)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", UiTokens.SPACE_M)
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_msg.add_child(h)
+	outer.add_child(h)
 	var icon_box := PanelContainer.new()
 	icon_box.theme_type_variation = &"PaperInset"
 	icon_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -246,6 +268,12 @@ func _build_message() -> void:
 	_msg_mark.theme_type_variation = &"SmallLabel"
 	_msg_mark.size_flags_vertical = Control.SIZE_SHRINK_END
 	h.add_child(_msg_mark)
+	# 会話の選択肢（パネルの下の段。横に並べる）
+	_choice_list = MenuList.new()
+	_choice_list.vertical = false
+	_choice_list.alignment = BoxContainer.ALIGNMENT_END
+	outer.add_child(_choice_list)
+	_choice_list.hide()
 	_msg.hide()
 
 
@@ -261,27 +289,226 @@ func _draw_ruled_lines() -> void:
 		_msg_text.draw_line(Vector2(0, y), Vector2(_msg_text.size.x, y), UiTokens.PAPER_DARK, 2.0)
 
 
-## アイテムを拾ったときの一言
+## アイテムを拾ったときの一言。読む文があるもの（置き手紙など）は、先にそれを読ませる
 func show_item_message(item: ItemData) -> void:
+	if item.read_text != "":
+		var reader := NpcData.new()
+		reader.id = StringName("read_" + item.id)
+		reader.display_name = item.display_name
+		reader.placeholder_color = item.placeholder_color
+		var lines: Array[String] = [item.read_text]
+		start_talk(reader, lines)
+		await talk_finished
 	_talk_data = null
-	_open_message(Strings.PICKED_FORMAT % item.display_name, item.description, item.placeholder_color, item.icon)
+	_open_message(Strings.PICKED_FORMAT % item.display_name, item.text(), item.placeholder_color, item.icon)
 
 
-## NPC との会話を始める。せりふを1つずつ送り、最後まで読むと閉じる。会話の間は立ち止まる
-func start_talk(data: NpcData, lines: Array[String]) -> void:
+## NPC との会話を始める。せりふを1つずつ送り、最後まで読むと閉じる。会話の間は立ち止まる。
+## せりふの書き方（話す人・選択肢・アイテムのやりとり）は NpcData を参照
+func start_talk(data: NpcData, lines: Array[String], npc: Npc = null) -> void:
 	if lines.is_empty():
 		return
 	_talk_data = data
+	_talk_npc = npc
 	_talk_lines = lines
 	_talk_index = 0
+	_next_show = null
 	if player:
 		player.talking = true
 	SfxPlayer.play("accept")
-	_open_message(data.display_name, lines[0], data.placeholder_color, null)
+	_step()
+
+
+## 会話をして、終わるまで待つ（バスの場面など、シーンの演出から使う）
+func run_talk(data: NpcData, lines: Array[String]) -> void:
+	if is_talking():
+		await talk_finished
+	if _msg_open:
+		close_message()
+	start_talk(data, lines)
+	if is_talking():
+		await talk_finished
 
 
 func is_talking() -> bool:
 	return _talk_data != null
+
+
+func is_choosing() -> bool:
+	return _choosing
+
+
+## 次のせりふまで進める（目印・条件・アイテムのやりとりなどの指示はその場で行う）
+func _step() -> void:
+	while _talk_index < _talk_lines.size():
+		var e := _talk_lines[_talk_index].strip_edges()
+		_talk_index += 1
+		if e == "" or e.begins_with("#"):
+			continue
+		if e.begins_with("@"):
+			var r := _run_command(e)
+			if r == _Step.END:
+				break
+			if r == _Step.WAIT:
+				return
+			continue
+		_show_line(e)
+		return
+	close_message()
+
+
+enum _Step { NEXT, WAIT, END }
+
+
+func _run_command(e: String) -> _Step:
+	var parts := e.substr(1).split(" ", false, 2)
+	var cmd := parts[0]
+	var a := parts[1] if parts.size() > 1 else ""
+	var b := parts[2] if parts.size() > 2 else ""
+	match cmd:
+		"end":
+			return _Step.END
+		"goto":
+			_jump(a)
+		"if_has":
+			if GameState.holds(StringName(a)):
+				_jump(b)
+		"if_flag":
+			if GameState.has_flag(StringName(a)):
+				_jump(b)
+		"flag":
+			GameState.set_flag(StringName(a))
+		"choice":
+			_show_choices(e.substr(e.find(" ") + 1))
+			return _Step.WAIT
+		"give":
+			var it := GameState.find_item(StringName(a))
+			if it and not GameState.is_collected(it.id):
+				GameState.collect(it, true)
+				SfxPlayer.play("pickup")
+				_open_message(Strings.RECEIVED_FORMAT % it.display_name, it.text(), it.placeholder_color, it.icon)
+				return _Step.WAIT
+		"take":
+			var it := GameState.find_item(StringName(a))
+			if it:
+				GameState.give_away(it, b)
+		"show":
+			_next_show = GameState.find_item(StringName(a))
+		"bury":
+			_bury()
+			return _Step.WAIT
+		"leave":
+			if _talk_npc and is_instance_valid(_talk_npc):
+				_talk_npc.leave()
+		"event":
+			var day := _talk_day()
+			if day:
+				day.on_talk_event(a)
+		_:
+			push_warning("せりふの指示がわからない: " + e)
+	return _Step.NEXT
+
+
+func _jump(label: String) -> void:
+	var at := _talk_lines.find("#" + label)
+	if at < 0:
+		push_warning("せりふの目印がない: " + label)
+		_talk_index = _talk_lines.size()
+	else:
+		_talk_index = at + 1
+
+
+## 話している人のいる日のシーン
+func _talk_day() -> DayBase:
+	var n: Node = _talk_npc
+	while n and not n is DayBase:
+		n = n.get_parent()
+	return n as DayBase
+
+
+## せりふを1つ出す。「ぼく：……」のように「：」の前があれば、その人のせりふにする
+func _show_line(e: String) -> void:
+	var speaker := _talk_data.display_name
+	var color := _talk_data.placeholder_color
+	var icon: Texture2D = null
+	var colon := e.find("：")
+	if colon > 0 and colon <= SPEAKER_MAX:
+		speaker = e.substr(0, colon)
+		e = e.substr(colon + 1)
+		if speaker == Strings.ME:
+			color = WorldPalette.PLAYER_HAT
+	if _next_show:
+		color = _next_show.placeholder_color
+		icon = _next_show.icon
+		_next_show = null
+	_open_message(speaker, e, color, icon)
+
+
+## 「ことば:目印 | ことば:目印」の選択肢を出す。目印がなければ、そのまま次へ進む
+func _show_choices(spec: String) -> void:
+	_choosing = true
+	_msg_mark.modulate.a = 0.0
+	for c in _choice_list.get_children():
+		_choice_list.remove_child(c)
+		c.queue_free()
+	for opt in spec.split("|", false):
+		var o := opt.strip_edges()
+		var label := ""
+		var colon := o.rfind(":")
+		if colon >= 0:
+			label = o.substr(colon + 1).strip_edges()
+			o = o.substr(0, colon).strip_edges()
+		var b: MenuItem = MENU_ITEM.instantiate()
+		b.variation = &"ChoiceItem"
+		b.text = o
+		b.pressed.connect(_on_choice.bind(label))
+		_choice_list.add_child(b)
+	# 文字送りが終わってから出す
+	_msg_text.visible_characters = -1
+	_choice_list.modulate.a = 0.0
+	_choice_at = Time.get_ticks_msec()
+	UiAnim.fade(_choice_list, 1.0, UiTokens.TIME_SMALL)
+	_choice_list.activate()
+
+
+func _on_choice(label: String) -> void:
+	if not _choosing or Time.get_ticks_msec() - _choice_at < CHOICE_GUARD * 1000.0:
+		return
+	_choosing = false
+	_choice_list.deactivate()
+	_choice_list.hide()
+	if label != "":
+		_jump(label)
+	_step()
+
+
+## 選択肢を選ぶ（自動の動作確認から使う）
+func choose(index: int) -> void:
+	var items := _choice_list.items()
+	if _choosing and index >= 0 and index < items.size():
+		(items[index] as BaseButton).pressed.emit()
+
+
+## 宝箱から1つ選んで手ばなす（タイムカプセルに入れる）。何も持っていなければ、そのまま次へ
+func _bury() -> void:
+	var held := GameState.all_items().filter(func(it: ItemData): return GameState.holds(it.id))
+	if held.is_empty() or box == null:
+		_step()
+		return
+	_burying = true
+	var picked: ItemData = await box.pick(Strings.BURY_TITLE, Strings.BURY_HINT)
+	_burying = false
+	if picked == null:
+		# もどったときは、ひとつ前のせりふから。もう一度送ると宝箱が開く
+		_talk_index -= 1
+		var prev := _talk_index - 1
+		while prev >= 0 and (_talk_lines[prev].begins_with("@") or _talk_lines[prev].begins_with("#")):
+			prev -= 1
+		if prev >= 0:
+			_show_line(_talk_lines[prev])
+		return
+	GameState.give_away(picked, Strings.BURIED_NOTE)
+	_open_message(Strings.PUT_IN_FORMAT % picked.display_name, picked.text(), picked.placeholder_color, picked.icon)
 
 
 ## 一言パネルの位置。拾ったときは右下（左寄りのプレイヤーを隠さない）、
@@ -337,15 +564,18 @@ func is_message_open() -> bool:
 
 ## 1回目：全文表示 → 2回目：次のせりふ（なければ閉じる）
 func advance_message() -> void:
-	if not _msg_open:
+	if not _msg_open or _burying:
 		return
 	if _msg_text.visible_characters >= 0:
 		_msg_text.visible_characters = -1
 		SfxPlayer.play("accept")
-	elif is_talking() and _talk_index + 1 < _talk_lines.size():
-		_talk_index += 1
+	elif _choosing:
+		# 選択肢はボタンで選ぶ。キーボードなら最初の項目へ
+		if InputMode.keyboard:
+			_choice_list.focus_first()
+	elif is_talking():
 		SfxPlayer.play("cursor")
-		_set_body(_talk_lines[_talk_index])
+		_step()
 	else:
 		close_message()
 
@@ -354,17 +584,24 @@ func close_message() -> void:
 	if not _msg_open:
 		return
 	_msg_open = false
-	if is_talking():
-		# 話し終えたらフラグを立てる（エンディングの分岐など）
+	var was_talking := is_talking()
+	if was_talking:
+		# 話し終えたらフラグを立てる（エンディングの分岐、その日の段取りなど）
 		for f in _talk_data.set_flags:
 			GameState.set_flag(f)
 		_talk_data = null
+		_talk_npc = null
 		_talk_lines = []
+		_choosing = false
+		_choice_list.deactivate()
+		_choice_list.hide()
 		if player:
 			player.talking = false
 	SfxPlayer.play("cancel")
 	UiAnim.panel_out(_msg)
 	_update_target()
+	if was_talking:
+		talk_finished.emit()
 
 
 func _on_msg_gui_input(event: InputEvent) -> void:
@@ -385,13 +622,31 @@ func _update_message(delta: float) -> void:
 			SfxPlayer.tick()
 		if n >= total:
 			_msg_text.visible_characters = -1
-	if _msg_text.visible_characters < 0:
+	if _msg_text.visible_characters < 0 and not _choosing:
 		if _msg_mark.modulate.a == 0.0:
 			UiAnim.fade(_msg_mark, 1.0, UiTokens.TIME_SMALL)
 		_msg_done_t += delta
 		# 会話は読み終えるまで待つ（自動で閉じるのは拾ったときの一言だけ）
 		if not is_talking() and _msg_done_t >= UiTokens.TIME_MESSAGE_AUTO_CLOSE:
 			close_message()
+
+
+# --- 向こうから声をかけてくる人 -----------------------------------------------------
+
+func request_auto_talk(npc: Npc) -> void:
+	if not _auto_pending.has(npc):
+		_auto_pending.append(npc)
+
+
+## 手があいたら（一言パネルを閉じていて、立ち止まっていなければ）話しはじめる
+func _update_auto_talk() -> void:
+	if _auto_pending.is_empty() or _msg_open or player == null or player.locked or player.talking:
+		return
+	if get_tree().paused or Transition.is_busy():
+		return
+	var npc: Npc = _auto_pending.pop_front()
+	if is_instance_valid(npc) and npc.wants_auto_talk() and _near.has(npc):
+		npc.interact(self)
 
 
 # --- 最初の日の歩き方の案内 ------------------------------------------------------
@@ -441,11 +696,20 @@ func _process(delta: float) -> void:
 	_update_target()
 	_place_bubble()
 	_update_message(delta)
+	_update_auto_talk()
 	_update_hint()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _msg_open and (event.is_action_pressed("ui_accept") or event.is_action_pressed("interact")):
+	if _choosing and event.is_action_pressed("interact"):
+		# E でも、選んでいる選択肢を決める
+		var f := get_viewport().gui_get_focus_owner()
+		if f is BaseButton and _choice_list.is_ancestor_of(f):
+			(f as BaseButton).pressed.emit()
+		else:
+			_choice_list.focus_first()
+		get_viewport().set_input_as_handled()
+	elif _msg_open and (event.is_action_pressed("ui_accept") or event.is_action_pressed("interact")):
 		advance_message()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") and _target:
