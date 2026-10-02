@@ -16,6 +16,7 @@ var _cache: Dictionary = {}
 var _ambient: AudioStreamPlayer
 var _ambient_name := ""
 var _tick_count := 0
+var _volume_tween: Tween
 
 
 func _ready() -> void:
@@ -69,6 +70,17 @@ func set_ambient(ambient_name: String) -> void:
 	if stream:
 		_ambient.stream = stream
 		_ambient.play()
+
+
+## 環境音の大きさ（dB）。型抜きで削っているあいだ、まわりの音を少し下げるなど。time 秒かけて変える
+func set_ambient_volume(db: float, time := 0.0) -> void:
+	if _volume_tween:
+		_volume_tween.kill()
+	if time <= 0.0:
+		_ambient.volume_db = db
+		return
+	_volume_tween = create_tween()
+	_volume_tween.tween_property(_ambient, "volume_db", db, time)
 
 
 func _find(dir: String, base: String) -> AudioStream:

@@ -9,7 +9,7 @@ signal closed
 const MAIN_SCENE := "res://world/main.tscn"
 const DAY_COLUMNS := 5
 ## ルートごとの、その日を終えたときに立っているフラグ（キーは日の番号 day_number）。
-## dive_ で始まるものは飛び込みの結果として記録する（GameState.set_dive_result）。
+## dive_ で始まるものは飛び込みの結果、katanuki_ で始まるものは型抜きの結果として記録する（GameState.set_dive_result／set_katanuki_result）。
 ## received はルートの中で人から「もらった」アイテム、given は手ばなしたアイテム（id -> 宝箱に出すひとこと）
 const ROUTES := [
 	{
@@ -22,7 +22,7 @@ const ROUTES := [
 		"name": "タケル",
 		"flags": {
 			3: [&"route_takeru"],
-			5: [&"takeru_d5_stall"],
+			5: [&"takeru_d5_stall", &"katanuki_broken"],
 			6: [&"takeru_d6_go"],
 			7: [&"takeru_d7_jump", &"dive_perfect"],
 		},
@@ -75,6 +75,8 @@ static func apply(route: int, day_index: int) -> void:
 			var s := String(f)
 			if s.begins_with("dive_"):
 				GameState.set_dive_result(StringName(s.trim_prefix("dive_")))
+			elif s.begins_with("katanuki_"):
+				GameState.set_katanuki_result(StringName(s.trim_prefix("katanuki_")))
 			else:
 				GameState.set_flag(f)
 		var given: Dictionary = r.given.get(d.day_number, {})

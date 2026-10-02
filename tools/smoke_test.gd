@@ -4,6 +4,8 @@ extends Node
 
 var _log: Array[String] = []
 var _fail := false
+## 型抜きでタケルの型が割れたとき、主人公が削っていた部分
+var _katanuki_takeru_broke_at := -1
 
 
 func _ready() -> void:
@@ -224,6 +226,20 @@ func _run() -> void:
 		check(buried.size() == 1 and notes.get(buried[0], "") == Strings.BURIED_NOTE, "ending slot: buried item")
 		check(end_box._slots[-1].item.id == &"takeru_hat" and end_box._slots[-1].collected, "hat appears last")
 
+	# 型抜き：少し削っては離して、きれいに抜く。とちゅうでタケルの型が割れる
+	check(GameState.katanuki_result == &"clean" and GameState.has_flag(&"katanuki_clean"), "katanuki: carved out cleanly (%s)" % GameState.katanuki_result)
+	check(_katanuki_takeru_broke_at == KatanukiGame.TAKERU_BREAK_PART, "katanuki: takeru breaks his when we reach the tail (%d)" % _katanuki_takeru_broke_at)
+	# 押しつづけると割れる（型抜きの画面だけで確かめる）。そのあとタケルも割る
+	var keep_kata := GameState.flags.duplicate()
+	var greedy := KatanukiGame.new()
+	get_tree().root.add_child(greedy)
+	await _play_katanuki(greedy, false)
+	check(GameState.katanuki_result == &"broken" and greedy.part <= 1, "katanuki: holding on breaks it (part %d)" % greedy.part)
+	check(greedy.takeru_broken, "katanuki: takeru breaks his too when we break first")
+	greedy.queue_free()
+	GameState.flags = keep_kata
+	GameState.katanuki_result = &"clean"
+
 	# 飛び込み：ぴったりで跳び、タケルの一言とラムネ
 	check(GameState.dive_result == &"perfect" and GameState.has_flag(&"dive_perfect"), "dive: jumped together (%s)" % GameState.dive_result)
 	check(GameState.was_received(&"ramune_bottle"), "dive: ramune after the dive")
@@ -331,6 +347,29 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	return out
 
 
+## 型抜き：careful なら、ひびが「多め」になったら離して落ち着くのを待つ。そうでなければ押しつづける
+func _play_katanuki(game: KatanukiGame, careful: bool) -> void:
+	var n := 0
+	while game.phase != KatanukiGame.Phase.CARVE and n < 100:
+		await get_tree().process_frame
+		n += 1
+	n = 0
+	while game.phase == KatanukiGame.Phase.CARVE and n < 6000:
+		n += 1
+		if not game._hold.is_down:
+			if not careful or game.crack <= 0.05:
+				game._hold.press()
+		elif careful and game.crack >= KatanukiGame.CRACK_SOME:
+			game._hold.release()
+		if game.takeru_broken and _katanuki_takeru_broke_at < 0:
+			_katanuki_takeru_broke_at = game.part
+		await get_tree().process_frame
+	n = 0
+	while is_instance_valid(game) and game.phase != KatanukiGame.Phase.DONE and n < 2000:
+		await get_tree().process_frame
+		n += 1
+
+
 ## 飛び込み：押しつづけて、タケルの「の！」で離す（perfect = false なら、すぐ離す）
 func _play_dive(game: DiveGame, perfect: bool) -> void:
 	var n := 0
@@ -393,6 +432,8 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		guard += 1
 		if hud.minigame() is DiveGame:
 			await _play_dive(hud.minigame(), true)
+		elif hud.minigame() is KatanukiGame:
+			await _play_katanuki(hud.minigame(), true)
 		elif hud.is_in_minigame():
 			await _play_base_build(hud)
 		elif box.is_open:
