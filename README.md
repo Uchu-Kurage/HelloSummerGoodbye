@@ -92,10 +92,16 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 ### ミニゲーム：秘密基地づくり（4日目）
 
-- 画面：`ui/base_build.gd`。基地の絵：`world/secret_base.gd`（4・8・9日目で使い回す。`mode` が BUILD／QUIET／NIGHT）
-- 材料は `data/base_materials/*.tres`（BaseMaterial：名前・仮の色・はめたときの音・屋根の雨の音・タケルの一言・夜の見え方）。材料を足すときは `.tres` を作り、`GameState.BASE_MATERIAL_PATHS` に足す
-- どのすき間に何をはめたかは `GameState.base_slots` に入り、8・9日目はそれで基地を描く
-- 本番の絵は BaseMaterial の `texture` に入れると、仮の絵のかわりに使われる
+ペントミノ式の型はめ。基地に寄った専用の画面に切り替わり、いろいろな形と材料のピースを選んで、屋根と壁のすき間を埋めます。
+
+- 画面：`ui/base_build.gd`。基地の絵：`world/secret_base.gd`（4・8・9日目で使い回す。`mode` が BUILD／QUIET／NIGHT）。どちらも `world/base_art.gd` で盤を描く
+- 盤とピース：`data/base_puzzle.tres`（BasePuzzle）
+  - `layout` は文字で書いた盤（`A`〜`C` 屋根のすき間、`D` `E` 壁のすき間、`#` 骨組み、`o` 入口）
+  - `pieces` は BasePiece（形 `"###/#.."`・材料・タケルが最初に置いておくか）
+  - 盤やピースを変えたら、回転だけで埋められる組み合わせになっているか、遊んで確かめる（ヒントが出ないときは埋められない）
+- 材料：`data/base_materials/*.tres`（BaseMaterial：名前・仮の色・はめたときの音・屋根の雨の音・タケルの一言・夜の見え方）
+- 記録：どのマスに何をはめたかは `GameState.base_cells` に入り、8・9日目はそれで基地を描く
+- 本番の絵：材料ごとのマスの絵を BaseMaterial の `texture` に入れると、仮の絵のかわりに使われる（骨組み・入口の絵は `base_art.gd` で差し替える）
 
 ## 色や文字の大きさを変える
 

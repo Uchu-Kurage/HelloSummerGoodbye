@@ -16,15 +16,8 @@ const DAY_LENGTH_PX := 3840.0
 const SUMMER_START := Vector2i(7, 20)
 const SUMMER_END := Vector2i(8, 31)
 const DAY_LIST_PATH := "res://data/day_list.tres"
-## 秘密基地づくりの材料（ミニゲームに並べる順）
-const BASE_MATERIAL_PATHS := [
-	"res://data/base_materials/wood.tres",
-	"res://data/base_materials/tin.tres",
-	"res://data/base_materials/blue_sheet.tres",
-	"res://data/base_materials/sudare.tres",
-]
-## 秘密基地のすき間の数（屋根3か所：左・中・右、壁2か所：左・右）
-const BASE_GAPS := 5
+## 秘密基地づくり（ペントミノ式の型はめ）の盤とピース
+const BASE_PUZZLE_PATH := "res://data/base_puzzle.tres"
 const _MONTH_DAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 var day_list: DayList
@@ -39,15 +32,16 @@ var gone: Dictionary = {}
 var talked: Dictionary = {}
 ## 立っているフラグ（エンディングの分岐など）。セーブはしない
 var flags: Dictionary = {}
-## 秘密基地のすき間（0〜4）-> はめた材料の id。4日目に作り、8・9日目はこれで見た目を組み立てる
-var base_slots: Dictionary = {}
-var _base_materials: Array[BaseMaterial] = []
+## 秘密基地の盤のマス（Vector2i）-> はめた材料の id。4日目に作り、8・9日目はこれで見た目を組み立てる
+var base_cells: Dictionary = {}
+## 秘密基地の盤のマス -> はめたピースの番号（ピースのふちを描くため）
+var base_cell_piece: Dictionary = {}
+var _base_puzzle: BasePuzzle
 
 
 func _ready() -> void:
 	day_list = load(DAY_LIST_PATH)
-	for path in BASE_MATERIAL_PATHS:
-		_base_materials.append(load(path))
+	_base_puzzle = load(BASE_PUZZLE_PATH)
 
 
 func reset() -> void:
@@ -56,7 +50,8 @@ func reset() -> void:
 	gone.clear()
 	talked.clear()
 	flags.clear()
-	base_slots.clear()
+	base_cells.clear()
+	base_cell_piece.clear()
 	current_day_index = 0
 
 
@@ -151,25 +146,45 @@ func set_flag(f: StringName) -> void:
 	flags_changed.emit()
 
 
-func base_materials() -> Array[BaseMaterial]:
-	return _base_materials
+func base_puzzle() -> BasePuzzle:
+	return _base_puzzle
 
 
 func base_material(id: StringName) -> BaseMaterial:
-	for m in _base_materials:
-		if m.id == id:
-			return m
+	for p in _base_puzzle.pieces:
+		if p.material and p.material.id == id:
+			return p.material
 	return null
 
 
-## そのすき間にはめた材料（まだなら null）
-func base_slot(gap: int) -> BaseMaterial:
-	return base_material(base_slots.get(gap, &""))
+## そのマスにはめた材料（まだなら null）
+func base_cell(c: Vector2i) -> BaseMaterial:
+	return base_material(base_cells.get(c, &""))
 
 
-func set_base_slot(gap: int, material: BaseMaterial) -> void:
-	base_slots[gap] = material.id
+## ピースを盤にはめる（cells は盤のマス）
+func base_place(piece: int, cells: Array[Vector2i], material: BaseMaterial) -> void:
+	for c in cells:
+		base_cells[c] = material.id
+		base_cell_piece[c] = piece
 	base_changed.emit()
+
+
+## はめたピースを盤から外す
+func base_remove(piece: int) -> void:
+	for c in base_cell_piece.keys():
+		if base_cell_piece[c] == piece:
+			base_cells.erase(c)
+			base_cell_piece.erase(c)
+	base_changed.emit()
+
+
+## 屋根と壁のすき間が、ぜんぶふさがったか
+func base_done() -> bool:
+	for c in _base_puzzle.holes():
+		if not base_cells.has(c):
+			return false
+	return true
 
 
 ## その日に使う差し替え（なければ null）
