@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"kenta_festival"
+display_name = "けんた"
+lines = Array[String](["きんぎょすくい、しょうぶだ！", "……まけた。もう いっかい！"])
+repeat_lines = Array[String](["つぎは まけないからな。"])
+placeholder_color = Color(0.624, 0.765, 0.839, 1)
+height = 140.0
+skin_color = Color(0.851, 0.643, 0.486, 1)
+hair_color = Color(0.180, 0.165, 0.149, 1)
+shirt_color = Color(0.624, 0.765, 0.839, 1)
+pants_color = Color(0.243, 0.353, 0.478, 1)
+hair_full = true

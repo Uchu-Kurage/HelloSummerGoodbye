@@ -70,6 +70,10 @@ func _run() -> void:
 
 	var max_loaded := 0
 	var seen_days: Array[int] = []
+	check(GameState.current_ending().id == &"default", "no route -> default ending")
+	var day5_path := ""
+	var day10_path := ""
+	var natsumi_hidden_after_kenta := false
 	var skip_day := 3  # この日のアイテムはわざと拾わない
 	var max_cam := -INF
 	var cam_back := false
@@ -83,6 +87,16 @@ func _run() -> void:
 		max_loaded = maxi(max_loaded, streamer.loaded_count())
 		if not seen_days.has(GameState.current_day_index):
 			seen_days.append(GameState.current_day_index)
+		# 分岐：場面の差し替えと、選ばなかった子がいなくなること
+		var loaded: Dictionary = streamer._loaded
+		if loaded.has(4) and day5_path == "":
+			day5_path = (loaded[4] as Node).scene_file_path if GameState.current_day_index >= 3 else ""
+		if loaded.has(9) and day10_path == "":
+			day10_path = (loaded[9] as Node).scene_file_path
+		if loaded.has(1) and GameState.has_flag(&"route_kenta"):
+			var n := (loaded[1] as Node).get_node_or_null("Props/Natsumi") as Npc
+			if n and not n.can_interact():
+				natsumi_hidden_after_kenta = true
 		if camera.position.x < max_cam - 0.5:
 			cam_back = true
 		max_cam = maxf(max_cam, camera.position.x)
@@ -130,6 +144,25 @@ func _run() -> void:
 	var skipped := GameState.get_day(skip_day).items[0]
 	check(not GameState.is_collected(skipped.id), "skipped item remains empty")
 	check(get_tree().current_scene and get_tree().current_scene.name == "Ending", "ending reached")
+	# 2日目で最初に会うのはけんた → けんたの分岐
+	check(GameState.has_flag(&"route_kenta") and not GameState.has_flag(&"route_natsumi"), "route flag: kenta")
+	check(natsumi_hidden_after_kenta, "natsumi leaves after talking to kenta")
+	check(day5_path.ends_with("day_05_kenta.tscn"), "day 5 swapped: %s" % day5_path)
+	check(day10_path.ends_with("day_10_kenta.tscn"), "day 10 swapped: %s" % day10_path)
+	if get_tree().current_scene and get_tree().current_scene.name == "Ending":
+		var cap: Label = get_tree().current_scene.get_node("TreasureBox").header_caption
+		check(cap.text == GameState.current_ending().title and GameState.current_ending().id == &"kenta",
+			"kenta ending shown: %s" % cap.text)
+	# なつみの分岐とふつうのエンディングは、データの上で確かめる
+	var keep_flags := GameState.flags.duplicate()
+	GameState.flags.clear()
+	GameState.set_flag(&"route_natsumi")
+	check(GameState.current_ending().id == &"natsumi", "natsumi route -> natsumi ending")
+	check(GameState.day_scene_path(GameState.get_day(9)).ends_with("day_10_natsumi.tscn"), "natsumi day 10 scene")
+	GameState.flags.clear()
+	check(GameState.current_ending().id == &"default", "flags cleared -> default ending")
+	check(GameState.day_scene_path(GameState.get_day(4)) == GameState.get_day(4).scene_path, "no route -> original day 5")
+	GameState.flags = keep_flags
 	check(GameState.summer_progress(8, 31) > GameState.summer_progress(7, 21), "summer progress increases")
 	var c0 := TimeOfDay.sky_color(0.4, 0.0)
 	var c1 := TimeOfDay.sky_color(0.4, 1.0)

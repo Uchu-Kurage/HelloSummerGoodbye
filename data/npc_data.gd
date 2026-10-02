@@ -8,6 +8,10 @@ extends Resource
 @export var lines: Array[String] = []
 ## 2回目以降に話しかけたときのせりふ。空なら lines をくり返す
 @export var repeat_lines: Array[String] = []
+## この人が出てくる条件。空ならいつでも出る（条件が合わなくなったら、そっといなくなる）
+@export var appear_if: FlagCondition
+## 話し終えたときに立てるフラグ（エンディングの分岐など）
+@export var set_flags: Array[StringName] = []
 ## 本番の絵。空のときは下の色で仮の姿を描く
 @export var sprite: Texture2D
 @export_group("仮の見た目")
@@ -18,5 +22,7 @@ extends Resource
 @export var hair_color: Color = Color("#D8D4CC")
 @export var shirt_color: Color = Color("#F2F0EA")
 @export var pants_color: Color = Color("#C9B79A")
+## 髪が頭の上まである（子どもなど）。false なら横と後ろだけ（おじいちゃんなど）
+@export var hair_full := false
 ## 少し前かがみにする（お年寄りなど）
 @export var stoop := 0.0

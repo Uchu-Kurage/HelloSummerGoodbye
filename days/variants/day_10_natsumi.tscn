@@ -1,0 +1,11 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_10.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="2"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_farewell.tres" id="3"]
+
+[node name="Day10_natsumi" instance=ExtResource("1")]
+
+[node name="Natsumi" parent="Props" instance=ExtResource("2")]
+position = Vector2(2600, 604)
+npc_data = ExtResource("3")

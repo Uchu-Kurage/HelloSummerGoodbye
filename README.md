@@ -48,6 +48,13 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 せりふは `lines`（最初に話しかけたとき）と `repeat_lines`（2回目以降）に、1つずつ短く書きます。
 
+## エンディングの分岐を足す
+
+1. **フラグを立てる**：NpcData の `set_flags` にフラグ名（例：`route_kenta`）を書くと、その人と話し終えたときに立つ
+2. **選ばなかった人を消す**（必要なら）：その人の NpcData の `appear_if` に条件を作り、`forbid_any` に相手のフラグを入れる
+3. **先の日の場面を変える**：もとの日のシーンを継承した差し替えシーンを `days/variants/` に作る。その日の DayData（`data/days/`）の `variants` に、条件（`require_all` にフラグ）・場面・タイトルを足す
+4. **エンディングを足す**：`data/endings/` に EndingData（条件・見出し・しめくくりの一言）を作り、`data/day_list.tres` の `endings` の、ふつうのエンディングより上に入れる
+
 ## 色や文字の大きさを変える
 
 1. スキル（`.claude/skills/summer-game-ui/SKILL.md`）の値を直す

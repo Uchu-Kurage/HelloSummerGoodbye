@@ -67,7 +67,7 @@ func _change_day(next: int) -> void:
 		streamer.update_now()
 		GameState.set_current_day(next)
 	var on_reveal := func(): hud.flip_to_day(d)
-	await Transition.play_day_change(Strings.DATE_FULL % [d.month, d.day], d.title, on_dark, on_reveal)
+	await Transition.play_day_change(Strings.DATE_FULL % [d.month, d.day], GameState.day_title(d), on_dark, on_reveal)
 	player.locked = false
 	_changing_day = false
 

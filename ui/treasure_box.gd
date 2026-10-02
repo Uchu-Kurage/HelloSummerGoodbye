@@ -27,6 +27,8 @@ var _slots: Array[ItemSlot] = []
 var _cols := MAX_COLUMNS
 var _title: Label
 var _found := [0, 0]
+## エンディングで右の欄に出す、しめくくりの一言
+var ending_message := ""
 var _selected: ItemSlot
 var _detail_name: Label
 var _detail_date: Label
@@ -244,8 +246,13 @@ func _select(s: ItemSlot) -> void:
 func _show_detail(s: ItemSlot) -> void:
 	if s == null and ending_mode:
 		_detail_name.text = Strings.ENDING_FOUND_TITLE
-		_detail_date.text = ""
-		_detail_text.text = Strings.ENDING_FOUND % [_found[1], _found[0]]
+		if ending_message != "":
+			# しめくくりの一言を本文に、集めた数は見出しの下の小さい行に
+			_detail_date.text = Strings.ENDING_COUNT % [_found[0], _found[1]]
+			_detail_text.text = ending_message
+		else:
+			_detail_date.text = ""
+			_detail_text.text = Strings.ENDING_FOUND % [_found[1], _found[0]]
 	elif s == null:
 		_detail_name.text = Strings.BOX_TITLE
 		_detail_date.text = ""

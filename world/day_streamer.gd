@@ -27,8 +27,26 @@ func player_day_index() -> int:
 	return clampi(int(player.global_position.x / GameState.DAY_LENGTH_PX), 0, GameState.day_count() - 1)
 
 
+func _ready() -> void:
+	GameState.flags_changed.connect(_on_flags_changed)
+
+
 func _process(_delta: float) -> void:
 	update_now()
+
+
+## フラグが立ったら、先の日（まだ入っていない日）の場面を差し替える。
+## いまいる日と、通りすぎた日はそのまま
+func _on_flags_changed() -> void:
+	var cur := player_day_index()
+	for i in _loaded.keys():
+		if i <= cur:
+			continue
+		var path := GameState.day_scene_path(GameState.get_day(i))
+		if (_loaded[i] as Node).scene_file_path != path:
+			_loaded[i].queue_free()
+			_loaded.erase(i)
+			_load(i)
 
 
 func update_now() -> void:
@@ -54,7 +72,7 @@ func update_now() -> void:
 
 func _load(i: int) -> void:
 	var data := GameState.get_day(i)
-	var packed: PackedScene = load(data.scene_path)
+	var packed: PackedScene = load(GameState.day_scene_path(data))
 	var day: DayBase = packed.instantiate()
 	day.day_data = data
 	day.position = Vector2(i * GameState.DAY_LENGTH_PX, 0)
