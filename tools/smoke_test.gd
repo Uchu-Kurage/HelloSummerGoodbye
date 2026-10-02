@@ -27,6 +27,11 @@ func check(cond: bool, msg: String) -> void:
 		_fail = true
 
 
+func _frames(n: int) -> void:
+	for i in n:
+		await get_tree().physics_frame
+
+
 func _wait(sec: float) -> void:
 	await get_tree().create_timer(sec, true, false, true).timeout
 
@@ -68,6 +73,23 @@ func _run() -> void:
 	Input.parse_input_event(esc)
 	await _wait(0.5)
 	check(not get_tree().paused, "pause closes with ui_cancel")
+
+	# 押しつづけると走りだし、離すと歩きにもどる（ふつうの速さにして、物理フレームで数える）
+	var keep_scale := Engine.time_scale
+	Engine.time_scale = 1.0
+	Input.action_press("move_right")
+	await _frames(10)
+	check(player.is_walking() and not player.is_dashing(), "walks when the key is pressed")
+	await _frames(int((Player.DASH_DELAY + Player.DASH_RAMP) * 60) + 4)
+	check(player.is_dashing(), "dashes after holding (%.0f px/s)" % player.velocity.x)
+	Input.action_release("move_right")
+	await _frames(2)
+	Input.action_press("move_right")
+	await _frames(10)
+	check(not player.is_dashing(), "back to walking after letting go")
+	Input.action_release("move_right")
+	await _frames(2)
+	Engine.time_scale = keep_scale
 
 	var max_loaded := 0
 	var seen_days: Array[int] = []
