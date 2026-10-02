@@ -86,6 +86,9 @@ const TIME_KEYS := [
 const RAIN_LIGHT := Color(0.72, 0.75, 0.82)
 const RAIN_SKY := Color("#8C949A")
 const RAIN_STREAK := Color(0.85, 0.9, 0.96, 0.55)
+## 飛び込み岩の上（蝉と川の音を大きめに）と、水の中（すべての音がこもる）の環境音
+const DIVE_AMBIENT_ROCK := "river_rock"
+const DIVE_AMBIENT_UNDER := "underwater"
 ## 雨の間の環境音（雨がやむと季節の蝉の声にもどる）
 const RAIN_AMBIENT := "rain"
 

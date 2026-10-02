@@ -37,6 +37,8 @@ var base_cells: Dictionary = {}
 ## 秘密基地の盤のマス -> はめたピースの番号（ピースのふちを描くため）
 var base_cell_piece: Dictionary = {}
 var _base_puzzle: BasePuzzle
+## 飛び込み（7日目）の結果：&"perfect"（ぴったり）／&"early"（はやすぎ）／&"late"（おそい）。空ならまだ
+var dive_result := &""
 
 
 func _ready() -> void:
@@ -52,6 +54,7 @@ func reset() -> void:
 	flags.clear()
 	base_cells.clear()
 	base_cell_piece.clear()
+	dive_result = &""
 	current_day_index = 0
 
 
@@ -177,6 +180,12 @@ func base_remove(piece: int) -> void:
 			base_cells.erase(c)
 			base_cell_piece.erase(c)
 	base_changed.emit()
+
+
+## 飛び込みの結果を記録する。会話で分けられるよう、フラグ dive_perfect / dive_early / dive_late も立てる
+func set_dive_result(r: StringName) -> void:
+	dive_result = r
+	set_flag(StringName("dive_" + r))
 
 
 ## 屋根と壁のすき間が、ぜんぶふさがったか

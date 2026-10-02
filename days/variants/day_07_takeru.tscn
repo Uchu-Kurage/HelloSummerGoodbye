@@ -1,8 +1,7 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_07.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
-[ext_resource type="Script" path="res://world/splash.gd" id="splash"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
 [ext_resource type="Resource" path="res://data/npcs/takeru_dive.tres" id="npc_takeru_dive"]
 [ext_resource type="Resource" path="res://data/npcs/takeru_okuribi.tres" id="npc_takeru_okuribi"]
@@ -17,10 +16,6 @@ position = Vector2(1720, 604)
 position = Vector2(1500, 604)
 script = ExtResource("prop")
 kind = 16
-
-[node name="Splash" type="Node2D" parent="Props"]
-position = Vector2(1820, 540)
-script = ExtResource("splash")
 
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1290, 604)

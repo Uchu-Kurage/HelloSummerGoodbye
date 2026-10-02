@@ -66,7 +66,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
 | `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
-| `@game base_build` | ミニゲームをして、終わったら続きへ（いまは秘密基地づくり） |
+| `@game base_build` / `@game dive` | ミニゲームをして、終わったら続きへ（秘密基地づくり／飛び込み） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -103,6 +103,13 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - 材料：`data/base_materials/*.tres`（BaseMaterial：名前・仮の色・はめたときの音・屋根の雨の音・タケルの一言・夜の見え方）
 - 記録：どのマスに何をはめたかは `GameState.base_cells` に入り、8・9日目はそれで基地を描く
 - 本番の絵：材料ごとのマスの絵を BaseMaterial の `texture` に入れると、仮の絵のかわりに使われる（骨組み・入口の絵は `base_art.gd` で差し替える）
+
+### ミニゲーム：飛び込み（7日目）
+
+- 画面：`ui/dive_game.gd`（会話の `@game dive`）。押しつづけて、タケルの「の！」で離す
+- 「押しつづけて離す」の入力は `ui/components/hold_input.gd`（HoldInput）。キーボードは Space / Enter / E、タッチ・マウスは画面のどこか
+- 結果（`GameState.dive_result`、フラグ `dive_perfect` / `dive_early` / `dive_late`）でタケルの一言が変わる。せりふは `data/npcs/takeru_dive.tres`
+- 間の長さと判定の幅は `DiveGame` の `COUNT_NO`・`PERFECT_WINDOW`
 
 ## 色や文字の大きさを変える
 

@@ -9,3 +9,4 @@ display_name = "ラムネのびん"
 description = "ふたりで のんだ。からっぽ。"
 day_number = 7
 placeholder_color = Color(0.549, 0.765, 0.788, 1)
+on_ground = false
