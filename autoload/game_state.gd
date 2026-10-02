@@ -41,6 +41,8 @@ var base_cell_piece: Dictionary = {}
 var _base_puzzle: BasePuzzle
 ## 飛び込み（7日目）の結果：&"perfect"（ぴったり）／&"early"（はやすぎ）／&"late"（おそい）。空ならまだ
 var dive_result := &""
+## 型抜き（5日目）の結果：&"clean"（ぬけた）／&"broken"（われた）。空ならまだ
+var katanuki_result := &""
 
 
 func _ready() -> void:
@@ -57,6 +59,7 @@ func reset() -> void:
 	base_cells.clear()
 	base_cell_piece.clear()
 	dive_result = &""
+	katanuki_result = &""
 	current_day_index = 0
 	start_day_index = 0
 
@@ -189,6 +192,12 @@ func base_remove(piece: int) -> void:
 func set_dive_result(r: StringName) -> void:
 	dive_result = r
 	set_flag(StringName("dive_" + r))
+
+
+## 型抜きの結果を記録する。会話で分けられるよう、フラグ katanuki_clean / katanuki_broken も立てる
+func set_katanuki_result(r: StringName) -> void:
+	katanuki_result = r
+	set_flag(StringName("katanuki_" + r))
 
 
 ## 屋根と壁のすき間が、ぜんぶふさがったか

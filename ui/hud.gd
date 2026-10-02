@@ -23,6 +23,7 @@ const MENU_ITEM := preload("res://ui/components/menu_item.tscn")
 const MINIGAMES := {
 	"base_build": preload("res://ui/base_build.gd"),
 	"dive": preload("res://ui/dive_game.gd"),
+	"katanuki": preload("res://ui/katanuki_game.gd"),
 }
 
 var player: Player

@@ -76,6 +76,14 @@ const DIVE_HINT_KEY := "Space を おしつづけて、「の！」で はなす
 const DIVE_COUNT_SE := "せー……"
 const DIVE_COUNT_NO := "の！"
 const DIVE_LATE_CALL := "はやく こいよー！"
+## 型抜き（ミニゲーム）
+const KATANUKI_HINT_TOUCH := "がめんを おしつづけて けずる。はなすと ひとやすみ"
+const KATANUKI_HINT_KEY := "Space を おしつづけて けずる。はなすと ひとやすみ"
+## となりのタケルの型が割れたとき
+const KATANUKI_TAKERU_BREAK := "……あーっ！ われた！"
+## きれいに抜けたとき、屋台のおじさん
+const KATANUKI_STALL_NAME := "おじさん"
+const KATANUKI_CLEAN := "おっ、ぬけたね"
 ## 寄りの画面の上に出す、タケルのひとこと
 const SPEECH_FORMAT := "%s「%s」"
 

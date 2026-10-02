@@ -67,7 +67,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
 | `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
-| `@game base_build` / `@game dive` | ミニゲームをして、終わったら続きへ（秘密基地づくり／飛び込み） |
+| `@game base_build` / `@game katanuki` / `@game dive` | ミニゲームをして、終わったら続きへ（秘密基地づくり／型抜き／飛び込み） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -104,6 +104,14 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - 材料：`data/base_materials/*.tres`（BaseMaterial：名前・仮の色・はめたときの音・屋根の雨の音・タケルの一言・夜の見え方）
 - 記録：どのマスに何をはめたかは `GameState.base_cells` に入り、8・9日目はそれで基地を描く
 - 本番の絵：材料ごとのマスの絵を BaseMaterial の `texture` に入れると、仮の絵のかわりに使われる（骨組み・入口の絵は `base_art.gd` で差し替える）
+
+### ミニゲーム：型抜き（5日目）
+
+- 画面：`ui/katanuki_game.gd`（会話の `@game katanuki`）。押しつづけると削れ、離すと手を休める。ひよこの型を 頭 → くちばし → 背中 → しっぽ → 足 → おなか の順に削る
+- 押しているあいだ「ひび」がたまり、離すとゆっくり落ち着く。いっぱいで割れる。ひびはゲージで出さず、ひびの線・手元のふるえ・音（`katanuki_scrape` / `katanuki_creak` / `katanuki_break`）で伝える
+- 入力は飛び込みと同じ `HoldInput`。主人公が「しっぽ」に入ると、となりのタケルの型が割れる（先に割ったときは、少しおくれてタケルも割る）
+- 結果（`GameState.katanuki_result`、フラグ `katanuki_clean` / `katanuki_broken`）でタケルの一言が変わる。せりふは `data/npcs/takeru_festival.tres`
+- 部分ごとの「削る時間」「割れるまでの時間」は `KatanukiGame.PARTS`、ひびの落ち着く速さは `RELAX`
 
 ### ミニゲーム：飛び込み（7日目）
 
