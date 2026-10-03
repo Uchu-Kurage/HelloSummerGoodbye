@@ -25,6 +25,8 @@ var _ending := false
 
 
 func _ready() -> void:
+	# 本編は BGM なし（夏の環境音だけ）。デバッグのジャンプや「もういちど」から来ても止める
+	SfxPlayer.stop_music()
 	# ふだんは1日目の左端から。デバッグのジャンプでは、その日のはじめから
 	var start := GameState.start_day_index
 	GameState.current_day_index = start

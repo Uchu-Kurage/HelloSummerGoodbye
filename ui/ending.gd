@@ -2,6 +2,7 @@ extends Control
 ## エンディング。宝箱が開き、拾ったアイテムが1つずつ順に現れる。「もういちど」で最初から。
 
 const MAIN_SCENE := "res://world/main.tscn"
+const ENDING_MUSIC := "ending"
 
 @onready var _box: TreasureBox = $TreasureBox
 var _list: MenuList
@@ -9,6 +10,9 @@ var _list: MenuList
 
 func _ready() -> void:
 	$Paper.color = UiTokens.PAPER_DARK
+	# 夏の音を静かに閉じて、エンディングの曲に入れかえる
+	SfxPlayer.set_ambient("")
+	SfxPlayer.play_music(ENDING_MUSIC)
 	var ending := GameState.current_ending()
 	_box.header_caption.text = ending.title if ending and ending.title != "" else Strings.ENDING_TITLE
 	_box.ending_message = ending.message if ending else ""
@@ -45,4 +49,5 @@ func _on_retry() -> void:
 	if Transition.is_busy():
 		return
 	GameState.reset()
+	SfxPlayer.stop_music()
 	Transition.change_scene(MAIN_SCENE)

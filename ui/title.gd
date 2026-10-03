@@ -4,6 +4,7 @@ extends Node2D
 
 const SCROLL_SPEED := 36.0
 const MAIN_SCENE := "res://world/main.tscn"
+const TITLE_MUSIC := "title"
 
 @onready var _camera: Camera2D = $Camera2D
 @onready var _modulate: CanvasModulate = $CanvasModulate
@@ -26,6 +27,9 @@ func _ready() -> void:
 	$Days.add_child(day)
 	_build_ui()
 	_camera.position = Vector2(640, 360)
+	# 本編の一時停止メニューから戻ったときは、もう音を出してよいので曲から始める
+	if SfxPlayer.enabled:
+		SfxPlayer.play_music(TITLE_MUSIC)
 
 
 ## 景色を主役にする：パネルは置かず、右上に縦書きのタイトル、下の道の上に案内とメニュー
@@ -143,6 +147,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 	SfxPlayer.unlock()
 	SfxPlayer.play("accept")
+	SfxPlayer.play_music(TITLE_MUSIC)
 	_pulse.kill()
 	UiAnim.fade(_prompt, 0.0, UiTokens.TIME_SMALL)
 	UiAnim.panel_in(_menu_panel)
@@ -153,6 +158,7 @@ func _on_start() -> void:
 	if Transition.is_busy():
 		return
 	GameState.reset()
+	SfxPlayer.stop_music()
 	Transition.change_scene(MAIN_SCENE)
 
 
