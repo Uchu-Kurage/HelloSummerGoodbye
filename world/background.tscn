@@ -25,7 +25,7 @@ repeat_times = 3
 
 [node name="Cumulus" type="Node2D" parent="Clouds"]
 script = ExtResource("2")
-kind = 2
+kind = 1
 width = 3200.0
 base_y = 380.0
 
@@ -43,15 +43,16 @@ color = Color(0.36, 0.5, 0.3, 1)
 
 [node name="Fields" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.35, 1)
-repeat_size = Vector2(2000, 0)
+repeat_size = Vector2(1833.6, 0)
 repeat_times = 3
 
 [node name="Paddies" type="Node2D" parent="Fields"]
 script = ExtResource("2")
-kind = 3
-width = 2000.0
-base_y = 548.0
-height = 52.0
+kind = 2
+width = 1833.6
+base_y = 512.0
+height = 128.8
+color = Color(0.29, 0.5, 0.2, 1)
 
 [node name="Wires" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.45, 1)
@@ -60,28 +61,20 @@ repeat_times = 4
 
 [node name="PoleLine" type="Node2D" parent="Wires"]
 script = ExtResource("2")
-kind = 4
+kind = 3
 width = 900.0
 base_y = 560.0
 height = 260.0
 
 [node name="Near" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.55, 1)
-repeat_size = Vector2(2560, 0)
+repeat_size = Vector2(1693.44, 0)
 repeat_times = 3
 
 [node name="Trees" type="Node2D" parent="Near"]
 script = ExtResource("2")
-kind = 5
-base_y = 600.0
-height = 150.0
-color = Color(0.415686, 0.54902, 0.380392, 1)
-color_2 = Color(0.360784, 0.490196, 0.345098, 1)
-
-[node name="Bushes" type="Node2D" parent="Near"]
-script = ExtResource("2")
-kind = 1
-base_y = 590.0
-height = 70.0
-color = Color(0.486275, 0.611765, 0.388235, 1)
-color_2 = Color(0.435294, 0.54902, 0.341176, 1)
+kind = 4
+width = 1693.44
+base_y = 610.0
+height = 208.08
+color = Color(0.33, 0.52, 0.22, 1)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cs01ory0dbo60"
-path="res://.godot/imported/tree_round.png-eaf35ebdd7b36310e9fcffc8da3ee04b.ctex"
+uid="uid://lxb3n0jhoskf"
+path="res://.godot/imported/cloud_small_2.png-a48140d4e032e2a37a2e96b51f6605d4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://world/scenery/tree_round.png"
-dest_files=["res://.godot/imported/tree_round.png-eaf35ebdd7b36310e9fcffc8da3ee04b.ctex"]
+source_file="res://world/scenery/painted/cloud_small_2.png"
+dest_files=["res://.godot/imported/cloud_small_2.png-a48140d4e032e2a37a2e96b51f6605d4.ctex"]
 
 [params]
 

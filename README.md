@@ -4,7 +4,7 @@
 設計は [`DESIGN.md`](DESIGN.md)、UI/UX の決まりは [`.claude/skills/summer-game-ui/SKILL.md`](.claude/skills/summer-game-ui/SKILL.md) にあります。
 
 - エンジン：**Godot 4.4.1**（GDScript / Compatibility レンダラー）
-- 人物や小物の絵は仮素材（図形・単色）。背景の山並み・入道雲・手前の枝は生成AI（Google Gemini）で作った絵、木立ちと効果音・環境音・BGM は CC0 のフリー素材です（出典は [CREDITS.md](CREDITS.md)）
+- 人物や小物の絵は仮素材（図形・単色）。背景（山並み・入道雲・田んぼ・木立ち・手前の枝）は生成AI（Google Gemini）で作った絵、効果音・環境音・BGM は CC0 のフリー素材です（出典は [CREDITS.md](CREDITS.md)）
 
 ## あそびかた
 
@@ -201,4 +201,4 @@ python3 -m http.server 8000
 ## ライセンス
 
 - フォント：Zen Maru Gothic（SIL Open Font License 1.1）。`ui/theme/fonts/OFL.txt` を参照
-- 音・背景の絵：CC0（Kenney、OpenGameArt.org の各作者）と、Google Gemini で生成した絵。一覧は [CREDITS.md](CREDITS.md)。素材を足すときも CC0 など再配布できるもの（または自分で生成したもの）だけにして、CREDITS.md に出典を書く
+- 音：CC0（Kenney、OpenGameArt.org の各作者）。背景の絵：Google Gemini で生成した絵。一覧は [CREDITS.md](CREDITS.md)。素材を足すときも CC0 など再配布できるもの（または自分で生成したもの）だけにして、CREDITS.md に出典を書く

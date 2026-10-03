@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://donqwp03vd5f8"
-path="res://.godot/imported/tree_bushy.png-d1e69b3fc8efaca5ee7c844fe8aa16ce.ctex"
+uid="uid://sikixurx1pb4"
+path="res://.godot/imported/cloud_small_3.png-66183225aedd826d08986b00ccf65f7f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://world/scenery/tree_bushy.png"
-dest_files=["res://.godot/imported/tree_bushy.png-d1e69b3fc8efaca5ee7c844fe8aa16ce.ctex"]
+source_file="res://world/scenery/painted/cloud_small_3.png"
+dest_files=["res://.godot/imported/cloud_small_3.png-66183225aedd826d08986b00ccf65f7f.ctex"]
 
 [params]
 
