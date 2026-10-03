@@ -152,7 +152,8 @@ description: 夏休みゲーム（Godot）のUI/UXの決まりごと。HUD・宝
 | `cursor` | カーソル移動 |
 | `accept` | 決定 |
 | `cancel` | 戻る |
-| `pickup` | アイテムを拾う |
+| `fanfare` | アイテムを手に入れる（拾う・もらう）。主人公の前にアイテムの絵が浮かび上がる（`ItemFanfare`） |
+| `pickup` | 宝箱にアイテムが並ぶ |
 | `box_open` / `box_close` | 宝箱の開閉 |
 | `day_change` | 日の切り替わり |
 | `text_tick` | 文字送り（数文字おきに小さく） |

@@ -21,6 +21,7 @@ CC0 では出典の表示は義務ではありませんが、作者への感謝�
 | [Impact Sounds](https://kenney.nl/assets/impact-sounds) | Kenney | CC0 |
 | [Interface Sounds](https://kenney.nl/assets/interface-sounds) | Kenney | CC0 |
 | [RPG Audio](https://kenney.nl/assets/rpg-audio) | Kenney | CC0 |
+| [Music Jingles](https://kenney.nl/assets/music-jingles) | Kenney | CC0 |
 | [cicada sounds](https://opengameart.org/content/cicada-sounds) | syncopika | CC0 |
 | [Park ambiences](https://opengameart.org/content/park-ambiences) | Thimras | CC0 |
 | [AMB Rain Loop 1](https://opengameart.org/content/amb-rain-loop-1) | Kresiek The Furry | CC0 |
@@ -108,6 +109,7 @@ CC0 では出典の表示は義務ではありませんが、作者への感謝�
 | `place_tin.ogg` | Kenney「Impact Sounds」 impactMetal_medium_001.ogg |
 | `place_sheet.ogg` | Kenney「RPG Audio」 cloth1.ogg |
 | `place_sudare.ogg` | Kenney「Impact Sounds」 impactWood_light_002.ogg |
+| `fanfare.ogg` | Kenney「Music Jingles」 jingles_STEEL10.ogg |
 
 ## 補足
 
