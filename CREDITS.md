@@ -35,6 +35,7 @@ CC0 では出典の表示は義務ではありませんが、作者への感謝�
 | [Another August](https://opengameart.org/content/another-august) | cynicmusic | CC0 |
 | [AMB Morning Sounds (Perfect Loop)](https://opengameart.org/content/amb-morning-sounds-perfect-loop) | Kresiek The Furry | CC0 |
 | [underwater or space engine rumble](https://opengameart.org/content/underwater-or-space-engine-rumble) | gmason | CC0 |
+| [Bell dings/chimes](https://opengameart.org/content/bell-dingschimes) | PWL | CC0 |
 | [First Light Particles – CC0 Atmospheric Piano/Ambient Track](https://opengameart.org/content/first-light-particles-%E2%80%93-cc0-atmospheric-pianoambient-track) | Yoiyami | CC0 |
 
 ## BGM（`audio/music/`）
@@ -110,6 +111,7 @@ CC0 では出典の表示は義務ではありませんが、作者への感謝�
 | `place_sheet.ogg` | Kenney「RPG Audio」 cloth1.ogg |
 | `place_sudare.ogg` | Kenney「Impact Sounds」 impactWood_light_002.ogg |
 | `fanfare.ogg` | Kenney「Music Jingles」 jingles_STEEL10.ogg |
+| `furin.ogg` | PWL「Bell dings/chimes」 bell_ding2.wav（音を約3倍の高さにして、3回重ねて風鈴の音にしています） |
 
 ## 補足
 
