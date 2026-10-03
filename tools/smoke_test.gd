@@ -8,6 +8,8 @@ var _fail := false
 var _katanuki_takeru_broke_at := -1
 ## 石切りのお手本で、タケルが数えたことば
 var _ishikiri_demo_count := ""
+## カブトムシが落ちて、また木にもどったのを見たか
+var _kabuto_saw_fall_recover := false
 
 
 func _ready() -> void:
@@ -248,6 +250,21 @@ func _run() -> void:
 	GameState.ishikiri_best = 7
 	GameState.ishikiri_result = &"win"
 
+	# カブトムシとり：気づきかけたら止まり、一度も落とさずにつかむ
+	check(GameState.kabuto_drops == 0 and GameState.has_flag(&"kabuto_clean"), "kabuto: caught without dropping (%d)" % GameState.kabuto_drops)
+	check(GameState.was_received(&"bug_cage"), "kabuto: bug cage after catching")
+	# 押しっぱなしだと落ちる。落ちても元にもどり、最後はつかめる（カブトムシとりの画面だけで確かめる）
+	var keep_kabuto := GameState.flags.duplicate()
+	var greedy_k := KabutoGame.new()
+	greedy_k.rng.seed = 6
+	get_tree().root.add_child(greedy_k)
+	await _play_kabuto(greedy_k, false)
+	check(greedy_k.drops >= 1 and _kabuto_saw_fall_recover, "kabuto: moving while it is wary drops it, and it climbs back (%d)" % greedy_k.drops)
+	check(GameState.kabuto_drops >= 1 and GameState.has_flag(&"kabuto_dropped"), "kabuto: still caught after dropping")
+	greedy_k.queue_free()
+	GameState.flags = keep_kabuto
+	GameState.kabuto_drops = 0
+
 	# 型抜き：少し削っては離して、きれいに抜く。とちゅうでタケルの型が割れる
 	check(GameState.katanuki_result == &"clean" and GameState.has_flag(&"katanuki_clean"), "katanuki: carved out cleanly (%s)" % GameState.katanuki_result)
 	check(_katanuki_takeru_broke_at == KatanukiGame.TAKERU_BREAK_PART, "katanuki: takeru breaks his when we reach the tail (%d)" % _katanuki_takeru_broke_at)
@@ -369,6 +386,31 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	return out
 
 
+## カブトムシとり：careful なら、食べているときだけ進み、気づきかけたら止まる。そうでなければ押しっぱなし
+func _play_kabuto(game: KabutoGame, careful: bool) -> void:
+	var n := 0
+	var fell := false
+	while game.phase == KabutoGame.Phase.APPROACH and n < 6000:
+		n += 1
+		var go := not careful or game.bug == KabutoGame.Bug.EAT
+		if go and not game._hold.is_down:
+			game._hold.press()
+		elif not go and game._hold.is_down:
+			game._hold.release()
+		if game.bug == KabutoGame.Bug.FALLEN:
+			fell = true
+		elif fell and game.bug == KabutoGame.Bug.EAT:
+			_kabuto_saw_fall_recover = true
+		await get_tree().process_frame
+	if game._hold.is_down:
+		game._hold.release()
+	game.grab()
+	n = 0
+	while is_instance_valid(game) and game.phase != KabutoGame.Phase.DONE and n < 2000:
+		await get_tree().process_frame
+		n += 1
+
+
 ## 石切り：お手本を見て、石を選び、held 秒押して離す（3回）
 func _play_ishikiri(game: IshikiriGame, ids: Array, helds: Array) -> void:
 	var n := 0
@@ -486,6 +528,8 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		guard += 1
 		if hud.minigame() is DiveGame:
 			await _play_dive(hud.minigame(), true)
+		elif hud.minigame() is KabutoGame:
+			await _play_kabuto(hud.minigame(), true)
 		elif hud.minigame() is IshikiriGame:
 			await _play_ishikiri(hud.minigame(), [&"flat", &"flat", &"flat"], [IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT])
 		elif hud.minigame() is KatanukiGame:

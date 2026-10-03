@@ -76,6 +76,14 @@ const DIVE_HINT_KEY := "Space を おしつづけて、「の！」で はなす
 const DIVE_COUNT_SE := "せー……"
 const DIVE_COUNT_NO := "の！"
 const DIVE_LATE_CALL := "はやく こいよー！"
+## カブトムシとり（ミニゲーム）
+const KABUTO_HINT_TOUCH := "がめんを おしつづけて そーっと すすむ。はなすと とまる"
+const KABUTO_HINT_KEY := "Space を おしつづけて そーっと すすむ。はなすと とまる"
+const KABUTO_GRAB := "つかむ"
+const KABUTO_GRAB_TOUCH := "「つかむ」を タップ"
+const KABUTO_GRAB_KEY := "Space で つかむ"
+## 落ちてしまったとき、うしろのタケルの小声
+const KABUTO_DROPPED := "あ！ ……まだ いる。あそこ。"
 ## 石切り（ミニゲーム）
 const ISHI_PICK_TOUCH := "なげる いしを タップ（%d／%d かいめ）"
 const ISHI_PICK_KEY := "やじるしで いしを えらんで けってい（%d／%d かいめ）"

@@ -67,7 +67,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
 | `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
-| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game dive` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／飛び込み） |
+| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game kabuto` / `@game dive` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／カブトムシとり／飛び込み） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -120,6 +120,13 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - 入力は飛び込みと同じ `HoldInput`。主人公が「しっぽ」に入ると、となりのタケルの型が割れる（先に割ったときは、少しおくれてタケルも割る）
 - 結果（`GameState.katanuki_result`、フラグ `katanuki_clean` / `katanuki_broken`）でタケルの一言が変わる。せりふは `data/npcs/takeru_festival.tres`
 - 部分ごとの「削る時間」「割れるまでの時間」は `KatanukiGame.PARTS`、ひびの落ち着く速さは `RELAX`
+
+### ミニゲーム：カブトムシとり（6日目）
+
+- 画面：`ui/kabuto_game.gd`（会話の `@game kabuto`。罠の木でタケルが見つけたあと）。押しつづけると、そっと前へ進み、離すと止まる。手が届いたら「つかむ」
+- カブトムシの様子：食べている（`EAT_MIN`〜`EAT_MAX` 秒でばらつく）→ 気づきかけ（`NOTICE_TIME`）→ 気にしている（`WARY_TIME`）→ 食べている。気にしているときに動くと落ちる（落ちても木をのぼって元の場所へもどる）
+- 木までの距離は `APPROACH_TIME`（押しつづけて合計 6 秒）
+- 結果（`GameState.kabuto_drops`、フラグ `kabuto_clean` / `kabuto_dropped`）でタケルの一言が変わる。せりふは `data/npcs/takeru_trap.tres`
 
 ### ミニゲーム：飛び込み（7日目）
 

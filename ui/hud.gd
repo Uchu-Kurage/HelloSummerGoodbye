@@ -25,6 +25,7 @@ const MINIGAMES := {
 	"dive": preload("res://ui/dive_game.gd"),
 	"katanuki": preload("res://ui/katanuki_game.gd"),
 	"ishikiri": preload("res://ui/ishikiri_game.gd"),
+	"kabuto": preload("res://ui/kabuto_game.gd"),
 }
 
 var player: Player
