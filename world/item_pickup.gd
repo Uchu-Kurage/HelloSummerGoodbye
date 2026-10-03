@@ -5,8 +5,8 @@ extends Interactable
 const BOB_HEIGHT := 6.0
 const BOB_SPEED := 2.2
 const ICON_SIZE := 44.0
-## 拾ったときに立ち止まる時間
-const PICKUP_HOLD := 0.6
+## 拾ったときに立ち止まる時間（アイテムが頭の上に浮かび上がるまで）
+const PICKUP_HOLD := 1.0
 
 var item: ItemData
 var _picked := false
@@ -59,7 +59,7 @@ func interact(hud: Node) -> void:
 	if _picked:
 		return
 	pick()
-	SfxPlayer.play("pickup")
+	hud.celebrate_item(item)
 	if hud.player:
 		hud.player.hold(PICKUP_HOLD)
 	hud.show_item_message(item)
@@ -72,7 +72,7 @@ func pick() -> void:
 	set_deferred("monitoring", false)
 	notify_left()
 	GameState.collect(item)
-	var tw := create_tween().set_parallel().set_trans(UiTokens.TRANS).set_ease(Tween.EASE_OUT)
-	tw.tween_property(_visual, "position:y", _visual.position.y - 60.0, UiTokens.TIME_PANEL * 2)
-	tw.tween_property(_visual, "modulate:a", 0.0, UiTokens.TIME_PANEL * 2)
-	tw.chain().tween_callback(queue_free)
+	# 道の上の絵はその場で消え、かわりに主人公の前に浮かび上がる（ItemFanfare）
+	var tw := create_tween()
+	tw.tween_property(_visual, "modulate:a", 0.0, UiTokens.TIME_SMALL)
+	tw.tween_callback(queue_free)

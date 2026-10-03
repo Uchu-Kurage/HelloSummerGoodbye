@@ -302,6 +302,19 @@ func _draw_ruled_lines() -> void:
 
 
 ## アイテムを拾ったときの一言。読む文があるもの（置き手紙など）は、先にそれを読ませる
+## アイテムを手に入れた演出：ファンファーレを鳴らし、主人公の前にアイテムの絵を浮かび上がらせる
+func celebrate_item(item: ItemData) -> void:
+	SfxPlayer.play("fanfare")
+	if player == null:
+		return
+	for c in player.get_children():
+		if c is ItemFanfare:
+			c.dismiss()
+	var f := ItemFanfare.new()
+	f.item = item
+	player.add_child(f)
+
+
 func show_item_message(item: ItemData) -> void:
 	if item.read_text != "":
 		var reader := NpcData.new()
@@ -397,7 +410,7 @@ func _run_command(e: String) -> _Step:
 			var it := GameState.find_item(StringName(a))
 			if it and not GameState.is_collected(it.id):
 				GameState.collect(it, true)
-				SfxPlayer.play("pickup")
+				celebrate_item(it)
 				_open_message(Strings.RECEIVED_FORMAT % it.display_name, it.text(), it.placeholder_color, it.icon)
 				return _Step.WAIT
 		"take":
