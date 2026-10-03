@@ -3,8 +3,8 @@ extends Control
 ## ミニゲーム「帽子を受け止める」（10日目、親友ルート。ゲーム全体の最後の操作）。会話の @game hat で始まる。
 ## ずっと右へ進んできたこのゲームで、この場面だけカメラが後ろ（左）を振り返り、坂道を追ってくるタケルを見る。
 ## 1. 窓を開ける：押しつづけると、ガタガタと少しずつ開く（離すと止まるが、閉じない）。開くほど外の音が大きくなる
-## 2. 帽子を受け止める：タケルが帽子を投げる。押しつづけると手をのばし、帽子は手のほうへ寄ってくる。
-##    届いたときに手をのばしていれば受け止める。のばしていなければ顔にぽふっと当たって、ひざに落ちる（どちらでも手に入る）
+## 2. 帽子を受け止める：タケルが帽子を投げる。近づいてきた帽子をタップ（キーボードは Space）すると受け止め、
+##    両手でつかむ寄りのカットになる。つかめなければ顔にぽふっと当たって、ひざに乗るカットになる（どちらでも手に入る）
 ## 3. 手をふって、さけび返す：押すたびに「ぜったいー！」「またねー！」「タケルー！」。タケルは小さくなり、カーブで見えなくなる
 ## 必ず成功する。受け止めたかを GameState.hat_caught に入れ、フラグ hat_caught / hat_face も立てる
 
@@ -18,18 +18,15 @@ const LOOK_TIME := 1.4
 const OPEN_TIME := 1.5
 ## 帽子が届くまで（風にあおられて、ふわふわと。速く飛ばさない）
 const HAT_TIME := 2.6
-## 手をのばす速さ・もどす速さ（1 秒あたり）
-const REACH_SPEED := 4.0
-const REACH_BACK := 2.5
-## 届いたとき、これ以上手をのばしていれば受け止める
-const CATCH_REACH := 0.5
-## 手をのばしているとき、帽子が手に寄る強さ
-const HAT_PULL := 0.7
+## 帽子が近づいて、つかめるようになるところ（飛ぶ時間の割合）。ここから届くまでにタップすれば受け止める
+const CATCH_FROM := 0.5
+## 帽子のタップを受けつける半径（基準画面 1280×720 で。押せる範囲は 72px 以上）
+const HAT_HIT_RADIUS := 80.0
 ## 受け止めたあとのスロー（速さと長さ）
 const SLOW := 0.35
 const SLOW_TIME := 0.5
-## 受け止めて（顔に当たって）から「やくそくだぞー！」まで
-const PROMISE_DELAY := 1.2
+## 受け止めた（ひざに乗った）寄りのカットを見せる時間。そのあと「やくそくだぞー！」
+const CUT_TIME := 1.8
 ## タケルが自転車を止めて、小さくなっていく時間（このあいだ手をふってさけべる）
 const RECEDE_TIME := 7.0
 ## タケルが最後の一言を足すころ（小さくなった割合）
@@ -47,8 +44,6 @@ var hud: Hud
 var phase := Phase.LOOK
 ## 窓の開き（0〜1）
 var open := 0.0
-## 手ののばし（0〜1）
-var reach := 0.0
 ## 受け止めたか（帽子が届くまでは false）
 var caught := false
 ## 帽子が届いたか
@@ -141,7 +136,7 @@ func _refresh_hint() -> void:
 		Phase.OPEN:
 			text = Strings.HAT_OPEN_TOUCH if touch else Strings.HAT_OPEN_KEY
 		Phase.THROW:
-			text = Strings.HAT_REACH_TOUCH if touch else Strings.HAT_REACH_KEY
+			text = Strings.HAT_TAP_TOUCH if touch else Strings.HAT_TAP_KEY
 		Phase.WAVE:
 			if _promised and shouts < Strings.HAT_SHOUTS.size():
 				text = Strings.HAT_WAVE_TOUCH if touch else Strings.HAT_WAVE_KEY
@@ -175,16 +170,13 @@ func _process(delta: float) -> void:
 				if open >= 1.0:
 					_throw()
 		Phase.THROW:
-			reach = clampf(reach + (REACH_SPEED if _hold.is_down else -REACH_BACK) * d, 0.0, 1.0)
 			_hat_u = minf(_hat_u + d / HAT_TIME, 1.0)
 			if _hat_u >= 1.0:
 				_land()
 		Phase.CATCH:
 			if caught and _t >= SLOW_TIME:
 				_speed = 1.0
-			# 受け止めたら、手をもどして帽子を胸にかかえる
-			reach = maxf(reach - REACH_BACK * d, 0.0)
-			if _t >= PROMISE_DELAY:
+			if _t >= CUT_TIME:
 				_go(Phase.WAVE)
 		Phase.WAVE:
 			if not _promised:
@@ -216,28 +208,47 @@ func _go(p: Phase) -> void:
 	_refresh_hint()
 
 
-## タケルが片手で帽子を投げる
+## タケルが片手で帽子を投げる。帽子はタップで受け止める（押しつづけの入力はここで止める）
 func _throw() -> void:
 	_hold.release()
+	_hold.enabled = false
 	_go(Phase.THROW)
 	_hat_u = 0.0
 	SfxPlayer.play("hat_throw")
 
 
-## 帽子が届いた。手をのばしていれば受け止める。のばしていなければ顔に当たって、ひざに落ちる
-func _land() -> void:
+## 帽子がつかめるところまで来たか
+func catchable() -> bool:
+	return phase == Phase.THROW and _hat_u >= CATCH_FROM
+
+
+## タップした場所で帽子をつかむ（帽子の近くなら受け止める。自動の動作確認からも呼べる）
+func tap_at(pos: Vector2) -> void:
+	if catchable() and pos.distance_to(_hat_pos()) <= HAT_HIT_RADIUS * size.y / 720.0:
+		_receive(true)
+
+
+## 帽子がとどいた。受け止める（両手でつかむカット）か、顔に当たってひざに乗る（ひざのカット）
+func _receive(c: bool) -> void:
+	if landed:
+		return
 	landed = true
-	caught = reach >= CATCH_REACH
+	caught = c
 	if caught:
 		SfxPlayer.play("hat_catch")
 		_speed = SLOW
+		# 寄りのカットでは、前のかけ声を消して静かに見せる
+		UiAnim.fade(_chip, 0.0, UiTokens.TIME_SMALL_OUT)
 	else:
 		SfxPlayer.play("hat_face")
 		say(Strings.HAT_SMELLY)
-	_hold.enabled = false
-	_hold.is_down = false
 	GameState.set_hat_result(caught)
 	_go(Phase.CATCH)
+
+
+## つかめないまま届いた：顔にぽふっと当たって、ひざに乗る
+func _land() -> void:
+	_receive(false)
 
 
 ## 石切りの記録から、小さくなっていくタケルが足す最後の一言（記録がなければ言わない）
@@ -275,6 +286,20 @@ func _finish() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if phase == Phase.THROW:
+		# 帽子を直接タップ（クリック）するか、近づいたら決定キーで受け止める
+		if event is InputEventScreenTouch and event.pressed:
+			tap_at(event.position)
+			get_viewport().set_input_as_handled()
+		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT \
+				and event.device != InputEvent.DEVICE_ID_EMULATION:
+			tap_at(event.position)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
+			if catchable():
+				_receive(true)
+			get_viewport().set_input_as_handled()
+		return
 	# 振り返るところと、カーブのあとは早送りできる
 	if phase in [Phase.LOOK, Phase.CURVE]:
 		var tap: bool = event.is_action_pressed("ui_accept") or event.is_action_pressed("interact") \
@@ -304,33 +329,22 @@ func _takeru_scale() -> float:
 	return lerpf(1.0, 0.22, smoothstep(0.0, 1.0, away)) * size.y / 720.0
 
 
-## のばした手の先
-func _hand_pos() -> Vector2:
-	var w := _window_rect()
-	var face := _face_pos()
-	var rest := face + Vector2(60, 70) * size.y / 720.0
-	var out := Vector2(w.position.x + w.size.x * 0.32, w.end.y - w.size.y * 0.22)
-	return rest.lerp(out, reach)
-
-
 ## 主人公の顔（窓のそば、画面の左下）
 func _face_pos() -> Vector2:
 	var w := _window_rect()
 	return Vector2(w.position.x + w.size.x * 0.12, w.end.y + size.y * 0.06)
 
 
-## 帽子の位置：投げた手から窓へ、風にあおられながら。手をのばしていると、手のほうへ寄る
+## 帽子の位置：投げた手から窓をくぐって主人公の顔へ、風にあおられながら
 func _hat_pos() -> Vector2:
 	var u := _hat_u
 	var from := _takeru_pos() + Vector2(10, -150) * _takeru_scale()
-	var to := _hand_pos()
+	var to := _face_pos()
 	var ctrl := from.lerp(to, 0.5) + Vector2(0, -size.y * 0.3)
 	var p := from.lerp(ctrl, u).lerp(ctrl.lerp(to, u), u)
 	if not UiAnim.reduced():
 		p += Vector2(sin(u * 9.0) * 28.0, cos(u * 7.0) * 12.0) * (1.0 - u)
-	# 手をのばしていないときは、顔のほうへ流れていく
-	var target := _face_pos().lerp(to, clampf(reach * HAT_PULL / 0.7, 0.0, 1.0))
-	return p.lerp(target, u * u)
+	return p
 
 
 # --- 絵 -----------------------------------------------------------------------
@@ -338,6 +352,13 @@ func _hat_pos() -> Vector2:
 func _draw() -> void:
 	var s := size
 	var w := _window_rect()
+	# 受け止めた／ひざに乗った寄りのカット
+	if phase == Phase.CATCH:
+		if caught:
+			_draw_catch_cut(s)
+		else:
+			_draw_lap_cut(s)
+		return
 	# 後ろを振り返る：前を向いた車内から、窓の外の景色が横に流れこんでくる
 	var turn := smoothstep(0.0, 1.0, _t / LOOK_TIME) if phase == Phase.LOOK else 1.0
 	var shift := (1.0 - turn) * s.x * 0.6
@@ -378,7 +399,11 @@ func _draw() -> void:
 	# 飛んでくる帽子
 	if phase == Phase.THROW:
 		var rot := 0.0 if UiAnim.reduced() else _hat_u * TAU * 1.5
-		_draw_hat(_hat_pos(), rot, 1.0)
+		var hp := _hat_pos()
+		# 近づいてきたら、つかめる合図のうすい輪（押せる範囲）
+		if catchable():
+			draw_arc(hp, HAT_HIT_RADIUS * s.y / 720.0 * 0.6, 0, TAU, 32, Color(UiTokens.ACCENT_INK, 0.7), 3.0)
+		_draw_hat(hp, rot, 1.0)
 
 
 ## 窓の外：後ろの坂道と、追いかけてきたタケル
@@ -436,27 +461,57 @@ func _draw_bike(pos: Vector2, k: float) -> void:
 	draw_line(chest, hand, skin, maxf(6.0 * k, 2.0))
 
 
-## 窓のそばの主人公。手をのばす／帽子をかかえる／ひざに落ちた帽子
+## 窓のそばの主人公。帽子をかかえる／ひざに乗った帽子／手をふる
 func _draw_me(s: Vector2) -> void:
 	var face := _face_pos()
 	var k := s.y / 720.0
 	draw_rect(Rect2(face.x - 30 * k, face.y + 18 * k, 60 * k, s.y - face.y), P.PLAYER_BODY)
 	draw_circle(face, 26 * k, P.PLAYER_SKIN)
-	if not caught and landed:
-		# 顔に当たって、ひざに落ちた帽子
+	if landed and not caught:
+		# ひざに乗った帽子
 		_draw_hat(face + Vector2(30, 120) * k, 0.4, 1.0)
 	if caught:
 		# 帽子を胸にかかえる
 		_draw_hat(face + Vector2(10, 70) * k, -0.1, 1.2)
-	# 手：のばす（帽子へ）／ふる
-	var shoulder := face + Vector2(40, 50) * k
-	var hand := _hand_pos()
+	# 手をふる：顔の横で、窓のほうへ短く上げる
 	if phase == Phase.WAVE and _wave_t > 0.0:
-		var w := _window_rect()
-		hand = Vector2(w.position.x + w.size.x * 0.3, w.end.y - w.size.y * 0.3) + Vector2(0.0 if UiAnim.reduced() else sin(_wave_t * 20.0) * 24.0, 0) * k
-	if reach > 0.02 or _wave_t > 0.0:
-		draw_line(shoulder, hand, P.PLAYER_SKIN, 14.0 * k)
-		draw_circle(hand, 12 * k, P.PLAYER_SKIN)
+		var shoulder := face + Vector2(26, 34) * k
+		var sway := 0.0 if UiAnim.reduced() else sin(_wave_t * 20.0) * 10.0
+		var hand := face + Vector2(48 + sway, -36) * k
+		draw_line(shoulder, hand, P.PLAYER_SKIN, 12.0 * k)
+		draw_circle(hand, 11 * k, P.PLAYER_SKIN)
+
+
+## 受け止めたカット：窓の外の空を背に、両手で帽子をつかむ（少しずつ寄る）
+func _draw_catch_cut(s: Vector2) -> void:
+	var zoom := 1.0 if UiAnim.reduced() else lerpf(0.92, 1.0, minf(_t / CUT_TIME, 1.0))
+	draw_rect(Rect2(Vector2.ZERO, s), Color("#A8D4EA"))
+	draw_rect(Rect2(0, s.y * 0.62, s.x, s.y * 0.38), P.GROUND)
+	draw_rect(Rect2(0, s.y * 0.84, s.x, s.y * 0.16), P.BUS_BODY.darkened(0.35))
+	var c := s * 0.5 + Vector2(0, s.y * 0.04)
+	var k := s.y / 720.0 * zoom
+	_draw_hat(c, -0.05, 4.5 * zoom)
+	# 両手（左右から帽子のふちをつかむ。帽子の絵の左右のはしは、中心から 14×4.5×1.6 ≒ 100px）
+	for side in [-1.0, 1.0]:
+		var hand: Vector2 = c + Vector2(side * 98.0, -20.0) * k
+		var wrist: Vector2 = hand + Vector2(side * 40.0, 260.0) * k
+		draw_line(wrist, hand, P.PLAYER_SKIN, 40.0 * k)
+		draw_circle(hand, 30 * k, P.PLAYER_SKIN)
+
+
+## ひざのカット：顔に当たって落ちた帽子が、ひざの上に乗っている
+func _draw_lap_cut(s: Vector2) -> void:
+	draw_rect(Rect2(Vector2.ZERO, s), P.BUS_STRIPE.darkened(0.1))
+	var k := s.y / 720.0
+	var c := Vector2(s.x * 0.5, s.y * 0.62)
+	# ひざ（半ズボン）と足
+	for side in [-1.0, 1.0]:
+		var knee: Vector2 = c + Vector2(side * 110.0, 0) * k
+		draw_rect(Rect2(knee.x - 90 * k, knee.y - 70 * k, 180 * k, 120 * k), P.PLAYER_SHORTS)
+		draw_rect(Rect2(knee.x - 60 * k, knee.y + 50 * k, 120 * k, s.y), P.PLAYER_SKIN)
+	# ひざに乗った帽子（落ちてきて、少しはずむ）
+	var drop := 0.0 if UiAnim.reduced() else maxf(0.0, 1.0 - _t / 0.4) * -60.0 * k
+	_draw_hat(c + Vector2(10, -70 * k + drop), 0.15, 3.0)
 
 
 func _draw_hat(p: Vector2, rot: float, k: float) -> void:

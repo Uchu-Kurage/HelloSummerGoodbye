@@ -16,6 +16,7 @@ var _capsule_stars_seen := false
 ## 帽子を受け止める：さけび返した回数と、タケルの最後の一言
 var _hat_shouts := 0
 var _hat_last_line := ""
+var _hat_missed_tap_ignored := false
 
 
 func _ready() -> void:
@@ -251,19 +252,20 @@ func _run() -> void:
 	GameState.ishikiri_best = 7
 	GameState.ishikiri_result = &"win"
 
-	# 帽子を受け止める：窓を開け、手をのばして受け止め、3回さけび返す。石切りで勝ったので、タケルの最後の一言は「つぎは まけねーぞー！」
-	check(GameState.hat_caught and GameState.has_flag(&"hat_caught"), "hat: caught with the hand out")
+	# 帽子を受け止める：窓を開け、帽子をタップして受け止め、3回さけび返す。石切りで勝ったので、タケルの最後の一言は「つぎは まけねーぞー！」
+	check(GameState.hat_caught and GameState.has_flag(&"hat_caught"), "hat: caught by tapping the hat")
+	check(_hat_missed_tap_ignored, "hat: a tap away from the hat does not catch it")
 	check(_hat_shouts == Strings.HAT_SHOUTS.size(), "hat: shouted back %d times" % _hat_shouts)
 	check(_hat_last_line.contains(Strings.HAT_LAST_WIN), "hat: takeru's last line from the stone skipping (%s)" % _hat_last_line)
 	check(HatGame.last_line() == Strings.HAT_LAST_WIN, "hat: last line for a win")
-	# 手をのばさないと顔に当たる（帽子を受け止める画面だけで確かめる）。それでも帽子は手に入る
+	# 帽子をタップしないと顔に当たって、ひざに乗る（帽子を受け止める画面だけで確かめる）。それでも帽子は手に入る
 	var keep_hat := GameState.flags.duplicate()
 	var face := HatGame.new()
 	get_tree().root.add_child(face)
 	await _play_hat(face, false)
 	check(face.landed and not face.caught and not GameState.hat_caught and GameState.has_flag(&"hat_face"),
-		"hat: not reaching -> hits the face")
-	check(face.phase == HatGame.Phase.DONE, "hat: still finishes without reaching or shouting")
+		"hat: not tapping -> lands on the lap")
+	check(face.phase == HatGame.Phase.DONE, "hat: still finishes without tapping or shouting")
 	face.queue_free()
 	GameState.flags = keep_hat
 	GameState.hat_caught = true
@@ -412,8 +414,8 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	return out
 
 
-## 帽子を受け止める：窓を開け（押しつづける）、reach なら手をのばして受け止め、3回さけび返す
-func _play_hat(game: HatGame, reach: bool) -> void:
+## 帽子を受け止める：窓を開け（押しつづける）、catch なら近づいた帽子をタップして受け止め、3回さけび返す
+func _play_hat(game: HatGame, catch: bool) -> void:
 	var n := 0
 	if game.phase != HatGame.Phase.LOOK:
 		while is_instance_valid(game) and game.phase != HatGame.Phase.DONE and n < 2000:
@@ -429,18 +431,20 @@ func _play_hat(game: HatGame, reach: bool) -> void:
 		await get_tree().process_frame
 		n += 1
 	game._hold.release()
-	if reach:
-		game._hold.press()
 	n = 0
 	while not game.landed and n < 600:
+		if catch and game.catchable():
+			# 帽子から少し外れたところをタップしても、つかめない
+			game.tap_at(game._hat_pos() + Vector2(game.size.y, 0))
+			_hat_missed_tap_ignored = not game.landed
+			game.tap_at(game._hat_pos())
 		await get_tree().process_frame
 		n += 1
-	game._hold.release()
 	n = 0
 	while not game._hold.enabled and game.phase != HatGame.Phase.CURVE and n < 600:
 		await get_tree().process_frame
 		n += 1
-	if reach:
+	if catch:
 		for i in Strings.HAT_SHOUTS.size():
 			game._hold.press()
 			game._hold.release()
@@ -448,7 +452,7 @@ func _play_hat(game: HatGame, reach: bool) -> void:
 		_hat_shouts = game.shouts
 	n = 0
 	while is_instance_valid(game) and game.phase != HatGame.Phase.DONE and n < 2000:
-		if reach and game._last_said and _hat_last_line == "":
+		if catch and game._last_said and _hat_last_line == "":
 			_hat_last_line = game._line.text
 		await get_tree().process_frame
 		n += 1
