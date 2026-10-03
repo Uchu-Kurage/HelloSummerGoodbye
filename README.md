@@ -4,7 +4,7 @@
 設計は [`DESIGN.md`](DESIGN.md)、UI/UX の決まりは [`.claude/skills/summer-game-ui/SKILL.md`](.claude/skills/summer-game-ui/SKILL.md) にあります。
 
 - エンジン：**Godot 4.4.1**（GDScript / Compatibility レンダラー）
-- 絵・音は仮素材（図形・単色・無音）。仕組みと UI/UX を先に作っています
+- 人物や小物の絵は仮素材（図形・単色）。背景の山並み・木・雲、効果音・環境音・BGM は CC0 のフリー素材を使っています（出典は [CREDITS.md](CREDITS.md)）
 
 ## あそびかた
 
@@ -24,7 +24,7 @@
 
 ```
 autoload/   GameState（拾ったもの・今の日）、InputMode（タッチかキーボードか）
-audio/      SfxPlayer（効果音・環境音の枠）。audio/sfx/<名前>.ogg を置くと鳴る
+audio/      SfxPlayer（効果音・環境音・BGM）。audio/sfx/・ambient/・music/ の <名前>.ogg を鳴らす（ないものは無音）
 data/       DayData / ItemData と、その .tres。day_list.tres が日の並び順
 days/       day_base.tscn（共通の土台）と day_01〜day_10.tscn
 world/      main.tscn（ゲーム本体）、カメラ、日の読み込み、時間帯の色、背景
@@ -201,3 +201,4 @@ python3 -m http.server 8000
 ## ライセンス
 
 - フォント：Zen Maru Gothic（SIL Open Font License 1.1）。`ui/theme/fonts/OFL.txt` を参照
+- 音・背景の絵：すべて CC0（Kenney、OpenGameArt.org の各作者）。一覧は [CREDITS.md](CREDITS.md)。素材を足すときも CC0 など再配布できるものだけにして、CREDITS.md に出典を書く

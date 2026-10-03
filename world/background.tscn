@@ -66,6 +66,14 @@ scroll_scale = Vector2(0.55, 1)
 repeat_size = Vector2(2560, 0)
 repeat_times = 3
 
+[node name="Trees" type="Node2D" parent="Near"]
+script = ExtResource("2")
+kind = 5
+base_y = 600.0
+height = 150.0
+color = Color(0.415686, 0.54902, 0.380392, 1)
+color_2 = Color(0.360784, 0.490196, 0.345098, 1)
+
 [node name="Bushes" type="Node2D" parent="Near"]
 script = ExtResource("2")
 kind = 1

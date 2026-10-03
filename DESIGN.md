@@ -451,7 +451,8 @@ res://
 │  ├─ treasure_box.tscn
 │  └─ ending.tscn
 ├─ audio/
-│  └─ sfx_player.gd        # 効果音を鳴らす枠（オートロード）
+│  ├─ sfx_player.gd        # 効果音・環境音・BGM を鳴らす（オートロード）
+│  ├─ sfx/ ambient/ music/ # CC0 の音素材（出典は CREDITS.md）
 └─ web/
    └─ shell.html           # Web 書き出し用の HTML（読み込み画面など）
 
