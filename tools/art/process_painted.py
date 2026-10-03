@@ -3,7 +3,8 @@
 # 生成AIの絵（背景はマゼンタ #FF00FF の単色）を切り抜き、world/scenery/painted/<名前>.png に書き出す。
 # 名前ごとの処理（RECIPES）：
 #   cloud_*       … 切り抜いて、まわりの余白を落とす
-#   clouds_small  … 離れて浮かぶ雲を1つずつ切り分ける（cloud_small_1.png, _2, …）
+#   clouds_small / stones / thickets / lanterns / boxes … 横に並んだものを1つずつ切り分ける
+#                   （SPLITS の名前に番号をつけて書き出す。例: stone_1.png, stone_2.png, …）
 #   mountains / trees / paddies … 横にくり返せる帯にする（右端を左端に重ねてなじませる）
 #   branch / cloud_wide … 左右の端をぼかす（絵の端で切れている部分を見せない）
 # 必要: pillow, numpy
@@ -19,6 +20,14 @@ STRIPS = {
 	'mountains': [(0, 400), 300],
 	'trees': [(0, None), 240],
 	'paddies': [(0, 300), 260],
+}
+## 1枚に横に並んだものを切り分けるときの、書き出す名前
+SPLITS = {
+	'clouds_small': 'cloud_small',
+	'stones': 'stone',
+	'thickets': 'thicket',
+	'lanterns': 'lantern',
+	'boxes': 'box',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {
@@ -81,21 +90,67 @@ def strip(fg, al, rows, ov):
 	return im.crop((0, top, im.width, im.height))
 
 
+def _components(mask):
+	"""つながった部分ごとに番号をつける（上下左右のとなりでつながる）。小さすぎるものは捨てる"""
+	h, w = mask.shape
+	label = np.zeros((h, w), dtype=np.int32)
+	n = 0
+	for y0 in range(h):
+		for x0 in range(w):
+			if not mask[y0, x0] or label[y0, x0]:
+				continue
+			n += 1
+			stack = [(y0, x0)]
+			label[y0, x0] = n
+			while stack:
+				y, x = stack.pop()
+				for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+					yy, xx = y + dy, x + dx
+					if 0 <= yy < h and 0 <= xx < w and mask[yy, xx] and not label[yy, xx]:
+						label[yy, xx] = n
+						stack.append((yy, xx))
+	return label, n
+
+
 def split(fg, al, name):
-	"""離れた雲を1つずつ切り分ける（列ごとに透明なすき間で区切る）"""
-	cols = (al > 0.05).any(axis=0)
+	"""離れて並んだものを1つずつ切り分ける。左から順に番号をつける。
+	ふれあっているものも分けられるよう、こい部分（不透明に近いところ）だけでつながりを見る"""
+	step = 4
+	small = al[::step, ::step] > 0.85
+	label, n = _components(small)
+	# 小さすぎる部分（細いひもの切れはしなど）は先に消しておく
+	for i in range(1, n + 1):
+		if (label == i).sum() * step * step < 2500:
+			label[label == i] = 0
+	# 細い部分（草の葉・提灯のひも）も、いちばん近い部分のものとして広げて含める
+	# 細い線を落とさないよう、ブロックごとの最大値で縮める
+	hh, ww = label.shape
+	pad = np.zeros((hh * step, ww * step))
+	pad[:min(al.shape[0], hh * step), :min(al.shape[1], ww * step)] = al[:hh * step, :ww * step]
+	full = pad.reshape(hh, step, ww, step).max(axis=(1, 3)) > 0.05
+	h, w = full.shape
+	queue = list(zip(*np.nonzero(label)))
+	head = 0
+	while head < len(queue):
+		y, x = queue[head]
+		head += 1
+		for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+			yy, xx = y + dy, x + dx
+			if 0 <= yy < h and 0 <= xx < w and full[yy, xx] and not label[yy, xx]:
+				label[yy, xx] = label[y, x]
+				queue.append((yy, xx))
 	parts = []
-	x = 0
-	while x < len(cols):
-		if cols[x]:
-			s = x
-			while x < len(cols) and cols[x]:
-				x += 1
-			if x - s > 20:
-				parts.append((s, x))
-		x += 1
-	for i, (s, e) in enumerate(parts):
-		save(to_image(fg[:, s:e], al[:, s:e]), '%s_%d' % (name, i + 1))
+	for i in range(1, n + 1):
+		ys, xs = np.nonzero(label == i)
+		if len(xs) == 0:
+			continue
+		parts.append((xs.min(), i))
+	parts.sort()
+	# 各部分を元の大きさにもどし、少し広げて（ふちの半透明を含める）その部分だけを残す
+	for k, (_, i) in enumerate(parts):
+		m = Image.fromarray(((label == i) * 255).astype(np.uint8)).resize((al.shape[1], al.shape[0]), Image.NEAREST)
+		m = np.array(m.filter(ImageFilter.MaxFilter(9))).astype(float) / 255
+		save(to_image(fg, al * m), '%s_%d' % (name, k + 1))
 
 
 def edge_fade(fg, al, left, right):
@@ -113,8 +168,8 @@ def main():
 		if name in STRIPS:
 			rows, ov = STRIPS[name]
 			save(strip(fg, al, rows, ov), name, crop=False)
-		elif name == 'clouds_small':
-			split(fg, al, 'cloud_small')
+		elif name in SPLITS:
+			split(fg, al, SPLITS[name])
 		elif name in EDGE_FADES:
 			save(edge_fade(fg, al, *EDGE_FADES[name]), name)
 		else:

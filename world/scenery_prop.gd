@@ -1,6 +1,8 @@
 @tool
 extends Node2D
-## 親友ルートの場所の仮素材（駄菓子屋・川原・秘密基地・夏祭り・バス停など）を図形で描く。足もと（地面）が原点。
+## 親友ルートの場所（駄菓子屋・川原・秘密基地・夏祭り・バス停など）を描く。足もと（地面）が原点。
+## 石・岩・しげみ・雑木林・クヌギ・鳥居・提灯・屋台・街灯・段ボール箱・バス停は手描き風の絵
+## （Google Gemini で生成し、背景を切り抜いたもの。res://world/scenery/painted/）。ほかはまだ図形で描く。
 ## 灯りの光（*_GLOW）は GlowLayer の下に置くと、夜でも暗くならない。
 
 enum Kind {
@@ -44,6 +46,19 @@ enum Kind {
 @export var show_on_event := ""
 
 const P := preload("res://world/world_palette.gd")
+const ART := "res://world/scenery/painted/%s.png"
+## 絵に地面の影はないので、足もとにうすい影を描く
+const SHADOW := Color(0.12, 0.16, 0.08, 0.22)
+## 提灯の絵：本体のまん中（絵の上から px）と、本体の高さ
+const LANTERN_CENTER := 289.0
+const LANTERN_BODY := 234.0
+const LANTERN_SIZE := 44.0
+## 街灯の絵の高さと、電球の位置（絵の中の px）
+const STREETLIGHT_H := 340.0
+const STREETLIGHT_BULB := Vector2(129, 126)
+const STREETLIGHT_FOOT := 130.0
+
+var _tex_cache := {}
 
 
 func _ready() -> void:
@@ -62,7 +77,7 @@ func _draw() -> void:
 		Kind.SHOP: _shop()
 		Kind.MARBLE_RING: _marble_ring()
 		Kind.RIVER: _river()
-		Kind.BIG_ROCK: _rock(Vector2(240, 96))
+		Kind.BIG_ROCK: _big_rock()
 		Kind.STONES: _stones()
 		Kind.THICKET: _thicket()
 		Kind.WOODS: _woods()
@@ -87,6 +102,26 @@ func _draw() -> void:
 
 func _poly(points: Array, c: Color) -> void:
 	draw_colored_polygon(PackedVector2Array(points), c)
+
+
+func _tex(art_name: String) -> Texture2D:
+	if not _tex_cache.has(art_name):
+		_tex_cache[art_name] = load(ART % art_name)
+	return _tex_cache[art_name]
+
+
+## 絵を高さ h で描く。foot は足もと（絵の下のふち）の位置。foot_x は絵の中の足もとの x（px。負なら絵のまん中）
+func _art(art_name: String, foot: Vector2, h: float, foot_x := -1.0, tint := Color.WHITE) -> void:
+	var tex := _tex(art_name)
+	var k := h / tex.get_height()
+	var fx := (tex.get_width() / 2.0 if foot_x < 0.0 else foot_x) * k
+	draw_texture_rect(tex, Rect2(foot + Vector2(-fx, -h), tex.get_size() * k), false, tint)
+
+
+func _shadow(center: Vector2, radius: Vector2) -> void:
+	draw_set_transform(center, 0.0, Vector2(1.0, radius.y / radius.x))
+	draw_circle(Vector2.ZERO, radius.x, SHADOW)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 func _shop() -> void:
@@ -134,44 +169,40 @@ func _river() -> void:
 		draw_circle(Vector2(x, -6), 9 + (i % 3) * 3, P.ROCK if i % 2 else P.STONE_LIGHT)
 
 
-func _rock(size: Vector2) -> void:
-	var w := size.x / 2.0
-	var h := size.y
-	_poly([Vector2(-w, 0), Vector2(-w * 0.9, -h * 0.6), Vector2(-w * 0.4, -h), Vector2(w * 0.5, -h * 0.92),
-		Vector2(w, -h * 0.4), Vector2(w * 0.95, 0)], P.ROCK)
-	_poly([Vector2(-w * 0.4, -h), Vector2(w * 0.5, -h * 0.92), Vector2(w * 0.2, -h * 0.7), Vector2(-w * 0.3, -h * 0.78)], P.STONE_LIGHT)
-	draw_line(Vector2(-w * 0.2, -h * 0.5), Vector2(w * 0.3, -h * 0.3), P.ROCK_DARK, 3.0)
+## 川原の大きな岩（タケルが座る）
+func _big_rock() -> void:
+	_shadow(Vector2(0, -2), Vector2(96, 10))
+	_art("stone_3", Vector2.ZERO, 120.0)
 
 
 func _stones() -> void:
-	for s in [[-60, 10, 18], [-20, 14, 12], [24, 8, 22], [70, 12, 14], [110, 6, 10]]:
-		draw_circle(Vector2(s[0], -s[2] * 0.6 + s[1]), s[2], P.STONE_LIGHT)
-		draw_arc(Vector2(s[0], -s[2] * 0.6 + s[1]), s[2], 0.2, PI - 0.2, 10, P.ROCK, 2.0)
+	for s in [["stone_1", -60, 30], ["stone_2", -14, 24], ["stone_4", 34, 32], ["stone_5", 84, 22], ["stone_2", 120, 18]]:
+		_shadow(Vector2(s[1], -1), Vector2(s[2] * 0.7, 4))
+		_art(s[0], Vector2(s[1], 2), s[2])
 
 
 func _thicket() -> void:
-	for b in [[-110, -50, 60], [-50, -80, 78], [20, -60, 70], [80, -90, 72], [140, -50, 56]]:
-		draw_circle(Vector2(b[0], b[1]), b[2], P.GROUND_DARK if int(b[0]) % 20 == 0 else P.NEAR_BUSH)
-	draw_rect(Rect2(-170, -50, 370, 50), P.GROUND_DARK)
+	_shadow(Vector2(20, -2), Vector2(190, 10))
+	_art("thicket_1", Vector2(-100, 6), 130.0)
+	_art("thicket_3", Vector2(130, 6), 150.0)
+	_art("thicket_2", Vector2(10, 6), 175.0)
 
 
 func _woods() -> void:
 	var n := maxi(1, int(width / 180))
+	# 奥の木は少し暗く（林の中のかげ）
+	var shade := Color(0.78, 0.84, 0.78)
 	for i in n:
 		var x := width * (i + 0.5) / n
-		var h := 300.0 + (i % 3) * 60.0
-		draw_rect(Rect2(x - 12, -h, 24, h), P.WOODS_TRUNK)
-		draw_circle(Vector2(x, -h - 30), 100 + (i % 2) * 20, P.WOODS_DARK)
-		draw_circle(Vector2(x - 60, -h + 30), 70, P.GROUND_DARK)
-		draw_circle(Vector2(x + 64, -h + 20), 76, P.WOODS_DARK)
+		var h := 380.0 + (i % 3) * 50.0
+		if i % 2 == 0:
+			_art("prop_kunugi", Vector2(x, 4), h, 287.0, shade)
+		else:
+			_art("prop_tree", Vector2(x, 4), h, 281.0, shade)
 
 
 func _torii() -> void:
-	draw_rect(Rect2(-130, -330, 22, 330), P.SHRINE_RED)
-	draw_rect(Rect2(108, -330, 22, 330), P.SHRINE_RED)
-	draw_rect(Rect2(-170, -350, 340, 22), P.SHRINE_RED)
-	draw_rect(Rect2(-150, -300, 300, 16), P.SHRINE_RED)
-	draw_rect(Rect2(-176, -362, 352, 12), P.SHOP_DARK)
+	_art("prop_torii", Vector2.ZERO, 340.0, 463.0)
 
 
 func _lantern_points() -> Array[Vector2]:
@@ -189,40 +220,36 @@ func _lanterns(glow: bool) -> void:
 			draw_circle(p, 46, P.LANTERN_GLOW)
 			draw_circle(p, 24, P.LANTERN_GLOW)
 		return
+	# 電線は提灯の吊りひもの上の端にそろえる
+	var k := LANTERN_SIZE / LANTERN_BODY
+	var hang := LANTERN_CENTER * k
 	var pts := PackedVector2Array()
 	for i in 33:
 		var t := i / 32.0
-		pts.append(Vector2(width * t, -404 + 40.0 * 4.0 * t * (1.0 - t)))
+		pts.append(Vector2(width * t, -380.0 - hang + 40.0 * 4.0 * t * (1.0 - t)))
 	draw_polyline(pts, P.WIRE, 2.0)
+	var tex := _tex("lantern_1")
+	var h := tex.get_height() * k
 	for p in _lantern_points():
-		draw_line(p + Vector2(0, -24), p + Vector2(0, -18), P.SHOP_DARK, 2.0)
-		draw_circle(p, 18, P.LANTERN)
-		draw_rect(Rect2(p.x - 10, p.y - 20, 20, 5), P.SHOP_DARK)
-		draw_rect(Rect2(p.x - 10, p.y + 15, 20, 5), P.SHOP_DARK)
-		draw_line(p + Vector2(-16, 0), p + Vector2(16, 0), P.LANTERN_LINE, 2.0)
+		_art("lantern_1", p + Vector2(0, h - hang), h)
 
 
 func _stall() -> void:
-	draw_rect(Rect2(-150, -90, 300, 90), P.WOOD)
-	draw_rect(Rect2(-150, -96, 300, 10), P.WOOD_DARK)
-	draw_rect(Rect2(-146, -260, 8, 170), P.WOOD_DARK)
-	draw_rect(Rect2(138, -260, 8, 170), P.WOOD_DARK)
-	# しまのひさし
-	for i in 6:
-		var c := P.CANOPY if i % 2 == 0 else P.CANOPY_STRIPE
-		_poly([Vector2(-170 + i * 57, -270), Vector2(-113 + i * 57, -270), Vector2(-113 + i * 57, -226), Vector2(-170 + i * 57, -226)], c)
-	draw_rect(Rect2(-170, -276, 342, 8), P.SHOP_DARK)
+	_shadow(Vector2(0, -2), Vector2(170, 10))
+	_art("prop_stall", Vector2.ZERO, 290.0)
 
 
 func _streetlight(glow: bool) -> void:
+	var tex := _tex("prop_streetlight")
+	var k := STREETLIGHT_H / tex.get_height()
+	var bulb := Vector2((STREETLIGHT_BULB.x - STREETLIGHT_FOOT) * k, -STREETLIGHT_H + STREETLIGHT_BULB.y * k)
 	if glow:
-		draw_circle(Vector2(36, -296), 70, P.LAMP_GLOW)
-		draw_circle(Vector2(36, -296), 30, P.LAMP_GLOW)
-		_poly([Vector2(20, -290), Vector2(52, -290), Vector2(110, 0), Vector2(-38, 0)], Color(P.LAMP_GLOW, 0.1))
+		draw_circle(bulb, 70, P.LAMP_GLOW)
+		draw_circle(bulb, 30, P.LAMP_GLOW)
+		_poly([bulb + Vector2(-18, 6), bulb + Vector2(18, 6), Vector2(bulb.x + 80, 0), Vector2(bulb.x - 80, 0)], Color(P.LAMP_GLOW, 0.1))
 		return
-	draw_rect(Rect2(-6, -320, 12, 320), P.POLE)
-	draw_rect(Rect2(-6, -320, 50, 8), P.POLE)
-	draw_rect(Rect2(24, -312, 26, 14), P.FREEZER)
+	_shadow(Vector2(0, -1), Vector2(18, 4))
+	_art("prop_streetlight", Vector2.ZERO, STREETLIGHT_H, STREETLIGHT_FOOT)
 
 
 func _takeru_house() -> void:
@@ -235,20 +262,17 @@ func _takeru_house() -> void:
 
 
 func _boxes() -> void:
-	for b in [[-90, 0, 90, 70], [4, 0, 100, 76], [-60, -70, 96, 64], [-30, -134, 80, 58], [106, 0, 70, 54]]:
-		var r := Rect2(b[0], b[1] - b[3], b[2], b[3])
-		draw_rect(r, P.CARDBOARD)
-		draw_rect(r, P.CARDBOARD_DARK, false, 2.0)
-		draw_line(Vector2(r.position.x + r.size.x / 2, r.position.y), Vector2(r.position.x + r.size.x / 2, r.position.y + 14), P.CARDBOARD_DARK, 4.0)
+	_shadow(Vector2(20, -2), Vector2(170, 9))
+	_art("box_1", Vector2(-50, 2), 120.0)
+	_art("box_2", Vector2(70, 2), 96.0)
+	_art("box_3", Vector2(158, 2), 70.0)
+	# 上に積んだ箱
+	_art("box_3", Vector2(-44, -112), 72.0)
 
 
 func _kunugi() -> void:
-	draw_rect(Rect2(-26, -360, 52, 360), P.WOODS_TRUNK)
-	for i in 6:
-		draw_line(Vector2(-18 + (i % 3) * 14, -340 + i * 50), Vector2(-14 + (i % 3) * 14, -310 + i * 50), P.BEETLE, 2.0)
-	draw_circle(Vector2(0, -400), 140, P.WOODS_DARK)
-	draw_circle(Vector2(-110, -320), 90, P.GROUND_DARK)
-	draw_circle(Vector2(110, -330), 96, P.WOODS_DARK)
+	_shadow(Vector2(0, -2), Vector2(130, 12))
+	_art("prop_kunugi", Vector2(0, 4), 560.0, 287.0)
 	# バナナの罠（ネットに入れて幹に結んである）
 	draw_arc(Vector2(34, -170), 18, -0.4, PI * 0.9, 12, P.BANANA, 10.0)
 	draw_line(Vector2(26, -196), Vector2(26, -150), P.CHALK, 1.5)
@@ -295,16 +319,9 @@ func _engawa() -> void:
 
 
 func _bus_stop() -> void:
-	draw_rect(Rect2(-5, -230, 10, 230), P.POLE)
-	draw_circle(Vector2(0, -240), 30, P.SIGN_BOARD)
-	draw_arc(Vector2(0, -240), 30, 0, TAU, 24, P.BUS_STRIPE, 4.0)
-	# 小さな待合（トタン屋根とベンチ）
-	draw_rect(Rect2(60, -200, 8, 200), P.WOOD_DARK)
-	draw_rect(Rect2(232, -200, 8, 200), P.WOOD_DARK)
-	_poly([Vector2(44, -196), Vector2(256, -210), Vector2(256, -196), Vector2(44, -184)], P.TIN_ROOF)
-	draw_rect(Rect2(80, -54, 140, 10), P.WOOD)
-	draw_rect(Rect2(88, -44, 8, 44), P.WOOD_DARK)
-	draw_rect(Rect2(204, -44, 8, 44), P.WOOD_DARK)
+	# 左の丸い看板の柱が原点。右に待合所
+	_shadow(Vector2(200, -2), Vector2(240, 10))
+	_art("prop_busstop", Vector2.ZERO, 260.0, 85.0)
 
 
 func _slope() -> void:
