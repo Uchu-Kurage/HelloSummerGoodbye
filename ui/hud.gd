@@ -26,6 +26,8 @@ const MINIGAMES := {
 	"katanuki": preload("res://ui/katanuki_game.gd"),
 	"ishikiri": preload("res://ui/ishikiri_game.gd"),
 	"kabuto": preload("res://ui/kabuto_game.gd"),
+	"capsule": preload("res://ui/capsule_game.gd"),
+	"capsule_stars": preload("res://ui/capsule_game.gd"),
 }
 
 var player: Player
@@ -531,6 +533,7 @@ func _run_minigame(game_name: String) -> void:
 		return
 	var g: Control = MINIGAMES[game_name].new()
 	g.set("hud", self)
+	g.set("game_name", game_name)
 	_minigame = g
 	# ミニゲームは専用の画面に切り替わる。会話のパネルはそのあいだ隠し、日付の札より手前に出す
 	UiAnim.panel_out(_msg)

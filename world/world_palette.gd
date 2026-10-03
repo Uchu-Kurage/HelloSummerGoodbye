@@ -67,6 +67,9 @@ const KABUTO_GROUND := Color("#3A3A40")
 const KABUTO_LEAF := Color("#6A5440")
 const KABUTO_TRUNK := Color("#3D3430")
 const KABUTO_AMBIENT := "higurashi_dawn"
+## タイムカプセル埋め（9日目の夜）：懐中電灯の外の暗さ。環境音は秋の虫（コオロギ・スズムシ）
+const CAPSULE_NIGHT := Color("#0E1220")
+const CAPSULE_AMBIENT := "autumn_insects"
 const BUS_BODY := Color("#E6DDBF")
 const BUS_STRIPE := Color("#6F9686")
 const BUS_WINDOW := Color("#A9C3CE")
