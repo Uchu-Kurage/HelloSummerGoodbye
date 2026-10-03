@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bfrj18edjure5"
-path="res://.godot/imported/tree_cedar.png-645077cc353ef8d336f96eab2e59a46a.ctex"
+uid="uid://dsfri1v3lk4g4"
+path="res://.godot/imported/trees.png-2bc0c529be5fedc9f2858efd654e66b2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://world/scenery/tree_cedar.png"
-dest_files=["res://.godot/imported/tree_cedar.png-645077cc353ef8d336f96eab2e59a46a.ctex"]
+source_file="res://world/scenery/painted/trees.png"
+dest_files=["res://.godot/imported/trees.png-2bc0c529be5fedc9f2858efd654e66b2.ctex"]
 
 [params]
 
