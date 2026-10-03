@@ -11,6 +11,8 @@ signal released(held: float)
 var enabled := false
 var is_down := false
 var held_time := 0.0
+## 押しても「押しつづけ」に数えないボタンなど（その上のタッチ・クリックは、ボタンにまかせる）
+var exclude: Array[Control] = []
 
 
 func _ready() -> void:
@@ -41,6 +43,8 @@ func release() -> void:
 func _input(event: InputEvent) -> void:
 	if not enabled:
 		return
+	if _on_excluded(event):
+		return
 	var down := -1
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("interact"):
 		down = 1
@@ -58,3 +62,15 @@ func _input(event: InputEvent) -> void:
 	elif down == 0 and is_down:
 		release()
 		get_viewport().set_input_as_handled()
+
+
+func _on_excluded(event: InputEvent) -> bool:
+	if not (event is InputEventScreenTouch or event is InputEventMouseButton):
+		return false
+	# 離したときは、押しはじめた場所に関係なく受けつける（押しつづけを終わらせるため）
+	if not event.pressed:
+		return false
+	for c in exclude:
+		if is_instance_valid(c) and c.is_visible_in_tree() and c.get_global_rect().has_point(event.position):
+			return true
+	return false

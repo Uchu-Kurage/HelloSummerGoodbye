@@ -6,6 +6,8 @@ var _log: Array[String] = []
 var _fail := false
 ## 型抜きでタケルの型が割れたとき、主人公が削っていた部分
 var _katanuki_takeru_broke_at := -1
+## 石切りのお手本で、タケルが数えたことば
+var _ishikiri_demo_count := ""
 
 
 func _ready() -> void:
@@ -226,6 +228,26 @@ func _run() -> void:
 		check(buried.size() == 1 and notes.get(buried[0], "") == Strings.BURIED_NOTE, "ending slot: buried item")
 		check(end_box._slots[-1].item.id == &"takeru_hat" and end_box._slots[-1].collected, "hat appears last")
 
+	# 石切り：ひらたい石を、ちょうどいいところで3回投げて、タケルに勝つ
+	check(GameState.ishikiri_best == 7 and GameState.ishikiri_result == &"win" and GameState.has_flag(&"ishikiri_win"),
+		"ishikiri: flat stone at the sweet spot beats takeru (%d)" % GameState.ishikiri_best)
+	check(_ishikiri_demo_count.contains("いち、にー、さん、しー、ご！"), "ishikiri: takeru counts his demo (%s)" % _ishikiri_demo_count)
+	check(IshikiriGame.skips_for(IshikiriGame.STONES[0], IshikiriGame.SWEET_SPOT + 0.1) == 7 \
+		and IshikiriGame.skips_for(IshikiriGame.STONES[0], 0.1) < 3 and IshikiriGame.skips_for(IshikiriGame.STONES[0], IshikiriGame.PULL_MAX) < 3,
+		"ishikiri: too early or pulled too far skips less")
+	check(IshikiriGame.result_for(5) == &"draw" and IshikiriGame.result_for(4) == &"lose", "ishikiri: draw at 5, lose at 4")
+	# まるい石・おおきい石（石切りの画面だけで確かめる）。0回なら「ぽちゃん！」
+	var keep_ishi := GameState.flags.duplicate()
+	var ishi := IshikiriGame.new()
+	get_tree().root.add_child(ishi)
+	await _play_ishikiri(ishi, [&"round", &"big", &"round"], [0.0, IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT])
+	check(ishi.throws == [0, 3, 1] and ishi.has_meta("plop"), "ishikiri: round 0 (plop), big 3, round 1 -> %s" % str(ishi.throws))
+	check(GameState.ishikiri_result == &"lose", "ishikiri: best 3 loses")
+	ishi.queue_free()
+	GameState.flags = keep_ishi
+	GameState.ishikiri_best = 7
+	GameState.ishikiri_result = &"win"
+
 	# 型抜き：少し削っては離して、きれいに抜く。とちゅうでタケルの型が割れる
 	check(GameState.katanuki_result == &"clean" and GameState.has_flag(&"katanuki_clean"), "katanuki: carved out cleanly (%s)" % GameState.katanuki_result)
 	check(_katanuki_takeru_broke_at == KatanukiGame.TAKERU_BREAK_PART, "katanuki: takeru breaks his when we reach the tail (%d)" % _katanuki_takeru_broke_at)
@@ -347,6 +369,38 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	return out
 
 
+## 石切り：お手本を見て、石を選び、held 秒押して離す（3回）
+func _play_ishikiri(game: IshikiriGame, ids: Array, helds: Array) -> void:
+	var n := 0
+	while game.phase == IshikiriGame.Phase.DEMO or (game.phase == IshikiriGame.Phase.SHOW and game._demo):
+		if game._line.text.contains("ご！"):
+			_ishikiri_demo_count = game._line.text
+		await get_tree().process_frame
+		n += 1
+		if n > 2000:
+			return
+	for i in ids.size():
+		n = 0
+		while game.phase != IshikiriGame.Phase.PICK and n < 2000:
+			await get_tree().process_frame
+			n += 1
+		game.choose_id(ids[i])
+		await get_tree().process_frame
+		game._hold.press()
+		game._hold.held_time = helds[i]
+		game._hold.release()
+		n = 0
+		while game.phase in [IshikiriGame.Phase.FLY, IshikiriGame.Phase.SHOW] and n < 2000:
+			if game._line.text.contains(Strings.ISHI_PLOP):
+				game.set_meta("plop", true)
+			await get_tree().process_frame
+			n += 1
+	n = 0
+	while is_instance_valid(game) and game.phase != IshikiriGame.Phase.DONE and n < 2000:
+		await get_tree().process_frame
+		n += 1
+
+
 ## 型抜き：careful なら、ひびが「多め」になったら離して落ち着くのを待つ。そうでなければ押しつづける
 func _play_katanuki(game: KatanukiGame, careful: bool) -> void:
 	var n := 0
@@ -432,6 +486,8 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		guard += 1
 		if hud.minigame() is DiveGame:
 			await _play_dive(hud.minigame(), true)
+		elif hud.minigame() is IshikiriGame:
+			await _play_ishikiri(hud.minigame(), [&"flat", &"flat", &"flat"], [IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT])
 		elif hud.minigame() is KatanukiGame:
 			await _play_katanuki(hud.minigame(), true)
 		elif hud.is_in_minigame():
