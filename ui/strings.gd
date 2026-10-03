@@ -76,6 +76,34 @@ const DIVE_HINT_KEY := "Space を おしつづけて、「の！」で はなす
 const DIVE_COUNT_SE := "せー……"
 const DIVE_COUNT_NO := "の！"
 const DIVE_LATE_CALL := "はやく こいよー！"
+## タイムカプセル埋め（ミニゲーム）
+const CAPSULE_SPOTS := ["ひだり", "まんなか", "みぎ"]
+const CAPSULE_ANYWHERE := "どこでも いいぞ。"
+const CAPSULE_PICK_TOUCH := "うめる ばしょを タップ"
+const CAPSULE_PICK_KEY := "やじるしで ばしょを えらんで けってい"
+const CAPSULE_DIG_TOUCH := "タップで ひとすくい ほる"
+const CAPSULE_DIG_KEY := "Space で ひとすくい ほる"
+const CAPSULE_PLACE_TOUCH := "タップで かんを そっと おく"
+const CAPSULE_PLACE_KEY := "Space で かんを そっと おく"
+const CAPSULE_COVER_TOUCH := "おしつづけて つちを よせる"
+const CAPSULE_COVER_KEY := "Space を おしつづけて つちを よせる"
+const CAPSULE_PAT_TOUCH := "タップで ぽん"
+const CAPSULE_PAT_KEY := "Space で ぽん"
+const CAPSULE_PON := "ぽん、"
+const CAPSULE_PON_PON := "ぽん、ぽん。"
+## 掘りながらの会話。ひとすくいごとに1行すすむ（行を増やすと、すくう回数も増える）
+const CAPSULE_DIG_LINES := [
+	"まちの がっこうって でかいのかな。",
+	"ぼく：たぶん",
+	"おれ、とかいもんに なっちゃうな。",
+	"ぼく：タケルは タケルだよ",
+	"……なんだ それ。",
+	"おまえ、らいねんも きち つかえよ。",
+	"やね、ちゃんと なおせよ。",
+	"……よし。こんくらいで いいだろ。",
+]
+## さみしい一言（CAPSULE_DIG_LINES の番号）。このときだけ懐中電灯の光が少しゆれる
+const CAPSULE_SAD_LINES := [2, 5]
 ## カブトムシとり（ミニゲーム）
 const KABUTO_HINT_TOUCH := "がめんを おしつづけて そーっと すすむ。はなすと とまる"
 const KABUTO_HINT_KEY := "Space を おしつづけて そーっと すすむ。はなすと とまる"

@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"takeru_capsule"
 display_name = "タケル"
-lines = Array[String](["……きのう、ごめん。", "おれ、はるに ひっこすんだ。まちに。", "だから らいねん、おまえが きても、", "もう ここには いない。", "ぼく：……", "だからさ、これ。うめようぜ。", "@show marble", "おれは、これ。", "おまえも なにか いれろよ。", "@bury", "@event buried", "おとなに なったら、8月31日に ここで あける。", "ぜったいな。", "ぼく：ぜったい", "@give capsule_map"])
+lines = Array[String](["……きのう、ごめん。", "おれ、はるに ひっこすんだ。まちに。", "だから らいねん、おまえが きても、", "もう ここには いない。", "ぼく：……", "だからさ、これ。うめようぜ。", "@show marble", "おれは、これ。", "おまえも なにか いれろよ。", "@bury", "@game capsule", "@event buried", "おとなに なったら、8月31日に ここで あける。", "ぜったいな。", "ぼく：ぜったい", "けすぞ。", "@game capsule_stars", "……ほら。ちず、かいといた。", "@give capsule_map"])
 repeat_lines = Array[String](["ぜったいな。"])
 auto_talk = true
 placeholder_color = Color(0.659, 0.357, 0.271, 1)

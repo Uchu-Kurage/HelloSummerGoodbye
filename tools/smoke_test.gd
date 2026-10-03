@@ -10,6 +10,9 @@ var _katanuki_takeru_broke_at := -1
 var _ishikiri_demo_count := ""
 ## カブトムシが落ちて、また木にもどったのを見たか
 var _kabuto_saw_fall_recover := false
+## タイムカプセル埋めで、掘りながら出た話の数と、星の場面を見たか
+var _capsule_lines := 0
+var _capsule_stars_seen := false
 
 
 func _ready() -> void:
@@ -250,6 +253,14 @@ func _run() -> void:
 	GameState.ishikiri_best = 7
 	GameState.ishikiri_result = &"win"
 
+	# タイムカプセル埋め：まんなかに埋め、掘るごとに話が進み、懐中電灯を消して星を見る。地図のバツじるしは、となり
+	check(GameState.capsule_spot == 1, "capsule: buried in the middle (%d)" % GameState.capsule_spot)
+	check(_capsule_lines == Strings.CAPSULE_DIG_LINES.size(), "capsule: one line per scoop (%d)" % _capsule_lines)
+	check(_capsule_stars_seen, "capsule: flashlight goes off and the stars show")
+	check(GameState.find_item(&"capsule_map").icon != null and CapsuleGame.map_mark(1) != 1 and CapsuleGame.map_mark(0) == 1 and CapsuleGame.map_mark(2) == 1,
+		"capsule: the map's X is next to the chosen spot")
+	check(GameState.was_received(&"capsule_map"), "capsule: map after the stars")
+
 	# カブトムシとり：気づきかけたら止まり、一度も落とさずにつかむ
 	check(GameState.kabuto_drops == 0 and GameState.has_flag(&"kabuto_clean"), "kabuto: caught without dropping (%d)" % GameState.kabuto_drops)
 	check(GameState.was_received(&"bug_cage"), "kabuto: bug cage after catching")
@@ -384,6 +395,52 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	var out: String = SecretBase.Mode.keys()[b.mode] if b else ""
 	scene.free()
 	return out
+
+
+## タイムカプセル埋め：まんなかを選び、話が出るのを数えながら掘って、缶を置き、土を寄せ、ならす。星の場面は見届ける
+func _play_capsule(game: CapsuleGame) -> void:
+	var n := 0
+	if game.game_name == "capsule_stars":
+		while is_instance_valid(game) and game.phase != CapsuleGame.Phase.DONE and n < 2000:
+			if game.phase == CapsuleGame.Phase.STARS and game._t > 1.0:
+				_capsule_stars_seen = true
+			await get_tree().process_frame
+			n += 1
+		return
+	if game.phase != CapsuleGame.Phase.PICK:
+		# 前の呼び出しで遊び終えて、閉じているところ
+		while is_instance_valid(game) and game.phase != CapsuleGame.Phase.DONE and n < 2000:
+			await get_tree().process_frame
+			n += 1
+		return
+	await get_tree().process_frame
+	game.choose_spot(1)
+	var lines := {}
+	while game.phase == CapsuleGame.Phase.DIG and n < 100:
+		n += 1
+		game._hold.press()
+		game._hold.release()
+		lines[game._line.text] = true
+		await get_tree().process_frame
+	_capsule_lines = lines.size()
+	game._hold.press()
+	game._hold.release()
+	game._hold.press()
+	n = 0
+	while game.phase == CapsuleGame.Phase.COVER and n < 600:
+		await get_tree().process_frame
+		n += 1
+	n = 0
+	while game._takeru_pats < CapsuleGame.PATS and n < 600:
+		await get_tree().process_frame
+		n += 1
+	for i in CapsuleGame.PATS:
+		game._hold.press()
+		game._hold.release()
+	n = 0
+	while is_instance_valid(game) and game.phase != CapsuleGame.Phase.DONE and n < 2000:
+		await get_tree().process_frame
+		n += 1
 
 
 ## カブトムシとり：careful なら、食べているときだけ進み、気づきかけたら止まる。そうでなければ押しっぱなし
@@ -528,6 +585,8 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		guard += 1
 		if hud.minigame() is DiveGame:
 			await _play_dive(hud.minigame(), true)
+		elif hud.minigame() is CapsuleGame:
+			await _play_capsule(hud.minigame())
 		elif hud.minigame() is KabutoGame:
 			await _play_kabuto(hud.minigame(), true)
 		elif hud.minigame() is IshikiriGame:

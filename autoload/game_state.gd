@@ -44,6 +44,8 @@ var dive_result := &""
 ## 石切り（3日目）で3回投げたうち、いちばんよく跳ねた回数と、タケルとの勝負の結果（&"win"／&"draw"／&"lose"）。空ならまだ
 var ishikiri_best := 0
 var ishikiri_result := &""
+## タイムカプセルを埋めた場所（0 左／1 まんなか／2 右）。-1 ならまだ
+var capsule_spot := -1
 ## カブトムシとり（6日目）で落とした回数。-1 ならまだ
 var kabuto_drops := -1
 ## 型抜き（5日目）の結果：&"clean"（ぬけた）／&"broken"（われた）。空ならまだ
@@ -67,6 +69,10 @@ func reset() -> void:
 	katanuki_result = &""
 	ishikiri_best = 0
 	kabuto_drops = -1
+	capsule_spot = -1
+	var map := find_item(&"capsule_map")
+	if map:
+		map.icon = null
 	ishikiri_result = &""
 	current_day_index = 0
 	start_day_index = 0
@@ -207,6 +213,14 @@ func set_ishikiri_best(n: int, r: StringName) -> void:
 	ishikiri_best = n
 	ishikiri_result = r
 	set_flag(StringName("ishikiri_" + r))
+
+
+## タイムカプセルを埋めた場所を記録し、タケルの地図の絵を作る（バツじるしは、となりにずれている）
+func set_capsule_spot(i: int) -> void:
+	capsule_spot = i
+	var map := find_item(&"capsule_map")
+	if map:
+		map.icon = CapsuleGame.map_texture(i)
 
 
 ## カブトムシとりの結果を記録する。会話で分けられるよう、フラグ kabuto_clean（一度も落とさない）／ kabuto_dropped も立てる

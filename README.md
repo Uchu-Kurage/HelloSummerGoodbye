@@ -67,7 +67,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
 | `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
-| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game kabuto` / `@game dive` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／カブトムシとり／飛び込み） |
+| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game kabuto` / `@game dive` / `@game capsule` / `@game capsule_stars` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／カブトムシとり／飛び込み／タイムカプセル埋め／懐中電灯を消して星を見る） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -134,6 +134,13 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - 「押しつづけて離す」の入力は `ui/components/hold_input.gd`（HoldInput）。キーボードは Space / Enter / E、タッチ・マウスは画面のどこか
 - 結果（`GameState.dive_result`、フラグ `dive_perfect` / `dive_early` / `dive_late`）でタケルの一言が変わる。せりふは `data/npcs/takeru_dive.tres`
 - 間の長さと判定の幅は `DiveGame` の `COUNT_NO`・`PERFECT_WINDOW`
+
+### ミニゲーム：タイムカプセル埋め（9日目）
+
+- 画面：`ui/capsule_game.gd`。会話の `@game capsule`（缶に入れる物を選んだあと）で、埋める場所を選ぶ → 掘る → 缶を置く → 土を寄せる → ならす。約束のあとの `@game capsule_stars` で、懐中電灯を消して星を見る
+- 掘りながらの会話は `Strings.CAPSULE_DIG_LINES`。ひとすくいで1行すすむので、行を増やすと、すくう回数も増える。光がゆれる行は `CAPSULE_SAD_LINES`
+- 選んだ場所は `GameState.capsule_spot`。地図の絵（`CapsuleGame.map_texture`）のバツじるしは、選んだ場所のとなりにずれている
+- 懐中電灯は Light2D を使わず、画面を暗くする重ね絵に丸い穴をあけて描く
 
 ## 色や文字の大きさを変える
 
