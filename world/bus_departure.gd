@@ -2,17 +2,15 @@ extends Node2D
 ## 帰る日のバス（親友ルート）。足もと（バス停の前の道）が原点。
 ## 1. バスに乗ると走り出し、窓の外を村の景色が流れる
 ## 2. 自転車のベルが鳴り、タケルが後ろの坂道から立ちこぎで追いかけてくる
-## 3. 「まど あけろー！」→ 窓をあけると帽子が飛び込んでくる →「やくそくだぞー！」
+## 3. タケルが追いつくと、ミニゲーム「帽子を受け止める」（後ろを振り返って、窓を開け、帽子を受け止め、さけび返す）
 ## 4. バスがカーブを曲がり、タケルが見えなくなる。そのまま日の終わり（エンディング）まで走る
 
-enum State { WAIT, BOARD, RIDE, CHASE, CALL, WINDOW, THROW, THANKS, AWAY }
+enum State { WAIT, BOARD, RIDE, CHASE, CATCH, AWAY }
 
 ## 自転車のタケルのせりふ（話す人の名前と色もここから）
 @export var takeru: NpcData
-## 最初の呼びかけ
-@export var call_lines: Array[String] = ["おーい！ まどー！ まど あけろー！"]
-## 帽子が飛び込んできたあと（@give で帽子をもらう）
-@export var thanks_lines: Array[String] = ["@give takeru_hat", "やくそくだぞー！"]
+## 追いついたら：ミニゲームで帽子を受け止め、帽子をもらう
+@export var catch_lines: Array[String] = ["@game hat", "@give takeru_hat"]
 ## 止まっているバスの位置（この場面の原点＝バス停からの距離）
 @export var bus_offset := 400.0
 ## 帽子を受け取るまで、バスはこの位置（バス停からの距離）より先へは行かない
@@ -40,17 +38,13 @@ var _bike_x := -INF
 var _bike_alpha := 1.0
 var _bike_t := 0.0
 var _wheel := 0.0
-var _hat_t := -1.0
 var _window_open := false
 var _player: Player
 var _hud: Hud
-@onready var _window: BusWindow = $Window
 
 
 func _ready() -> void:
 	_bus_x = bus_offset
-	_window.bubble_height = 40.0
-	_window.opened.connect(_on_window_opened)
 
 
 func _process(delta: float) -> void:
@@ -64,9 +58,8 @@ func _process(delta: float) -> void:
 			var x := _player.global_position.x - global_position.x
 			if x >= _bus_x + DOOR_X and not _player.talking and not _player.locked and not (_hud and _hud.is_message_open()):
 				_board()
-		State.RIDE, State.CHASE, State.CALL, State.WINDOW, State.THROW, State.THANKS, State.AWAY:
+		State.RIDE, State.CHASE, State.CATCH, State.AWAY:
 			_drive(delta)
-	_window.position = Vector2(_bus_x + SEAT_X, -BUS_H + 30)
 	queue_redraw()
 
 
@@ -85,7 +78,7 @@ func _board() -> void:
 
 func _drive(delta: float) -> void:
 	var target := SPEED_RIDE
-	if state in [State.CALL, State.WINDOW, State.THROW]:
+	if state == State.CATCH:
 		target = SPEED_SLOW
 	elif state == State.AWAY:
 		target = SPEED_AWAY
@@ -116,8 +109,8 @@ func _drive_bike(delta: float) -> void:
 		State.CHASE:
 			_bike_x = minf(_bike_x + (_speed + 260.0) * delta, want)
 			if _bike_x >= want:
-				_call()
-		State.CALL, State.WINDOW, State.THROW, State.THANKS:
+				_catch()
+		State.CATCH:
 			_bike_x = want
 		State.AWAY:
 			# カーブを曲がって見えなくなる
@@ -125,23 +118,12 @@ func _drive_bike(delta: float) -> void:
 			_bike_alpha = maxf(0.0, _bike_alpha - delta * 0.8)
 
 
-func _call() -> void:
-	state = State.CALL
-	await _hud.run_talk(takeru, call_lines)
-	state = State.WINDOW
-	_window.enable()
-
-
-func _on_window_opened() -> void:
-	state = State.THROW
+## 追いついた：後ろを振り返る画面で、窓を開けて帽子を受け止める（ミニゲーム）。終わったら、もうタケルは見えない
+func _catch() -> void:
+	state = State.CATCH
+	await _hud.run_talk(takeru, catch_lines)
 	_window_open = true
-	_hat_t = 0.0
-	var tw := create_tween().set_trans(UiTokens.TRANS).set_ease(Tween.EASE_OUT)
-	tw.tween_property(self, "_hat_t", 1.0, UiTokens.TIME_FADE * 2)
-	await tw.finished
-	_hat_t = -1.0
-	state = State.THANKS
-	await _hud.run_talk(takeru, thanks_lines)
+	_bike_alpha = 0.0
 	state = State.AWAY
 
 
@@ -149,11 +131,6 @@ func _draw() -> void:
 	_draw_bus()
 	if _bike_x > -INF and _bike_alpha > 0.0:
 		_draw_bike()
-	if _hat_t >= 0.0:
-		var from := Vector2(_bike_x + 10, -150)
-		var to := Vector2(_bus_x + SEAT_X, -BUS_H + 60)
-		var p := from.lerp(to, _hat_t) + Vector2(0, -90.0 * 4.0 * _hat_t * (1.0 - _hat_t))
-		_draw_hat(p, _hat_t * TAU)
 
 
 func _draw_bus() -> void:
@@ -209,7 +186,7 @@ func _draw_bike() -> void:
 	draw_circle(head, 15, Color(d.skin_color, a))
 	draw_arc(head, 13, PI * 0.9, PI * 2.05, 12, Color(d.hair_color, a), 7.0)
 	# 投げるまでは帽子をかぶっている
-	if state in [State.CHASE, State.CALL, State.WINDOW]:
+	if state in [State.CHASE, State.CATCH]:
 		_draw_hat(head + Vector2(0, -12), 0.0, a)
 
 

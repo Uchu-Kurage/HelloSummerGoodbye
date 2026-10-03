@@ -67,7 +67,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
 | `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
-| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game kabuto` / `@game dive` / `@game capsule` / `@game capsule_stars` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／カブトムシとり／飛び込み／タイムカプセル埋め／懐中電灯を消して星を見る） |
+| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game kabuto` / `@game dive` / `@game capsule` / `@game capsule_stars` / `@game hat` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／カブトムシとり／飛び込み／タイムカプセル埋め／懐中電灯を消して星を見る／帽子を受け止める） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -141,6 +141,12 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - 掘りながらの会話は `Strings.CAPSULE_DIG_LINES`。ひとすくいで1行すすむので、行を増やすと、すくう回数も増える。光がゆれる行は `CAPSULE_SAD_LINES`
 - 選んだ場所は `GameState.capsule_spot`。地図の絵（`CapsuleGame.map_texture`）のバツじるしは、選んだ場所のとなりにずれている
 - 懐中電灯は Light2D を使わず、画面を暗くする重ね絵に丸い穴をあけて描く
+
+### ミニゲーム：帽子を受け止める（10日目）
+
+- 画面：`ui/hat_game.gd`。バス（`world/bus_departure.gd`）に自転車のタケルが追いつくと、会話の `@game hat` で始まる。終わったら `@give takeru_hat`
+- この場面だけ、カメラが後ろを振り返る。窓を開ける（押しつづけて `OPEN_TIME`）→ 帽子が飛んでくる（`HAT_TIME`）。押しつづけて手をのばしていれば受け止め、のばしていなければ顔に当たる → 「やくそくだぞー！」→ 押すたびにさけび返す（`Strings.HAT_SHOUTS`）→ タケルが小さくなり（`RECEDE_TIME`）、カーブの木で見えなくなる
+- 結果は `GameState.hat_caught`、フラグ `hat_caught` / `hat_face`。タケルの最後の一言は石切りの結果で変わる（`HatGame.last_line`）
 
 ## 色や文字の大きさを変える
 
