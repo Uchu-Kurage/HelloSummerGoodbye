@@ -1,26 +1,23 @@
 @tool
 extends Node2D
 ## 横にくり返せる景色（山並み・木立ち・しげみ・雲・田んぼ・電柱）。width で一周する形にする。
-## 山並み・木・雲は Kenney「Background Elements」（CC0）の絵を使う。白い影絵にしてあるので、color をかけて色をつける
-## （時間帯の色は CanvasModulate が上からかける）。しげみ・田んぼ・電柱・入道雲は図形で描く。出典は res://CREDITS.md。
+## 山並みと入道雲は手描き風の絵（Google Gemini で生成し、背景を切り抜いたもの。res://world/scenery/painted/）。
+## 木立ちは Kenney「Background Elements」（CC0）の白い影絵に color をかける。しげみ・田んぼ・電柱は図形で描く。
+## 時間帯の色は CanvasModulate が上からかける。出典は res://CREDITS.md。
 
 enum Kind { HILLS, BUSHES, CLOUDS, FIELDS, WIRES, TREES }
 
-const HILLS_TEX: Texture2D = preload("res://world/scenery/hills_1.png")
-const HILLS_TEX_2: Texture2D = preload("res://world/scenery/hills_2.png")
+## 山並み（横にくり返せる1枚）と入道雲
+const MOUNTAINS_TEX: Texture2D = preload("res://world/scenery/painted/mountains.png")
+const CLOUD_TOWER_TEX: Texture2D = preload("res://world/scenery/painted/cloud_tower.png")
 const TREE_TEX: Array[Texture2D] = [
 	preload("res://world/scenery/tree_round.png"),
 	preload("res://world/scenery/tree_cedar.png"),
 	preload("res://world/scenery/tree_bushy.png"),
 ]
-const CLOUD_TEX: Array[Texture2D] = [
-	preload("res://world/scenery/cloud_1.png"),
-	preload("res://world/scenery/cloud_4.png"),
-	preload("res://world/scenery/cloud_6.png"),
-	preload("res://world/scenery/cloud_2.png"),
-	preload("res://world/scenery/cloud_8.png"),
-]
-## 絵の山並みの下のふち（半透明）を、塗りつぶしと重ねる幅
+## 入道雲：[x（割合）, 底の高さ（base_y から）, 大きさ]。大きいのは底が山並みのうしろに沈む
+const CLOUD_SPECS := [[0.78, 70.0, 0.85], [0.3, -150.0, 0.34], [0.52, -230.0, 0.24]]
+## 山並みの下のふち（半透明）を、塗りつぶしと重ねる幅
 const HILL_OVERLAP := 6.0
 
 @export var kind: Kind = Kind.HILLS
@@ -34,8 +31,7 @@ const HILL_OVERLAP := 6.0
 func _draw() -> void:
 	match kind:
 		Kind.HILLS:
-			_hill_strip(HILLS_TEX_2, color_2, height * 1.3, 0.37)
-			_hill_strip(HILLS_TEX, color, height, 0.0)
+			_hill_strip(MOUNTAINS_TEX, height)
 		Kind.BUSHES:
 			_bushes()
 		Kind.CLOUDS:
@@ -48,16 +44,16 @@ func _draw() -> void:
 			_trees()
 
 
-## 絵の山並みを width にちょうど収まる枚数だけ横に並べる。phase（0〜1）で1枚ぶんの中をずらす
-func _hill_strip(tex: Texture2D, c: Color, h: float, phase: float) -> void:
+## 絵の山並み（高さ h）を、width にちょうど収まる枚数だけ横に並べる。下は color で塗りつぶす
+func _hill_strip(tex: Texture2D, h: float) -> void:
 	var aspect := float(tex.get_width()) / tex.get_height()
 	var n := maxi(1, roundi(width / (h * aspect)))
 	var tile := width / n
 	var top := base_y - h
 	for i in range(-1, n + 1):
 		# つなぎ目に細い線が出ないよう、となりと少し重ねる
-		draw_texture_rect(tex, Rect2((i + phase) * tile - 1.0, top, tile + 2.0, h), false, c)
-	draw_rect(Rect2(0, base_y - HILL_OVERLAP, width, 800 + HILL_OVERLAP), c)
+		draw_texture_rect(tex, Rect2(i * tile - 1.0, top, tile + 2.0, h), false)
+	draw_rect(Rect2(0, base_y - HILL_OVERLAP, width, 800 + HILL_OVERLAP), color)
 
 
 ## 木立ち：丸い木・杉・こんもりした木を、すこしずつ間をかえて並べる（同じ並びで一周する）
@@ -82,53 +78,13 @@ func _bushes() -> void:
 	draw_rect(Rect2(0, base_y, width, 800), color)
 
 
-## 雲：絵の雲を高さと大きさをかえて散らす。いちばん大きいのは入道雲として図形で描く
+## 雲：絵の入道雲を、大きさと高さをかえて置く（光は左上から）
 func _clouds() -> void:
-	var specs := [[0.33, -170.0, 0.9], [0.58, -60.0, 1.25], [0.95, -210.0, 0.75], [0.24, 10.0, 1.1], [0.43, -260.0, 0.6]]
-	for i in specs.size():
-		var tex := CLOUD_TEX[i % CLOUD_TEX.size()]
-		var sp: Array = specs[i]
+	var tex := CLOUD_TOWER_TEX
+	for sp in CLOUD_SPECS:
 		var sz := tex.get_size() * float(sp[2])
 		var pos := Vector2(width * float(sp[0]) - sz.x * 0.5, base_y + float(sp[1]) - sz.y)
-		draw_texture_rect(tex, Rect2(pos, sz), false, WorldPalette.CLOUD)
-	_cumulus()
-
-
-## 入道雲：もこもこの丸を積み上げ、底は平らにする。光は左上から：影の側は青みの灰色、日の当たる側は白（3段の重ね）
-func _cumulus() -> void:
-	# 地平線の上にそびえる大きな入道雲（底は山並みのうしろに沈む）
-	_draw_cumulus(width * 0.8, base_y + 90.0, 1.3, TOWER_BUMPS)
-	_draw_cumulus(width * 0.14, base_y, 0.75, SMALL_BUMPS)
-
-
-const SMALL_BUMPS := [[-150, -40, 70], [-70, -110, 95], [30, -170, 115], [130, -95, 90], [210, -40, 65], [60, -260, 85]]
-const TOWER_BUMPS := [
-	[-260, -50, 80], [-150, -70, 100], [-30, -80, 110], [100, -70, 105], [220, -50, 85],
-	[-120, -170, 100], [0, -200, 120], [120, -170, 95],
-	[-60, -300, 105], [60, -310, 100], [-110, -380, 65], [-10, -400, 95], [90, -390, 70],
-	[-70, -470, 55], [0, -480, 80], [70, -465, 60],
-]
-
-
-func _draw_cumulus(cx: float, bottom: float, k: float, bumps: Array) -> void:
-	var left := INF
-	var right := -INF
-	for b in bumps:
-		left = minf(left, cx + (b[0] - b[2] * 0.8) * k)
-		right = maxf(right, cx + (b[0] + b[2] * 0.8) * k)
-	# 影（いちばん外側）と、平らな底
-	for b in bumps:
-		draw_circle(Vector2(cx + b[0] * k, bottom + b[1] * k), b[2] * k, WorldPalette.CLOUD_SHADOW)
-	draw_rect(Rect2(left, bottom - 70 * k, right - left, 70 * k), WorldPalette.CLOUD_SHADOW)
-	# 中間の明るさ → 日の当たる面 → いちばん明るいところ。少しずつ左上へずらして重ねる
-	for b in bumps:
-		var r: float = b[2] * k
-		draw_circle(Vector2(cx + b[0] * k - r * 0.08, bottom + b[1] * k - r * 0.1), r * 0.9, WorldPalette.CLOUD_SHADE)
-	for b in bumps:
-		var r: float = b[2] * k
-		draw_circle(Vector2(cx + b[0] * k - r * 0.18, bottom + b[1] * k - r * 0.22), r * 0.72, WorldPalette.CLOUD)
-	# 底のあたりはかげる
-	draw_rect(Rect2(left, bottom - 34 * k, right - left, 34 * k), Color(WorldPalette.CLOUD_SHADOW, 0.85))
+		draw_texture_rect(tex, Rect2(pos, sz), false)
 
 
 ## 田んぼ：あぜ道で区切られた、すじのある緑の帯

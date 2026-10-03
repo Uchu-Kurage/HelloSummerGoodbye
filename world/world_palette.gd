@@ -15,8 +15,6 @@ const SIGN_BOARD := Color("#D8C3A0")
 const SIGN_POST := Color("#7D6650")
 const CLOUD := Color("#FBF8F1")
 const CLOUD_SHADE := Color("#E2E6E8")
-## 入道雲の影の側（青みの灰色）
-const CLOUD_SHADOW := Color("#C3D0DC")
 const PADDY := Color("#9DBB77")
 const PADDY_ROW := Color("#B4CC8C")
 const PADDY_PATH := Color("#C9B98E")

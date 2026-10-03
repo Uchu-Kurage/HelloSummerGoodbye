@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b4p7mf8k2b2of"
-path="res://.godot/imported/hills_2.png-3a7bcaca531b56be1611457289380c88.ctex"
+uid="uid://bf05wo6n58xep"
+path="res://.godot/imported/branch.png-0f87325046a3f6e579ba99a804b032b3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://world/scenery/hills_2.png"
-dest_files=["res://.godot/imported/hills_2.png-3a7bcaca531b56be1611457289380c88.ctex"]
+source_file="res://world/scenery/painted/branch.png"
+dest_files=["res://.godot/imported/branch.png-0f87325046a3f6e579ba99a804b032b3.ctex"]
 
 [params]
 
