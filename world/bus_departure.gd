@@ -17,10 +17,17 @@ enum State { WAIT, BOARD, RIDE, CHASE, CATCH, AWAY }
 @export var hold_x := 2000.0
 
 const P := preload("res://world/world_palette.gd")
+## バスの絵（Google Gemini で生成し、背景を切り抜いたもの。窓は抜けている）と、表示する横幅
+const BUS_TEX: Texture2D = preload("res://world/scenery/painted/prop_bus.png")
 const BUS_W := 560.0
-const BUS_H := 210.0
-## 乗り口（バスの左寄り）とプレイヤーの席（後ろの窓）の位置（バスの中心から）
-const DOOR_X := -170.0
+## 絵のいちばん下（タイヤの下の余白）を地面にしずめる
+const BUS_SINK := 8.0
+## 絵の中の窓の帯：[左, 上, 右, 下]（px）
+const BUS_WINDOWS := Vector4(85, 95, 840, 200)
+## いちばん後ろの窓の半分の幅（開けたときにガラスをなくす範囲）
+const BUS_REAR_HALF := 36.0
+## 乗り口（前の扉）とプレイヤーの席（後ろの窓）の位置（バスの中心から）
+const DOOR_X := 190.0
 const SEAT_X := -190.0
 const SPEED_RIDE := 220.0
 const SPEED_SLOW := 40.0
@@ -134,30 +141,26 @@ func _draw() -> void:
 
 
 func _draw_bus() -> void:
-
+	var tex := BUS_TEX
+	var k := BUS_W / tex.get_width()
+	var h := tex.get_height() * k
 	var l := _bus_x - BUS_W / 2.0
-	var top := -BUS_H - 24
-	draw_rect(Rect2(l, top, BUS_W, BUS_H), P.BUS_BODY)
-	draw_rect(Rect2(l, top + BUS_H * 0.62, BUS_W, 18), P.BUS_STRIPE)
-	draw_rect(Rect2(l + 6, top - 8, BUS_W - 12, 12), P.BUS_STRIPE)
-	# 窓（いちばん後ろがプレイヤーの席）
-	for i in 6:
-		var wx := l + 24 + i * 88
-		var open := i == 0 and _window_open
-		draw_rect(Rect2(wx, top + 24, 72, 70), P.SHOP_DARK if open else P.BUS_WINDOW)
-	# 窓からのぞくプレイヤーの顔（乗ってから）
+	var top := -h + BUS_SINK
+	# 絵の窓は抜けているので、うしろに車内の暗さを描き、そこにプレイヤーの顔をのぞかせる
+	var band := Rect2(l + BUS_WINDOWS.x * k, top + BUS_WINDOWS.y * k, (BUS_WINDOWS.z - BUS_WINDOWS.x) * k, (BUS_WINDOWS.w - BUS_WINDOWS.y) * k)
+	draw_rect(band, P.SHOP_DARK)
 	if state != State.WAIT and state != State.BOARD:
-		var head := Vector2(_bus_x + SEAT_X, top + 70)
+		var head := Vector2(_bus_x + SEAT_X, band.position.y + band.size.y * 0.55)
 		draw_circle(head, 16, P.PLAYER_SKIN)
 		draw_rect(Rect2(head.x - 22, head.y - 18, 44, 6), P.PLAYER_HAT)
 		draw_rect(Rect2(head.x - 14, head.y - 30, 28, 13), P.PLAYER_HAT)
-	# 乗り口
-	draw_rect(Rect2(_bus_x + DOOR_X + 60, top + 24, 50, BUS_H - 30), P.BUS_WINDOW.darkened(0.15))
-	for wx in [l + 90, l + BUS_W - 90]:
-		var c := Vector2(wx, -18)
-		draw_circle(c, 26, P.SHOP_DARK)
-		draw_circle(c, 10, P.ROCK)
-		draw_line(c, c + Vector2(cos(_wheel), sin(_wheel)) * 22, P.ROCK_DARK, 3.0)
+	# 窓ガラス（いちばん後ろの窓は、開けたらガラスをなくす）
+	var rear_r := _bus_x + SEAT_X + BUS_REAR_HALF
+	if _window_open:
+		draw_rect(Rect2(rear_r, band.position.y, band.end.x - rear_r, band.size.y), Color(P.BUS_WINDOW, 0.45))
+	else:
+		draw_rect(band, Color(P.BUS_WINDOW, 0.45))
+	draw_texture_rect(tex, Rect2(l, top, BUS_W, h), false)
 
 
 func _draw_bike() -> void:

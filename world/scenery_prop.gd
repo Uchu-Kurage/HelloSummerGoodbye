@@ -1,8 +1,8 @@
 @tool
 extends Node2D
 ## 親友ルートの場所（駄菓子屋・川原・秘密基地・夏祭り・バス停など）を描く。足もと（地面）が原点。
-## 石・岩・しげみ・雑木林・クヌギ・鳥居・提灯・屋台・街灯・段ボール箱・バス停は手描き風の絵
-## （Google Gemini で生成し、背景を切り抜いたもの。res://world/scenery/painted/）。ほかはまだ図形で描く。
+## ほとんどは手描き風の絵（Google Gemini で生成し、背景を切り抜いたもの。res://world/scenery/painted/）。
+## ビー玉の輪・星空・缶を埋めた土は図形で描く。
 ## 灯りの光（*_GLOW）は GlowLayer の下に置くと、夜でも暗くならない。
 
 enum Kind {
@@ -53,6 +53,11 @@ const SHADOW := Color(0.12, 0.16, 0.08, 0.22)
 const LANTERN_CENTER := 289.0
 const LANTERN_BODY := 234.0
 const LANTERN_SIZE := 44.0
+## 飛び込み岩の深い淵の色（川の絵にかける）
+const DEEP_POOL := Color(0.45, 0.68, 0.66)
+## 送り火：絵の高さと、皿のまん中（絵の中の px。火と光はここから）
+const OKURIBI_H := 220.0
+const OKURIBI_DISH := Vector2(479, 320)
 ## 街灯の絵の高さと、電球の位置（絵の中の px）
 const STREETLIGHT_H := 340.0
 const STREETLIGHT_BULB := Vector2(129, 126)
@@ -125,28 +130,9 @@ func _shadow(center: Vector2, radius: Vector2) -> void:
 
 
 func _shop() -> void:
-	# 建物
-	draw_rect(Rect2(-260, -250, 520, 250), P.SHOP_WALL)
-	_poly([Vector2(-300, -240), Vector2(-240, -320), Vector2(240, -320), Vector2(300, -240)], P.HOUSE_ROOF)
-	# 店先（ひさし、のれん、たな）
-	draw_rect(Rect2(-280, -240, 560, 14), P.WOOD_DARK)
-	draw_rect(Rect2(-200, -200, 300, 200), P.SHOP_DARK)
-	for i in 3:
-		var y := -170 + i * 50
-		draw_rect(Rect2(-190, y + 30, 280, 6), P.WOOD)
-		for j in 6:
-			var c: Color = [P.LANTERN, P.MARBLE_BLUE, P.CANOPY_STRIPE, P.MARBLE_GREEN][(i + j) % 4]
-			draw_rect(Rect2(-180 + j * 45, y + 8, 28, 22), c)
-	for j in 5:
-		draw_rect(Rect2(-200 + j * 60, -226, 54, 46), P.NOREN)
-	# アイスの冷凍庫（店の前）
-	draw_rect(Rect2(140, -78, 96, 78), P.FREEZER)
-	draw_rect(Rect2(136, -86, 104, 12), P.CLOUD_SHADE)
-	draw_rect(Rect2(150, -64, 76, 30), P.WATER_LIGHT)
-	# ベンチ
-	draw_rect(Rect2(-250, -52, 150, 10), P.WOOD)
-	draw_rect(Rect2(-244, -42, 8, 42), P.WOOD_DARK)
-	draw_rect(Rect2(-114, -42, 8, 42), P.WOOD_DARK)
+	# 店先のベンチとアイスの冷凍庫も絵に入っている
+	_shadow(Vector2(0, -2), Vector2(300, 12))
+	_art("prop_shop", Vector2(0, 4), 333.0)
 
 
 func _marble_ring() -> void:
@@ -157,22 +143,20 @@ func _marble_ring() -> void:
 
 
 func _river() -> void:
-	# 道の向こうを流れる浅瀬。手前は丸い石の岸
-	draw_rect(Rect2(0, -70, width, 66), P.WATER)
-	draw_rect(Rect2(0, -74, width, 6), P.STONE_LIGHT)
-	for i in int(width / 120):
-		var x := 40.0 + i * 120.0
-		var y := -56.0 + (i % 3) * 14.0
-		draw_line(Vector2(x, y), Vector2(x + 50, y), P.WATER_LIGHT, 3.0)
-	for i in int(width / 46):
-		var x := 12.0 + i * 46.0 + (i % 2) * 14
-		draw_circle(Vector2(x, -6), 9 + (i % 3) * 3, P.ROCK if i % 2 else P.STONE_LIGHT)
+	# 道の向こうを流れる浅瀬。手前は丸い石の岸。絵の帯を width いっぱいに並べる
+	var tex := _tex("river")
+	var h := 90.0
+	var n := maxi(1, roundi(width / (h * tex.get_width() / tex.get_height())))
+	var tile := width / n
+	for i in n:
+		draw_texture_rect(tex, Rect2(i * tile - 1.0, -h + 4.0, tile + 2.0, h), false)
 
 
 ## 川原の大きな岩（タケルが座る）
 func _big_rock() -> void:
-	_shadow(Vector2(0, -2), Vector2(96, 10))
-	_art("stone_3", Vector2.ZERO, 120.0)
+	# タケルが上に立つ（足もとが -88）ので、てっぺんが -96 くらいの高さにする
+	_shadow(Vector2(0, -2), Vector2(80, 9))
+	_art("stone_3", Vector2.ZERO, 98.0)
 
 
 func _stones() -> void:
@@ -253,12 +237,8 @@ func _streetlight(glow: bool) -> void:
 
 
 func _takeru_house() -> void:
-	draw_rect(Rect2(-240, -240, 480, 240), P.WOOD)
-	for i in 8:
-		draw_line(Vector2(-240 + i * 60, -240), Vector2(-240 + i * 60, 0), P.WOOD_DARK, 2.0)
-	_poly([Vector2(-290, -230), Vector2(0, -380), Vector2(290, -230)], P.TIN_ROOF)
-	draw_rect(Rect2(-50, -150, 100, 150), P.SHOP_DARK)
-	draw_rect(Rect2(-190, -190, 90, 60), P.SIGN_BOARD)
+	_shadow(Vector2(0, -2), Vector2(300, 12))
+	_art("prop_takeru_house", Vector2(0, 4), 340.0)
 
 
 func _boxes() -> void:
@@ -283,39 +263,35 @@ func _kunugi() -> void:
 
 
 func _dive_rock() -> void:
-	# 深い淵（岩の右、道の向こう）
-	draw_rect(Rect2(60, -96, 560, 92), P.WATER_DEEP)
-	draw_rect(Rect2(60, -100, 560, 8), P.WATER)
-	for i in 4:
-		var y := -70.0 + (i % 2) * 26.0
-		draw_line(Vector2(120 + i * 120, y), Vector2(170 + i * 120, y), P.WATER, 3.0)
+	# 深い淵（岩の右、道の向こう）。川の帯を暗い緑にして使う
+	var tex := _tex("river")
+	var h := 98.0
+	var tile := h * tex.get_width() / tex.get_height()
+	var x := 60.0
+	while x < 620.0:
+		var w := minf(tile, 620.0 - x)
+		draw_texture_rect_region(tex, Rect2(x, -h + 2.0, w, h), Rect2(0, 0, w / tile * tex.get_width(), tex.get_height()), DEEP_POOL)
+		x += tile
 	# 高い岩
-	_poly([Vector2(-180, 0), Vector2(-150, -180), Vector2(-90, -270), Vector2(40, -280), Vector2(90, -230),
-		Vector2(110, -40), Vector2(80, 0)], P.ROCK)
-	_poly([Vector2(-90, -270), Vector2(40, -280), Vector2(20, -250), Vector2(-80, -246)], P.STONE_LIGHT)
-	draw_line(Vector2(-120, -150), Vector2(-40, -100), P.ROCK_DARK, 3.0)
-	draw_line(Vector2(0, -200), Vector2(70, -150), P.ROCK_DARK, 3.0)
+	_art("prop_diverock", Vector2(-30, 4), 300.0)
 
 
 func _okuribi(glow: bool) -> void:
+	var tex := _tex("prop_okuribi")
+	var k := OKURIBI_H / tex.get_height()
+	var dish := Vector2((OKURIBI_DISH.x - tex.get_width() / 2.0) * k, -OKURIBI_H + OKURIBI_DISH.y * k)
 	if glow:
-		draw_circle(Vector2(0, -26), 38, P.FIRE_GLOW)
-		draw_circle(Vector2(0, -22), 18, P.FIRE_GLOW)
-		_poly([Vector2(-12, -14), Vector2(0, -52), Vector2(12, -14)], Color(P.FIRE, 0.9))
+		draw_circle(dish + Vector2(0, -16), 38, P.FIRE_GLOW)
+		draw_circle(dish + Vector2(0, -12), 18, P.FIRE_GLOW)
+		_poly([dish + Vector2(-12, -4), dish + Vector2(0, -42), dish + Vector2(12, -4)], Color(P.FIRE, 0.9))
 		return
-	# 門口：門柱と、おがらを焚く素焼きの皿
-	draw_rect(Rect2(-110, -200, 18, 200), P.WOOD_DARK)
-	draw_rect(Rect2(92, -200, 18, 200), P.WOOD_DARK)
-	draw_rect(Rect2(-26, -12, 52, 12), P.ROCK_DARK)
-	for i in 5:
-		draw_line(Vector2(-16 + i * 8, -12), Vector2(-10 + i * 6, -26), P.WOOD, 2.0)
+	# 門口：門柱と、おがらを井桁に組んだ素焼きの皿
+	_art("prop_okuribi", Vector2(0, 6), OKURIBI_H)
 
 
 func _engawa() -> void:
-	draw_rect(Rect2(-260, -60, 520, 14), P.WOOD)
-	draw_rect(Rect2(-260, -46, 520, 6), P.WOOD_DARK)
-	for x in [-250, -80, 80, 240]:
-		draw_rect(Rect2(x, -40, 10, 40), P.WOOD_DARK)
+	# 家の前の縁側（手前のふちと脚）
+	_art("prop_engawa", Vector2(0, 2), 89.0)
 
 
 func _bus_stop() -> void:
@@ -325,9 +301,10 @@ func _bus_stop() -> void:
 
 
 func _slope() -> void:
-	# 後ろの坂道：左の丘から道が下りてくる
-	_poly([Vector2(-width, -220), Vector2(-width * 0.4, -170), Vector2(0, -20), Vector2(0, 0), Vector2(-width, 0)], P.GROUND_DARK)
-	_poly([Vector2(-width, -196), Vector2(-width * 0.4, -150), Vector2(0, -6), Vector2(0, 8), Vector2(-width * 0.4, -130), Vector2(-width, -176)], P.ROAD)
+	# 後ろの坂道：左の丘から道が下りてくる（絵の右下が原点）
+	var tex := _tex("prop_slope")
+	var h := width * tex.get_height() / tex.get_width()
+	draw_texture_rect(tex, Rect2(-width, -h + 8.0, width, h), false)
 
 
 func _stars() -> void:

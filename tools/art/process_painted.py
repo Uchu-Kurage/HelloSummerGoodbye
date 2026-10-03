@@ -20,6 +20,17 @@ STRIPS = {
 	'mountains': [(0, 400), 300],
 	'trees': [(0, None), 240],
 	'paddies': [(0, 300), 260],
+	'river': [(0, None), 220],
+}
+## 切り抜く前に、元の絵のこの範囲だけを使う：[左, 上, 右, 下]（None は端まで）
+## 同じ絵から2つ取り出すときは、名前を変えて2回わたす（例: prop_diverock=岩.jpg dive_pool=岩.jpg）
+CROPS = {
+	# 縁側は上から見た床が大きいので、手前のふちと脚だけ
+	'prop_engawa': [None, 255, None, None],
+	# 坂道は左と下の、紙のちぎれたふちを落とす
+	'prop_slope': [40, None, 1000, 535],
+	# 飛び込み岩の絵から、岩だけ（淵は川の帯を暗くして描く）
+	'prop_diverock': [None, None, 472, None],
 }
 ## 1枚に横に並んだものを切り分けるときの、書き出す名前
 SPLITS = {
@@ -33,11 +44,16 @@ SPLITS = {
 EDGE_FADES = {
 	'branch': [90.0, 70.0],
 	'cloud_wide': [280.0, 260.0],
+	'prop_slope': [140.0, 40.0],
 }
 
 
-def key(path):
-	a = np.array(Image.open(path).convert('RGB')).astype(float)
+def key(path, crop=None):
+	im = Image.open(path).convert('RGB')
+	if crop:
+		w, h = im.size
+		im = im.crop((crop[0] or 0, crop[1] or 0, crop[2] or w, crop[3] or h))
+	a = np.array(im).astype(float)
 	# マゼンタらしさ：R と B が G よりどれだけ大きいか
 	m = np.minimum(a[..., 0], a[..., 2]) - a[..., 1]
 	alpha = np.clip((205.0 - m) / 175.0, 0, 1)
@@ -164,7 +180,7 @@ def edge_fade(fg, al, left, right):
 def main():
 	for arg in sys.argv[1:]:
 		name, path = arg.split('=', 1)
-		fg, al = key(path)
+		fg, al = key(path, CROPS.get(name))
 		if name in STRIPS:
 			rows, ov = STRIPS[name]
 			save(strip(fg, al, rows, ov), name, crop=False)
