@@ -1,6 +1,17 @@
 @tool
 extends Node2D
-## 祖父母の家（仮）。足もとが原点。
+## 祖父母の家（仮）。足もとが原点。軒先に風鈴（Furin）を吊るす。
+
+## 風鈴を吊るす場所（屋根のふちの下）
+const FURIN_AT := Vector2(-236, -244)
+
+
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
+	var f := Furin.new()
+	f.position = FURIN_AT
+	add_child(f)
 
 
 func _draw() -> void:

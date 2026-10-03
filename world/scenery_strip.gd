@@ -84,7 +84,7 @@ func _bushes() -> void:
 
 ## 雲：絵の雲を高さと大きさをかえて散らす。いちばん大きいのは入道雲として図形で描く
 func _clouds() -> void:
-	var specs := [[0.33, -170.0, 0.9], [0.66, -60.0, 1.25], [0.95, -210.0, 0.75], [0.24, 10.0, 1.1], [0.43, -260.0, 0.6]]
+	var specs := [[0.33, -170.0, 0.9], [0.58, -60.0, 1.25], [0.95, -210.0, 0.75], [0.24, 10.0, 1.1], [0.43, -260.0, 0.6]]
 	for i in specs.size():
 		var tex := CLOUD_TEX[i % CLOUD_TEX.size()]
 		var sp: Array = specs[i]
@@ -94,20 +94,41 @@ func _clouds() -> void:
 	_cumulus()
 
 
-## 入道雲：もこもこの丸を積み上げ、底は平らにする
+## 入道雲：もこもこの丸を積み上げ、底は平らにする。光は左上から：影の側は青みの灰色、日の当たる側は白（3段の重ね）
 func _cumulus() -> void:
-	var specs := [[0.14, 0.75]]
-	for sp in specs:
-		var cx: float = width * sp[0]
-		var k: float = sp[1]
-		var bottom := base_y
-		var bumps := [[-150, -40, 70], [-70, -110, 95], [30, -170, 115], [130, -95, 90], [210, -40, 65], [60, -260, 85]]
-		for b in bumps:
-			draw_circle(Vector2(cx + b[0] * k, bottom + b[1] * k + 6), b[2] * k, WorldPalette.CLOUD_SHADE)
-		for b in bumps:
-			draw_circle(Vector2(cx + b[0] * k, bottom + b[1] * k), b[2] * k * 0.94, WorldPalette.CLOUD)
-		# 底を平らにそろえる
-		draw_rect(Rect2(cx - 150 * k, bottom - 90 * k, 360 * k, 98 * k), WorldPalette.CLOUD)
+	# 地平線の上にそびえる大きな入道雲（底は山並みのうしろに沈む）
+	_draw_cumulus(width * 0.8, base_y + 90.0, 1.3, TOWER_BUMPS)
+	_draw_cumulus(width * 0.14, base_y, 0.75, SMALL_BUMPS)
+
+
+const SMALL_BUMPS := [[-150, -40, 70], [-70, -110, 95], [30, -170, 115], [130, -95, 90], [210, -40, 65], [60, -260, 85]]
+const TOWER_BUMPS := [
+	[-260, -50, 80], [-150, -70, 100], [-30, -80, 110], [100, -70, 105], [220, -50, 85],
+	[-120, -170, 100], [0, -200, 120], [120, -170, 95],
+	[-60, -300, 105], [60, -310, 100], [-110, -380, 65], [-10, -400, 95], [90, -390, 70],
+	[-70, -470, 55], [0, -480, 80], [70, -465, 60],
+]
+
+
+func _draw_cumulus(cx: float, bottom: float, k: float, bumps: Array) -> void:
+	var left := INF
+	var right := -INF
+	for b in bumps:
+		left = minf(left, cx + (b[0] - b[2] * 0.8) * k)
+		right = maxf(right, cx + (b[0] + b[2] * 0.8) * k)
+	# 影（いちばん外側）と、平らな底
+	for b in bumps:
+		draw_circle(Vector2(cx + b[0] * k, bottom + b[1] * k), b[2] * k, WorldPalette.CLOUD_SHADOW)
+	draw_rect(Rect2(left, bottom - 70 * k, right - left, 70 * k), WorldPalette.CLOUD_SHADOW)
+	# 中間の明るさ → 日の当たる面 → いちばん明るいところ。少しずつ左上へずらして重ねる
+	for b in bumps:
+		var r: float = b[2] * k
+		draw_circle(Vector2(cx + b[0] * k - r * 0.08, bottom + b[1] * k - r * 0.1), r * 0.9, WorldPalette.CLOUD_SHADE)
+	for b in bumps:
+		var r: float = b[2] * k
+		draw_circle(Vector2(cx + b[0] * k - r * 0.18, bottom + b[1] * k - r * 0.22), r * 0.72, WorldPalette.CLOUD)
+	# 底のあたりはかげる
+	draw_rect(Rect2(left, bottom - 34 * k, right - left, 34 * k), Color(WorldPalette.CLOUD_SHADOW, 0.85))
 
 
 ## 田んぼ：あぜ道で区切られた、すじのある緑の帯

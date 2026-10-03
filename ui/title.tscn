@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://ui/title.gd" id="1"]
 [ext_resource type="PackedScene" path="res://world/background.tscn" id="2"]
+[ext_resource type="Script" path="res://world/foreground_leaves.gd" id="fg_leaves"]
+[ext_resource type="Script" path="res://world/summer_air.gd" id="summer_air"]
 
 [node name="Title" type="Node2D"]
 script = ExtResource("1")
@@ -11,6 +13,17 @@ script = ExtResource("1")
 [node name="CanvasModulate" type="CanvasModulate" parent="."]
 
 [node name="Days" type="Node2D" parent="."]
+
+[node name="Foreground" type="Parallax2D" parent="."]
+scroll_scale = Vector2(1.3, 1)
+repeat_size = Vector2(3400, 0)
+repeat_times = 3
+
+[node name="Leaves" type="Node2D" parent="Foreground"]
+script = ExtResource("fg_leaves")
+
+[node name="SummerAir" type="CanvasLayer" parent="."]
+script = ExtResource("summer_air")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(640, 360)

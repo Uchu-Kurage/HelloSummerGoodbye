@@ -14,6 +14,8 @@ var _last_ambient := ""
 var rain := 0.0
 ## 雨の間の環境音。秘密基地の屋根をふさぐと「屋根をたたく雨」にかわる（set_rain_ambient）
 var rain_ambient := WorldPalette.RAIN_AMBIENT
+## 昼の光の強さ（0.0〜1.0）。夕方から夜にかけて、また雨で弱まる。SummerAir（光の粒・光の筋）が読む
+var daylight := 1.0
 
 
 func _ready() -> void:
@@ -47,6 +49,7 @@ func apply(progress: float, season: float, tint: Color = Color.WHITE) -> void:
 	if rain > 0.0:
 		light = light.lerp(light * WorldPalette.RAIN_LIGHT, rain)
 		sky = sky.lerp(WorldPalette.RAIN_SKY, rain)
+	daylight = (1.0 - smoothstep(WorldPalette.DAYLIGHT_FADE.x, WorldPalette.DAYLIGHT_FADE.y, progress)) * (1.0 - rain)
 	if canvas_modulate:
 		canvas_modulate.color = light
 	if background:
