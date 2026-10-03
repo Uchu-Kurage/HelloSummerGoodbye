@@ -44,6 +44,8 @@ var dive_result := &""
 ## 石切り（3日目）で3回投げたうち、いちばんよく跳ねた回数と、タケルとの勝負の結果（&"win"／&"draw"／&"lose"）。空ならまだ
 var ishikiri_best := 0
 var ishikiri_result := &""
+## 帽子を受け止めた（true）か、顔に当たった（false）か。エンディングでは使わない
+var hat_caught := false
 ## タイムカプセルを埋めた場所（0 左／1 まんなか／2 右）。-1 ならまだ
 var capsule_spot := -1
 ## カブトムシとり（6日目）で落とした回数。-1 ならまだ
@@ -70,6 +72,7 @@ func reset() -> void:
 	ishikiri_best = 0
 	kabuto_drops = -1
 	capsule_spot = -1
+	hat_caught = false
 	var map := find_item(&"capsule_map")
 	if map:
 		map.icon = null
@@ -213,6 +216,12 @@ func set_ishikiri_best(n: int, r: StringName) -> void:
 	ishikiri_best = n
 	ishikiri_result = r
 	set_flag(StringName("ishikiri_" + r))
+
+
+## 帽子を受け止めたかを記録する。フラグ hat_caught（受け止めた）／ hat_face（顔に当たった）も立てる
+func set_hat_result(c: bool) -> void:
+	hat_caught = c
+	set_flag(&"hat_caught" if c else &"hat_face")
 
 
 ## タイムカプセルを埋めた場所を記録し、タケルの地図の絵を作る（バツじるしは、となりにずれている）

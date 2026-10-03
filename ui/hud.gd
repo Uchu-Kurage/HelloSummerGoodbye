@@ -28,6 +28,7 @@ const MINIGAMES := {
 	"kabuto": preload("res://ui/kabuto_game.gd"),
 	"capsule": preload("res://ui/capsule_game.gd"),
 	"capsule_stars": preload("res://ui/capsule_game.gd"),
+	"hat": preload("res://ui/hat_game.gd"),
 }
 
 var player: Player

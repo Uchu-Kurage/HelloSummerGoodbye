@@ -41,8 +41,6 @@ const PICKUP_TOUCH := "ひろう"
 const PICKED_FORMAT := "%s を ひろった"
 const TALK_KEY := "E"
 const TALK_TOUCH := "はなす"
-const WINDOW_KEY := "E"
-const WINDOW_TOUCH := "まどを あける"
 ## 会話で「ぼく：」と書いたせりふの名前（主人公）
 const ME := "ぼく"
 const RECEIVED_FORMAT := "%s を もらった"
@@ -76,6 +74,21 @@ const DIVE_HINT_KEY := "Space を おしつづけて、「の！」で はなす
 const DIVE_COUNT_SE := "せー……"
 const DIVE_COUNT_NO := "の！"
 const DIVE_LATE_CALL := "はやく こいよー！"
+## 帽子を受け止める（ミニゲーム）
+const HAT_CALL := "おーい！ まどー！ まど あけろー！"
+const HAT_PROMISE := "やくそくだぞー！"
+const HAT_SMELLY := "ぼく：……くさい"
+## 手をふって、さけび返す言葉（押すたびに順に）
+const HAT_SHOUTS := ["ぼく：ぜったいー！", "ぼく：またねー！", "ぼく：タケルー！"]
+## 小さくなっていくタケルの最後の一言（石切りの記録から）
+const HAT_LAST_LOSE := "いし、れんしゅう しとけよー！"
+const HAT_LAST_WIN := "つぎは まけねーぞー！"
+const HAT_OPEN_TOUCH := "おしつづけて まどを あける"
+const HAT_OPEN_KEY := "Space を おしつづけて まどを あける"
+const HAT_REACH_TOUCH := "おしつづけて てを のばす"
+const HAT_REACH_KEY := "Space を おしつづけて てを のばす"
+const HAT_WAVE_TOUCH := "タップで てを ふる"
+const HAT_WAVE_KEY := "Space で てを ふる"
 ## タイムカプセル埋め（ミニゲーム）
 const CAPSULE_SPOTS := ["ひだり", "まんなか", "みぎ"]
 const CAPSULE_ANYWHERE := "どこでも いいぞ。"

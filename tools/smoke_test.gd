@@ -13,6 +13,9 @@ var _kabuto_saw_fall_recover := false
 ## タイムカプセル埋めで、掘りながら出た話の数と、星の場面を見たか
 var _capsule_lines := 0
 var _capsule_stars_seen := false
+## 帽子を受け止める：さけび返した回数と、タケルの最後の一言
+var _hat_shouts := 0
+var _hat_last_line := ""
 
 
 func _ready() -> void:
@@ -154,11 +157,6 @@ func _run() -> void:
 			Input.action_press("move_right")
 			continue
 		var target := hud.current_target()
-		# 窓をあける（10日目のバス）
-		if target is BusWindow:
-			TouchControls.fire_action(&"interact")
-			await _wait(0.2)
-			continue
 		# NPC に話しかけて、せりふを最後まで送る（なつみには話しかけない＝親友ルートへ）
 		# 向こうから声をかけてくる人（auto_talk）は、話しかけずに待つ
 		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) \
@@ -252,6 +250,23 @@ func _run() -> void:
 	GameState.flags = keep_ishi
 	GameState.ishikiri_best = 7
 	GameState.ishikiri_result = &"win"
+
+	# 帽子を受け止める：窓を開け、手をのばして受け止め、3回さけび返す。石切りで勝ったので、タケルの最後の一言は「つぎは まけねーぞー！」
+	check(GameState.hat_caught and GameState.has_flag(&"hat_caught"), "hat: caught with the hand out")
+	check(_hat_shouts == Strings.HAT_SHOUTS.size(), "hat: shouted back %d times" % _hat_shouts)
+	check(_hat_last_line.contains(Strings.HAT_LAST_WIN), "hat: takeru's last line from the stone skipping (%s)" % _hat_last_line)
+	check(HatGame.last_line() == Strings.HAT_LAST_WIN, "hat: last line for a win")
+	# 手をのばさないと顔に当たる（帽子を受け止める画面だけで確かめる）。それでも帽子は手に入る
+	var keep_hat := GameState.flags.duplicate()
+	var face := HatGame.new()
+	get_tree().root.add_child(face)
+	await _play_hat(face, false)
+	check(face.landed and not face.caught and not GameState.hat_caught and GameState.has_flag(&"hat_face"),
+		"hat: not reaching -> hits the face")
+	check(face.phase == HatGame.Phase.DONE, "hat: still finishes without reaching or shouting")
+	face.queue_free()
+	GameState.flags = keep_hat
+	GameState.hat_caught = true
 
 	# タイムカプセル埋め：まんなかに埋め、掘るごとに話が進み、懐中電灯を消して星を見る。地図のバツじるしは、となり
 	check(GameState.capsule_spot == 1, "capsule: buried in the middle (%d)" % GameState.capsule_spot)
@@ -395,6 +410,48 @@ func _base_in(paths: Dictionary, day: int) -> String:
 	var out: String = SecretBase.Mode.keys()[b.mode] if b else ""
 	scene.free()
 	return out
+
+
+## 帽子を受け止める：窓を開け（押しつづける）、reach なら手をのばして受け止め、3回さけび返す
+func _play_hat(game: HatGame, reach: bool) -> void:
+	var n := 0
+	if game.phase != HatGame.Phase.LOOK:
+		while is_instance_valid(game) and game.phase != HatGame.Phase.DONE and n < 2000:
+			await get_tree().process_frame
+			n += 1
+		return
+	while game.phase == HatGame.Phase.LOOK and n < 600:
+		await get_tree().process_frame
+		n += 1
+	game._hold.press()
+	n = 0
+	while game.phase == HatGame.Phase.OPEN and n < 600:
+		await get_tree().process_frame
+		n += 1
+	game._hold.release()
+	if reach:
+		game._hold.press()
+	n = 0
+	while not game.landed and n < 600:
+		await get_tree().process_frame
+		n += 1
+	game._hold.release()
+	n = 0
+	while not game._hold.enabled and game.phase != HatGame.Phase.CURVE and n < 600:
+		await get_tree().process_frame
+		n += 1
+	if reach:
+		for i in Strings.HAT_SHOUTS.size():
+			game._hold.press()
+			game._hold.release()
+			await get_tree().process_frame
+		_hat_shouts = game.shouts
+	n = 0
+	while is_instance_valid(game) and game.phase != HatGame.Phase.DONE and n < 2000:
+		if reach and game._last_said and _hat_last_line == "":
+			_hat_last_line = game._line.text
+		await get_tree().process_frame
+		n += 1
 
 
 ## タイムカプセル埋め：まんなかを選び、話が出るのを数えながら掘って、缶を置き、土を寄せ、ならす。星の場面は見届ける
@@ -585,6 +642,8 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		guard += 1
 		if hud.minigame() is DiveGame:
 			await _play_dive(hud.minigame(), true)
+		elif hud.minigame() is HatGame:
+			await _play_hat(hud.minigame(), true)
 		elif hud.minigame() is CapsuleGame:
 			await _play_capsule(hud.minigame())
 		elif hud.minigame() is KabutoGame:
