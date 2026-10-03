@@ -12,7 +12,7 @@ const AMBIENT_FADE := 1.2
 const MUSIC_FADE := 1.5
 ## 聞こえない大きさ（フェードの始まりと終わり）
 const SILENT_DB := -40.0
-## 環境音・BGM の音量のバス（set_ambient_volume は環境音のバス全体を動かす）
+## 環境音・BGM の音量のバス（res://default_bus_layout.tres。set_ambient_volume は環境音のバス全体を動かす）
 const AMBIENT_BUS := &"Ambient"
 const MUSIC_BUS := &"Music"
 ## BGM のふだんの大きさ（環境音より少し控えめに）
@@ -43,19 +43,9 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_pool.append(p)
-	_add_bus(AMBIENT_BUS)
-	_add_bus(MUSIC_BUS)
 	_ambient = _make_loop_player(AMBIENT_BUS)
 	_ambient_old = _make_loop_player(AMBIENT_BUS)
 	_music = _make_loop_player(MUSIC_BUS)
-
-
-func _add_bus(bus: StringName) -> void:
-	if AudioServer.get_bus_index(bus) >= 0:
-		return
-	AudioServer.add_bus()
-	AudioServer.set_bus_name(AudioServer.bus_count - 1, bus)
-	AudioServer.set_bus_send(AudioServer.bus_count - 1, &"Master")
 
 
 func _make_loop_player(bus: StringName) -> AudioStreamPlayer:
