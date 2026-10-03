@@ -69,7 +69,30 @@ def key(path, crop=None):
 	# ふちを 1px 内側へ縮める（にじんだ輪郭を残さない）
 	al = Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3))
 	alpha = np.array(al).astype(float) / 255
-	return fg, alpha
+	return bleed(fg, alpha), alpha
+
+
+def bleed(fg, alpha, solid=0.95, steps=14):
+	"""半透明のふちの色を、すぐ内側の不透明な部分の色で置きかえる。
+	ふちにはマゼンタが混ざった色（赤茶っぽいにじみ）が残りやすく、表示で輪郭のように見えるため。
+	透明な部分にも色をのばしておくと、拡大・縮小したときもふちがにごらない"""
+	# ふちから 2px 内側までは色がにごっていることがあるので、それより内側だけを「きれいな色」とする
+	core = Image.fromarray(((alpha >= solid) * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(5))
+	filled = np.array(core) > 0
+	out = fg.copy()
+	out[~filled] = 0
+	for _ in range(steps):
+		acc = np.zeros_like(out)
+		cnt = np.zeros(alpha.shape)
+		for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
+			sh = np.roll(np.roll(out, dy, axis=0), dx, axis=1)
+			sf = np.roll(np.roll(filled, dy, axis=0), dx, axis=1)
+			acc += sh * sf[..., None]
+			cnt += sf
+		grow = (~filled) & (cnt > 0)
+		out[grow] = acc[grow] / cnt[grow][..., None]
+		filled = filled | grow
+	return out
 
 
 def to_image(fg, alpha):
