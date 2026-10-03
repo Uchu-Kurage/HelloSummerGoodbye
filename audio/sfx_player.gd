@@ -38,7 +38,8 @@ func unlock() -> void:
 
 
 ## cursor / accept / cancel / pickup / box_open / box_close / day_change / text_tick
-func play(sfx_name: String) -> void:
+## volume_db で大きさを変えられる（カブトムシとりの心臓の音など）
+func play(sfx_name: String, volume_db := 0.0) -> void:
 	if not enabled:
 		return
 	var stream := _find(SFX_DIR, sfx_name)
@@ -47,6 +48,7 @@ func play(sfx_name: String) -> void:
 	for p in _pool:
 		if not p.playing:
 			p.stream = stream
+			p.volume_db = volume_db
 			p.play()
 			return
 

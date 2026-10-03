@@ -11,8 +11,8 @@ const DAY_COLUMNS := 5
 ## 石切りの結果ごとの、いちばんよく跳ねた回数（デバッグでとぶときに入れておく）
 const ISHIKIRI_BEST := {&"win": 7, &"draw": 5, &"lose": 3}
 ## ルートごとの、その日を終えたときに立っているフラグ（キーは日の番号 day_number）。
-## dive_ で始まるものは飛び込みの結果、katanuki_ で始まるものは型抜きの結果、ishikiri_ で始まるものは石切りの結果として記録する
-## （GameState.set_dive_result／set_katanuki_result／set_ishikiri_best）。
+## dive_ で始まるものは飛び込みの結果、katanuki_ で始まるものは型抜きの結果、kabuto_ で始まるものはカブトムシとりの結果、ishikiri_ で始まるものは石切りの結果として記録する
+## （GameState.set_dive_result／set_katanuki_result／set_kabuto_result／set_ishikiri_best）。
 ## received はルートの中で人から「もらった」アイテム、given は手ばなしたアイテム（id -> 宝箱に出すひとこと）
 const ROUTES := [
 	{
@@ -26,7 +26,7 @@ const ROUTES := [
 		"flags": {
 			3: [&"route_takeru", &"ishikiri_lose"],
 			5: [&"takeru_d5_stall", &"katanuki_broken"],
-			6: [&"takeru_d6_go"],
+			6: [&"takeru_d6_go", &"kabuto_clean"],
 			7: [&"takeru_d7_jump", &"dive_perfect"],
 		},
 		"received": [&"river_stone", &"base_plaque", &"broken_katanuki", &"bug_cage", &"ramune_bottle", &"capsule_map"],
@@ -81,6 +81,8 @@ static func apply(route: int, day_index: int) -> void:
 			elif s.begins_with("ishikiri_"):
 				var res := StringName(s.trim_prefix("ishikiri_"))
 				GameState.set_ishikiri_best(ISHIKIRI_BEST.get(res, 0), res)
+			elif s.begins_with("kabuto_"):
+				GameState.set_kabuto_result(0 if s == "kabuto_clean" else 1)
 			elif s.begins_with("katanuki_"):
 				GameState.set_katanuki_result(StringName(s.trim_prefix("katanuki_")))
 			else:

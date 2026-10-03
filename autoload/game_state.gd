@@ -44,6 +44,8 @@ var dive_result := &""
 ## 石切り（3日目）で3回投げたうち、いちばんよく跳ねた回数と、タケルとの勝負の結果（&"win"／&"draw"／&"lose"）。空ならまだ
 var ishikiri_best := 0
 var ishikiri_result := &""
+## カブトムシとり（6日目）で落とした回数。-1 ならまだ
+var kabuto_drops := -1
 ## 型抜き（5日目）の結果：&"clean"（ぬけた）／&"broken"（われた）。空ならまだ
 var katanuki_result := &""
 
@@ -64,6 +66,7 @@ func reset() -> void:
 	dive_result = &""
 	katanuki_result = &""
 	ishikiri_best = 0
+	kabuto_drops = -1
 	ishikiri_result = &""
 	current_day_index = 0
 	start_day_index = 0
@@ -204,6 +207,12 @@ func set_ishikiri_best(n: int, r: StringName) -> void:
 	ishikiri_best = n
 	ishikiri_result = r
 	set_flag(StringName("ishikiri_" + r))
+
+
+## カブトムシとりの結果を記録する。会話で分けられるよう、フラグ kabuto_clean（一度も落とさない）／ kabuto_dropped も立てる
+func set_kabuto_result(drops: int) -> void:
+	kabuto_drops = drops
+	set_flag(&"kabuto_clean" if drops == 0 else &"kabuto_dropped")
 
 
 ## 型抜きの結果を記録する。会話で分けられるよう、フラグ katanuki_clean / katanuki_broken も立てる
