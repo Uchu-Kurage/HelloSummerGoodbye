@@ -1,11 +1,13 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1_bb382"]
+[ext_resource type="Texture2D" path="res://data/items/icons/straw_hat.svg" id="icon"]
 
 [resource]
 script = ExtResource("1_bb382")
 id = &"straw_hat"
 display_name = "祖父の麦わら帽子"
 description = "ちょっと おおきい。"
+icon = ExtResource("icon")
 day_number = 9
 placeholder_color = Color(0.847059, 0.737255, 0.478431, 1)

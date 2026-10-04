@@ -1,11 +1,13 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1_x626x"]
+[ext_resource type="Texture2D" path="res://data/items/icons/senko_hanabi.svg" id="icon"]
 
 [resource]
 script = ExtResource("1_x626x")
 id = &"senko_hanabi"
 display_name = "線香花火"
 description = "さいごまで おちなかった。"
+icon = ExtResource("icon")
 day_number = 6
 placeholder_color = Color(0.890196, 0.721569, 0.352941, 1)

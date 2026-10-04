@@ -1,11 +1,13 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1_fxo6d"]
+[ext_resource type="Texture2D" path="res://data/items/icons/hozuki.svg" id="icon"]
 
 [resource]
 script = ExtResource("1_fxo6d")
 id = &"hozuki"
 display_name = "ほおずき"
 description = "あかくて、ちょうちんみたい。"
+icon = ExtResource("icon")
 day_number = 7
 placeholder_color = Color(0.85098, 0.462745, 0.247059, 1)

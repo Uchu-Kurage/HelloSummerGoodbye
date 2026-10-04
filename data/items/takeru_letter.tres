@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/takeru_letter.svg" id="icon"]
 
 [resource]
 script = ExtResource("1")
 id = &"takeru_letter"
 display_name = "置き手紙"
 description = "じが きたない。タケルの じだ。"
+icon = ExtResource("icon")
 day_number = 8
 placeholder_color = Color(0.929, 0.898, 0.812, 1)
 read_text = "「あした よる きち こい」"

@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/takeru_hat.svg" id="icon"]
 
 [resource]
 script = ExtResource("1")
 id = &"takeru_hat"
 display_name = "タケルの帽子"
 description = "ちょっとくさい。でも、かえさない。"
+icon = ExtResource("icon")
 day_number = 10
 placeholder_color = Color(0.361, 0.498, 0.639, 1)
 on_ground = false

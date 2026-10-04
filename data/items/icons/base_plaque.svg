@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D2AD7C"/><stop offset="1" stop-color="#A97F50"/></linearGradient></defs>
+  <ellipse cx="64" cy="116" rx="40" ry="6" fill="#7A6A55" opacity="0.18"/>
+  <path d="M60 6 L68 6 L68 26 L60 26 Z" fill="#8A6844"/>
+  <circle cx="64" cy="30" r="3" fill="#5A4430"/>
+  <path d="M30 30 C28 28, 98 26, 100 30 L104 104 C104 108, 26 110, 24 104 Z" fill="url(#w)" stroke="#7A5A3A" stroke-width="2" stroke-linejoin="round"/>
+  <g fill="none" stroke="#B8915F" stroke-width="1.5" opacity="0.8">
+    <path d="M34 46 C50 44, 70 48, 94 45"/><path d="M32 78 C54 80, 76 76, 98 79"/><ellipse cx="80" cy="92" rx="5" ry="3"/>
+  </g>
+  <!-- 子どもの字（「かいいん」の雰囲気の筆あと） -->
+  <g fill="none" stroke="#3E2E22" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M36 56 L46 54 C48 62, 46 70, 42 72"/><path d="M40 58 C40 66, 37 70, 34 72"/><path d="M50 56 L52 62"/>
+    <path d="M58 54 C57 62, 58 68, 62 70"/><path d="M66 56 C68 60, 68 64, 67 66"/>
+    <path d="M72 54 C71 62, 72 68, 76 70"/><path d="M80 56 C82 60, 82 64, 81 66"/>
+    <path d="M88 54 C86 62, 84 68, 86 72 C88 66, 92 62, 96 70"/>
+  </g>
+</svg>

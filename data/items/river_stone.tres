@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+[ext_resource type="Texture2D" path="res://data/items/icons/river_stone.svg" id="icon"]
 
 [sub_resource type="Resource" id="alt"]
 script = ExtResource("2")
@@ -12,6 +13,7 @@ script = ExtResource("1")
 id = &"river_stone"
 display_name = "川のきれいな石"
 description = "つめたくて、すべすべ。"
+icon = ExtResource("icon")
 day_number = 3
 placeholder_color = Color(0.604, 0.647, 0.608, 1)
 alt_if = SubResource("alt")
