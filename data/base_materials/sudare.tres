@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="BaseMaterial" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="BaseMaterial" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/base_material.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/base_materials/sudare.png" id="tex"]
 
 [resource]
 script = ExtResource("1")
@@ -9,6 +10,7 @@ display_name = "すだれ"
 look = 3
 color = Color(0.804, 0.698, 0.478, 1)
 color_2 = Color(0.659, 0.557, 0.353, 1)
+texture = ExtResource("tex")
 place_sfx = "place_sudare"
 roof_rain_ambient = "rain_roof_sudare"
 leaks = true
