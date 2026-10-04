@@ -18,7 +18,7 @@
 | 決定 / もどる | Enter・Space / Esc | 項目をタップ / 「もどる」 |
 
 開発用（デバッグ実行のときだけ）：F3 で FPS と読み込み中の日を表示、F4 で日の終わりの手前へ移動。
-タイトルとひとやすみに出る「デバッグ」（Web 版でも URL の最後に `?debug` をつけると出る。例：`http://localhost:8000/?debug`）で、ルート（ふつう／タケル／なつみ）と日を選び、その日のはじめへとべる。前の日までのフラグ・アイテム・手ばなしたものは、そのルートを通ってきた状態に整える（中身は `ui/debug_jump.gd` の `ROUTES`。ルートやフラグを足したらここも直す）。
+タイトルとひとやすみに出る「デバッグ」（Web 版でも URL の最後に `?debug` をつけると出る。例：`http://localhost:8000/?debug`）で、ルート（ふつう／タケル／なつみ高・中・低）と日を選び、その日のはじめへとべる。前の日までのフラグ・アイテム・手ばなしたものは、そのルートを通ってきた状態に整える（中身は `ui/debug_jump.gd` の `ROUTES`。ルートやフラグを足したらここも直す）。
 
 ## フォルダ
 
@@ -66,8 +66,10 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@take marble タケルに あげた` | アイテムを手ばなす（宝箱とエンディングの枠に「タケルに あげた」と出る） |
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
 | `@show marble` | 次のせりふの左に、そのアイテムの絵を出す |
+| `@heart` | なつみの好感度を +1 する（好みの選択肢を選んだとき） |
+| `@drop blue_pencil` | 話している人の足もとにアイテムを落とす（拾える） |
 | `@flag 名前` / `@leave` / `@event 名前` | フラグを立てる / その人が立ち去る / その日の小物に知らせる（水しぶき、雨がやむ、など） |
-| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game kabuto` / `@game dive` / `@game capsule` / `@game capsule_stars` / `@game hat` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／カブトムシとり／飛び込み／タイムカプセル埋め／懐中電灯を消して星を見る／帽子を受け止める） |
+| `@game ishikiri` / `@game base_build` / `@game katanuki` / `@game kabuto` / `@game dive` / `@game capsule` / `@game capsule_stars` / `@game hat` | ミニゲームをして、終わったら続きへ（石切り／秘密基地づくり／型抜き／カブトムシとり／飛び込み／タイムカプセル埋め／懐中電灯を消して星を見る／帽子を受け止める）。初恋ルートは `@game sketch` / `kingyo` / `kaigara` / `senko`（スケッチ／金魚すくい／貝がら拾い／線香花火）と、場面の `@game movie`（映画会）/ `drawing`（なつみの絵を広げる） |
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
@@ -84,6 +86,24 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - 人からもらうだけのアイテムは、ItemData の `on_ground` をオフにする（道に置かれない）
 - ルートで一言だけ変えるアイテムは、ItemData の `alt_if` と `alt_description` を使う（例：川のきれいな石）
 - 拾ったときに中身を読ませるもの（置き手紙など）は、ItemData の `read_text` に書く
+- 宝箱の枠に数えないもの（人に返すもの）は、DayData の `extra_items` に入れる。持っているあいだだけ宝箱に出て、たからものの数には入らない（例：なつみの色えんぴつ。会話の `@drop` で落ちる）
+
+### 初恋ルート（なつみ）
+
+シナリオは「初恋ルート シナリオ（確定版）」に従う。1日目の夕方、田んぼ道で絵を描くなつみが走り去ったあとに「あおい色えんぴつ」を拾い（`@drop`）、
+2日目の朝、公民館のラジオ体操のあとで話しかけて返すと `route_natsumi` が立ち、3〜10日目が `days/variants/day_XX_natsumi.tscn` に差し替わります。
+色えんぴつを持っていない／話しかけないと、フラグは立ちません。なつみの会話は `data/npcs/natsumi*.tres`（3日目以降は `auto_talk`）。
+
+- **好感度**：`GameState.natsumi_heart`（最大 `HEART_MAX` = 13）。会話の好みの選択肢（`@heart`、全9か所）と、ミニゲームの高得点（`GameState.set_natsumi_game`、全4種）で +1。エンディングの差分だけに使い、ルートからは外れない
+- **エンディングの段階**：好感度が `HEART_MID`（5）以上でフラグ `natsumi_heart_mid`、`HEART_HIGH`（10）以上で `natsumi_heart_high` が立つ。10日目の場面（`day_10_natsumi_high.tscn`／`day_10_natsumi.tscn`）とエンディング（`data/endings/natsumi_high.tres`・`natsumi_mid.tres`・`natsumi.tres`）はこのフラグで選ぶ。しきい値は遊んでみて `GameState` で調整する
+- **10日目**：`world/natsumi_bus.gd`（親友ルートのバス `bus_departure.gd` を継承）。高：乗る直前になつみが走ってきて絵をくれ、走り出してから広げる（`@game drawing`）。中：窓の外の田んぼ道で、絵を描くなつみが小さく手をふる。低：田んぼ道に誰もいない
+- **場所の小物**：`world/scenery_prop.gd` に、公民館（`KOMINKAN`・夜の明かり `KOMINKAN_GLOW`）・ラジオ体操（`RADIO_KIDS`）・画板（`GAKUBAN`）・社（`SHRINE`）・水たまり（`PUDDLES`）・海（`SEA`・`SAND`・`SWIM_FLAG`・`SHELLS`）・バケツ（`BUCKET`）。絵はまだないので図形で描いている（`hide_on_event` で会話の `@event` で消せる）
+- **ミニゲーム**：どれも `ui/natsumi_screen.gd`（NatsumiScreen）を継承。上になつみのひとこと、下に案内の小札。失敗で止まらない
+  - スケッチ（3日目、`ui/sketch_game.gd`）：そら・やま・かわ・いし を3つから選んで描く。見本と `GOOD_MATCHES`（3）か所以上同じなら高得点
+  - 金魚すくい（5日目、`ui/kingyo_game.gd`）：金魚がポイの上に来たらタップ。すくうたびに紙が弱り（`WEAR_SCOOP`・`WEAR_FISH`）、破れたらおしまい。`GOOD_COUNT`（3）匹以上で高得点
+  - 貝がら拾い（6日目、`ui/kaigara_game.gd`）：波が引いたすきに、貝がらを1つ拾う（`ROUNDS` 回）。どこかの回にまじる、さくら貝を見つければ高得点
+  - 線香花火（9日目、`ui/senko_game.gd`）：始める前に押しつづけの案内を出し、押すと火がつく。離すと手がぶれて `GRACE` 秒で落ちる。最後まで落とさなければ高得点（なつみのが先に落ちる）
+  - 映画会（7日目、`ui/movie_scene.gd`）は暗転と音（`Strings.MOVIE_SOUNDS`）だけ、絵を広げる場面（10日目・高、`ui/drawing_reveal.gd`）は見るだけ
 
 ### 親友ルート（タケル）
 
@@ -161,7 +181,7 @@ godot --headless --import                       # 初回だけ
 godot --headless res://tools/smoke_test.tscn    # 最後に "SMOKE OK" と出れば成功
 ```
 
-タイトル → 本編を自動で右へ歩き、10日分の日付の進み・読み込まれている日数（3以下）・アイテム取得・拾わなかった枠・宝箱と一時停止の開閉・エンディングまでを確かめます。GitHub Actions でも公開の前に実行します。
+タイトル → 本編を自動で右へ歩き（親友ルートと、初恋ルートの好感度 高を1回ずつ）、10日分の日付の進み・読み込まれている日数（3以下）・アイテム取得・拾わなかった枠・宝箱と一時停止の開閉・エンディングまでを確かめます。GitHub Actions でも公開の前に実行します。
 
 ## ローカルのブラウザで確認する
 

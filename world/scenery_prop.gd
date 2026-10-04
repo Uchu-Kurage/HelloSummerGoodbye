@@ -30,6 +30,18 @@ enum Kind {
 	SLOPE,         ## 後ろの坂道
 	STARS,         ## 星空（width の幅）
 	SOIL_MOUND,    ## 基地の下の土（缶を埋めた場所）
+	# --- 初恋ルート（なつみ） ---
+	KOMINKAN,      ## 公民館（ラジオ体操・映画会・台風の軒下）
+	KOMINKAN_GLOW, ## 夜の公民館の窓の明かりと、映画のスクリーンのちらつき
+	RADIO_KIDS,    ## ラジオ体操：台の上のラジオと、体操する村の子どもたち（width の幅）
+	GAKUBAN,       ## あぜ道に置いた画板（描きかけの絵）
+	SHRINE,        ## 小さな社（軒下で雨宿りする）
+	PUDDLES,       ## 雨上がりの水たまり（width の幅）
+	SEA,           ## 道の向こうの海（width の幅）
+	SAND,          ## 砂浜（道の上に重ねる。width の幅）
+	SWIM_FLAG,     ## 遊泳禁止の旗
+	SHELLS,        ## 波打ちぎわの貝がら
+	BUCKET,        ## 水を入れたバケツ（線香花火の）
 }
 
 @export var kind: Kind = Kind.SHOP:
@@ -44,6 +56,8 @@ enum Kind {
 
 ## 空でなければ、はじめは隠しておき、会話の @event でこの名前が来たら現れる
 @export var show_on_event := ""
+## 空でなければ、会話の @event でこの名前が来たら消える（なつみが画板を持って走り去る、など）
+@export var hide_on_event := ""
 
 const P := preload("res://world/world_palette.gd")
 const ART := "res://world/scenery/painted/%s.png"
@@ -77,6 +91,15 @@ func _ready() -> void:
 		mat.set_shader_parameter("width", width)
 		mat.set_shader_parameter("top_y", -RIVER_H + 4.0)
 		material = mat
+	# 海も左右の端をぼかす（海辺の道から、だんだん海が見えてくる）
+	if kind == Kind.SEA:
+		var sea_mat := ShaderMaterial.new()
+		sea_mat.shader = EDGE_FADE
+		sea_mat.set_shader_parameter("width", width)
+		sea_mat.set_shader_parameter("fade_x", 400.0)
+		sea_mat.set_shader_parameter("top_y", -214.0)
+		sea_mat.set_shader_parameter("fade_top", 6.0)
+		material = sea_mat
 	if not Engine.is_editor_hint() and show_on_event != "":
 		visible = false
 
@@ -85,6 +108,22 @@ func on_talk_event(event_name: String) -> void:
 	if show_on_event != "" and event_name == show_on_event:
 		modulate.a = 0.0
 		UiAnim.fade(self, 1.0, UiTokens.TIME_FADE * 2)
+	if hide_on_event != "" and event_name == hide_on_event:
+		UiAnim.fade(self, 0.0, UiTokens.TIME_FADE * 2)
+
+
+## ゆれるもの（スクリーンのちらつき・波）だけ描きなおす。動きを減らす設定では止める
+func _process(_delta: float) -> void:
+	if Engine.is_editor_hint() or UiAnim.reduced():
+		return
+	if kind == Kind.KOMINKAN_GLOW or kind == Kind.SEA:
+		queue_redraw()
+
+
+func _clock() -> float:
+	if Engine.is_editor_hint() or UiAnim.reduced():
+		return 0.0
+	return Time.get_ticks_msec() / 1000.0
 
 
 func _draw() -> void:
@@ -113,6 +152,17 @@ func _draw() -> void:
 		Kind.SLOPE: _slope()
 		Kind.STARS: _stars()
 		Kind.SOIL_MOUND: _soil_mound()
+		Kind.KOMINKAN: _kominkan()
+		Kind.KOMINKAN_GLOW: _kominkan_glow()
+		Kind.RADIO_KIDS: _radio_kids()
+		Kind.GAKUBAN: _gakuban()
+		Kind.SHRINE: _shrine()
+		Kind.PUDDLES: _puddles()
+		Kind.SEA: _sea()
+		Kind.SAND: _sand()
+		Kind.SWIM_FLAG: _swim_flag()
+		Kind.SHELLS: _shells()
+		Kind.BUCKET: _bucket()
 
 
 func _poly(points: Array, c: Color) -> void:
@@ -329,3 +379,195 @@ func _stars() -> void:
 func _soil_mound() -> void:
 	_poly([Vector2(-70, 4), Vector2(-40, -18), Vector2(30, -22), Vector2(72, 4)], P.SOIL)
 	draw_line(Vector2(-20, -14), Vector2(18, -12), P.WOOD_DARK, 2.0)
+
+
+# --- 初恋ルート（なつみ）の場所。絵はまだないので図形で描く -----------------------
+
+## 公民館の窓（[左, 上, 幅, 高さ]）。夜の明かり（KOMINKAN_GLOW）も同じ場所に描く
+const KOMINKAN_WINDOWS := [[-200, -150, 80, 60], [120, -150, 80, 60]]
+## 公民館の入口（ガラスの引き戸）
+const KOMINKAN_DOOR := Rect2(-90, -150, 180, 150)
+
+
+func _kominkan() -> void:
+	_shadow(Vector2(0, -2), Vector2(260, 12))
+	# 土台と壁（下見板張り）
+	draw_rect(Rect2(-236, -12, 472, 14), P.ROCK_DARK)
+	draw_rect(Rect2(-226, -190, 452, 180), P.HOUSE_WALL)
+	for i in 12:
+		var y := -186.0 + i * 15.0
+		draw_line(Vector2(-226, y), Vector2(226, y), Color(P.WOOD_DARK, 0.25), 1.5)
+	# 屋根（低い切妻）と、ひさし
+	_poly([Vector2(-262, -186), Vector2(262, -186), Vector2(206, -252), Vector2(-206, -252)], P.HOUSE_ROOF)
+	draw_line(Vector2(-262, -186), Vector2(262, -186), P.POLE, 4.0)
+	_poly([Vector2(-120, -156), Vector2(120, -156), Vector2(132, -168), Vector2(-132, -168)], P.HOUSE_ROOF)
+	# 窓
+	for w in KOMINKAN_WINDOWS:
+		draw_rect(Rect2(w[0], w[1], w[2], w[3]), P.SHOP_DARK)
+		draw_rect(Rect2(w[0], w[1], w[2], w[3]), Color(P.BUS_WINDOW, 0.4))
+		draw_line(Vector2(w[0] + w[2] / 2.0, w[1]), Vector2(w[0] + w[2] / 2.0, w[1] + w[3]), P.WOOD_DARK, 3.0)
+		draw_rect(Rect2(w[0], w[1], w[2], w[3]), P.WOOD_DARK, false, 3.0)
+	# ガラスの引き戸
+	var d := KOMINKAN_DOOR
+	draw_rect(d, P.SHOP_DARK)
+	draw_rect(d, Color(P.BUS_WINDOW, 0.35))
+	for i in 5:
+		var x := d.position.x + d.size.x * i / 4.0
+		draw_line(Vector2(x, d.position.y), Vector2(x, 0), P.WOOD_DARK, 3.0)
+	draw_line(Vector2(d.position.x, -60), Vector2(d.end.x, -60), P.WOOD_DARK, 2.0)
+	# 入口の段
+	draw_rect(Rect2(-110, -6, 220, 8), P.STONE_LIGHT)
+
+
+func _kominkan_glow() -> void:
+	# 窓の明かり
+	for w in KOMINKAN_WINDOWS:
+		draw_rect(Rect2(w[0], w[1], w[2], w[3]), P.KOMINKAN_LIGHT)
+	# 入口のガラスごしに、スクリーンの青白い光がちらつく
+	var t := _clock()
+	var flick := 0.7 + 0.3 * sin(t * 7.0) * sin(t * 2.3 + 1.0)
+	var d := KOMINKAN_DOOR
+	draw_rect(d, Color(P.SCREEN_LIGHT, 0.32 * flick))
+	_poly([Vector2(d.position.x, 0), Vector2(d.end.x, 0), Vector2(d.end.x + 60, 70), Vector2(d.position.x - 60, 70)], Color(P.SCREEN_LIGHT, 0.08 * flick))
+
+
+func _radio_kids() -> void:
+	# 台の上のラジオ（左のはし）
+	draw_rect(Rect2(-30, -64, 6, 64), P.WOOD_DARK)
+	draw_rect(Rect2(24, -64, 6, 64), P.WOOD_DARK)
+	draw_rect(Rect2(-40, -70, 80, 8), P.WOOD)
+	draw_rect(Rect2(-30, -112, 60, 42), P.RADIO)
+	draw_circle(Vector2(-10, -91), 12, P.SHOP_DARK)
+	draw_rect(Rect2(8, -104, 14, 6), P.CHALK)
+	draw_line(Vector2(20, -112), Vector2(40, -150), P.POLE, 2.0)
+	# 出席カード（台の上に重ねてある）
+	draw_rect(Rect2(-36, -76, 22, 8), P.CLOUD)
+	# 体操する村の子どもたち（両手を上げて、のびの運動）
+	var n := maxi(1, int((width - 80) / 90))
+	var shirts := [P.KID_SHIRT_1, P.KID_SHIRT_2, P.CLOUD, P.KID_SHIRT_3]
+	for i in n:
+		var x := 90.0 + i * 90.0
+		var h := 88.0 + (i % 3) * 8.0
+		_kid(Vector2(x, 0), h, shirts[i % shirts.size()], i % 2 == 0)
+
+
+## 小さな子ども（仮の姿）。arms_up なら両手を上げる、そうでなければ横にひろげる
+func _kid(foot: Vector2, h: float, shirt: Color, arms_up: bool) -> void:
+	var leg := h * 0.32
+	var body := h * 0.34
+	var head_r := h * 0.13
+	draw_rect(Rect2(foot.x - 9, foot.y - leg, 7, leg), P.PLAYER_SKIN)
+	draw_rect(Rect2(foot.x + 2, foot.y - leg, 7, leg), P.PLAYER_SKIN)
+	draw_rect(Rect2(foot.x - 12, foot.y - leg - h * 0.1, 24, h * 0.12), P.PLAYER_SHORTS)
+	var top := foot.y - leg - h * 0.08 - body
+	draw_rect(Rect2(foot.x - 12, top, 24, body), shirt)
+	# 首からさげた出席カード
+	draw_rect(Rect2(foot.x - 6, top + body * 0.35, 12, 9), P.CHALK)
+	var sh := Vector2(foot.x, top + 6)
+	var arm := h * 0.32
+	for side in [-1.0, 1.0]:
+		var hand := sh + (Vector2(side * arm * 0.45, -arm * 0.9) if arms_up else Vector2(side * arm, -arm * 0.1))
+		draw_line(sh + Vector2(side * 9, 0), hand, P.PLAYER_SKIN, 5.0)
+	var head := Vector2(foot.x, top - head_r * 0.9)
+	draw_circle(head, head_r, P.PLAYER_SKIN)
+	draw_arc(head, head_r * 0.85, PI * 0.95, PI * 2.05, 12, P.HAIR, head_r * 0.45)
+
+
+func _gakuban() -> void:
+	# あぜ道にななめに立てかけた画板と、描きかけの絵
+	_shadow(Vector2(4, -1), Vector2(40, 5))
+	draw_set_transform(Vector2(0, -2), -0.35)
+	draw_rect(Rect2(-34, -56, 68, 54), P.WOOD)
+	draw_rect(Rect2(-29, -51, 58, 44), P.CLOUD)
+	draw_rect(Rect2(-29, -51, 58, 14), Color(P.PENCIL_BLUE, 0.6))
+	draw_line(Vector2(-26, -26), Vector2(26, -30), Color(P.PADDY, 0.9), 4.0)
+	draw_set_transform(Vector2.ZERO)
+	# 色えんぴつの缶
+	draw_rect(Rect2(30, -10, 24, 10), P.TIN_ROOF)
+
+
+func _shrine() -> void:
+	_shadow(Vector2(0, -2), Vector2(190, 10))
+	# 床下の柱と、高い床
+	for x in [-110, -40, 40, 110]:
+		draw_rect(Rect2(x - 5, -46, 10, 46), P.WOOD_DARK)
+	draw_rect(Rect2(-130, -54, 260, 10), P.WOOD)
+	# 本殿の壁と格子戸
+	draw_rect(Rect2(-100, -170, 200, 116), P.SHRINE_WALL)
+	for i in 9:
+		var x := -60.0 + i * 15.0
+		draw_line(Vector2(x, -150), Vector2(x, -60), P.WOOD_DARK, 2.0)
+	draw_rect(Rect2(-64, -152, 128, 94), P.WOOD_DARK, false, 3.0)
+	# 大きく張り出した屋根（この軒下で雨宿りする）
+	_poly([Vector2(-200, -166), Vector2(200, -166), Vector2(150, -214), Vector2(-150, -214)], P.SHRINE_ROOF)
+	_poly([Vector2(-210, -160), Vector2(210, -160), Vector2(200, -170), Vector2(-200, -170)], P.WOOD_DARK)
+	_poly([Vector2(-150, -214), Vector2(150, -214), Vector2(110, -236), Vector2(-110, -236)], P.SHRINE_ROOF)
+	# 鈴の緒とさい銭箱
+	draw_line(Vector2(0, -166), Vector2(0, -96), P.SHRINE_RED, 4.0)
+	draw_circle(Vector2(0, -160), 8, P.LANTERN)
+	draw_rect(Rect2(-36, -40, 72, 34), P.WOOD)
+	for i in 4:
+		draw_line(Vector2(-30 + i * 20, -38), Vector2(-30 + i * 20, -30), P.WOOD_DARK, 2.0)
+
+
+func _puddles() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var n := maxi(1, int(width / 260))
+	for i in n:
+		var c := Vector2(width * (i + 0.3 + rng.randf() * 0.4) / n, 26 + rng.randf() * 28)
+		var r := 34.0 + rng.randf() * 30.0
+		draw_set_transform(c, 0.0, Vector2(1.0, 0.22))
+		draw_circle(Vector2.ZERO, r, Color(P.WATER, 0.7))
+		draw_circle(Vector2(-r * 0.3, -r * 0.2), r * 0.45, Color(P.SKY_REFLECT, 0.6))
+		draw_set_transform(Vector2.ZERO)
+
+
+func _sea() -> void:
+	# 道の向こうの海。水平線から手前に向かって濃くなり、波打ちぎわに白い波
+	var top := -210.0
+	draw_rect(Rect2(0, top, width, 18), P.SEA_FAR)
+	draw_rect(Rect2(0, top + 18, width, -top - 18), P.SEA)
+	draw_rect(Rect2(0, -70, width, 60), P.SEA_NEAR)
+	var t := _clock()
+	for row in 4:
+		var y := top + 34.0 + row * 38.0
+		var x := fposmod(t * (8.0 + row * 4.0) + row * 70.0, 160.0) - 160.0
+		while x < width:
+			draw_line(Vector2(x, y), Vector2(x + 46, y), Color(P.CLOUD, 0.35 + row * 0.1), 2.0)
+			x += 160.0
+	# 波打ちぎわ（寄せては返す）
+	var k := 0.5 + 0.5 * sin(t * 0.9)
+	draw_rect(Rect2(0, -14 - 6 * k, width, 6), Color(P.CLOUD, 0.75))
+
+
+func _sand() -> void:
+	# 道の上に砂を重ねる（両はしは、ななめにぼかす）
+	_poly([Vector2(-60, 76), Vector2(0, -14), Vector2(width, -14), Vector2(width + 60, 76)], P.SAND)
+	_poly([Vector2(0, -14), Vector2(width, -14), Vector2(width, -4), Vector2(0, -4)], P.SAND_WET)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	for i in int(width / 14):
+		draw_circle(Vector2(rng.randf() * width, rng.randf() * 80 - 6), 1.5, Color(P.WOOD_DARK, 0.25))
+
+
+func _swim_flag() -> void:
+	_shadow(Vector2(0, -1), Vector2(16, 4))
+	draw_line(Vector2(0, 0), Vector2(0, -280), P.POLE, 5.0)
+	_poly([Vector2(2, -276), Vector2(110, -262), Vector2(104, -214), Vector2(2, -222)], P.SHRINE_RED)
+	draw_line(Vector2(4, -248), Vector2(106, -238), P.CLOUD, 6.0)
+
+
+func _shells() -> void:
+	for s in [[-40, 10, P.CLOUD], [10, 24, P.SHELL], [56, 6, P.CLOUD], [96, 30, P.SHELL]]:
+		var c := Vector2(s[0], s[1])
+		draw_circle(c, 7, s[2])
+		for a in [-0.6, 0.0, 0.6]:
+			draw_line(c + Vector2(0, 6), c + Vector2(sin(a) * 7, -cos(a) * 6), Color(P.WOOD_DARK, 0.35), 1.0)
+
+
+func _bucket() -> void:
+	_shadow(Vector2(0, -1), Vector2(26, 5))
+	_poly([Vector2(-22, -40), Vector2(22, -40), Vector2(17, 0), Vector2(-17, 0)], P.TIN_ROOF)
+	draw_line(Vector2(-22, -40), Vector2(22, -40), P.TIN_ROOF_LINE, 3.0)
+	draw_arc(Vector2(0, -40), 22, PI, TAU, 12, P.TIN_ROOF_LINE, 2.0)

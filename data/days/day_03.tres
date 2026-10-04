@@ -1,8 +1,21 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1_axu43"]
 [ext_resource type="Resource" path="res://data/items/river_stone.tres" id="2_dd2l1"]
 [ext_resource type="Script" path="res://data/day_data.gd" id="3_iudbu"]
+[ext_resource type="Script" path="res://data/day_variant.gd" id="v_script"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="c_script"]
+[ext_resource type="Resource" path="res://data/items/river_sketch.tres" id="item_n_river_sketch"]
+
+[sub_resource type="Resource" id="cond_natsumi"]
+script = ExtResource("c_script")
+require_all = Array[StringName]([&"route_natsumi"])
+
+[sub_resource type="Resource" id="var_natsumi"]
+script = ExtResource("v_script")
+condition = SubResource("cond_natsumi")
+scene_path = "res://days/variants/day_03_natsumi.tscn"
+items = Array[ExtResource("1_axu43")]([ExtResource("item_n_river_sketch")])
 
 [resource]
 script = ExtResource("3_iudbu")
@@ -12,3 +25,4 @@ day = 27
 title = "川の日"
 scene_path = "res://days/day_03.tscn"
 items = Array[ExtResource("1_axu43")]([ExtResource("2_dd2l1")])
+variants = Array[ExtResource("v_script")]([SubResource("var_natsumi")])

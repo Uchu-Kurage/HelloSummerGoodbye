@@ -12,4 +12,4 @@ script = ExtResource("1")
 id = &"natsumi"
 condition = SubResource("cond")
 title = "なつみと すごした なつ"
-message = "バスの なかで、てがみを なんども よんだ。"
+message = "たんぼみちには、だれも いなかった。"

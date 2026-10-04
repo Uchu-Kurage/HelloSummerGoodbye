@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <ellipse cx="64" cy="116" rx="40" ry="6" fill="#7A6A55" opacity="0.18"/>
+  <!-- 「はなびたいかい ちゅうし」のはり紙（あめで にじんでる） -->
+  <g transform="rotate(4 64 64)">
+    <path d="M22 20 H106 V106 C96 102, 86 108, 76 104 C64 100, 52 108, 40 104 C32 102, 26 106, 22 104 Z" fill="#F1EDE2" stroke="#B4AC97" stroke-width="2"/>
+    <circle cx="30" cy="27" r="3" fill="#B5563A"/><circle cx="98" cy="27" r="3" fill="#B5563A"/>
+    <g fill="#3E4C72" opacity="0.75">
+      <rect x="34" y="38" width="10" height="10" rx="2"/><rect x="48" y="38" width="10" height="10" rx="2"/><rect x="62" y="38" width="10" height="10" rx="2"/><rect x="76" y="38" width="10" height="10" rx="2"/>
+    </g>
+    <g fill="#B5563A" opacity="0.8">
+      <rect x="40" y="60" width="14" height="14" rx="2"/><rect x="58" y="60" width="14" height="14" rx="2"/><rect x="76" y="60" width="14" height="14" rx="2"/>
+    </g>
+    <!-- にじみ -->
+    <path d="M38 48 C36 60, 42 66, 38 78 M80 48 C84 58, 78 66, 82 80 M56 74 C54 84, 60 90, 56 98" stroke="#6E7FA8" stroke-width="3" fill="none" opacity="0.35" stroke-linecap="round"/>
+    <ellipse cx="70" cy="88" rx="14" ry="8" fill="#9DB0CF" opacity="0.3"/>
+  </g>
+</svg>

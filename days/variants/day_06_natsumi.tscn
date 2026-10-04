@@ -1,0 +1,49 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_06.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_sea.tres" id="n_sea"]
+
+[node name="Day06_natsumi" instance=ExtResource("base")]
+
+[node name="Sea" type="Node2D" parent="Props"]
+position = Vector2(900, 604)
+script = ExtResource("prop")
+kind = 30
+width = 2940
+
+[node name="Sand" type="Node2D" parent="Props"]
+position = Vector2(1500, 604)
+script = ExtResource("prop")
+kind = 31
+width = 2340
+
+[node name="SwimFlag" type="Node2D" parent="Props"]
+position = Vector2(1750, 604)
+script = ExtResource("prop")
+kind = 32
+
+[node name="Board" type="PanelContainer" parent="Props/SwimFlag"]
+offset_left = -90.0
+offset_top = -200
+offset_right = 90.0
+offset_bottom = -144
+mouse_filter = 2
+theme_type_variation = &"SignBoard"
+
+[node name="Label" type="Label" parent="Props/SwimFlag/Board"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "ゆうえい きんし"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Shells" type="Node2D" parent="Props"]
+position = Vector2(2350, 604)
+script = ExtResource("prop")
+kind = 33
+
+[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2150, 604)
+npc_data = ExtResource("n_sea")

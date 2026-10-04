@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/natsumi_drawing.svg" id="icon"]
+
+[resource]
+script = ExtResource("1")
+id = &"natsumi_drawing"
+display_name = "なつみの絵"
+description = "なつやすみの おもいで。ぼくが かいてある。"
+icon = ExtResource("icon")
+day_number = 10
+placeholder_color = Color(0.247, 0.471, 0.710, 1)
+on_ground = false

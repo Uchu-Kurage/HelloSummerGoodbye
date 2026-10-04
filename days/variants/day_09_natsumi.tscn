@@ -1,0 +1,30 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_09.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_senko.tres" id="n_senko"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+
+[node name="Day09_natsumi" instance=ExtResource("base")]
+
+[node name="House" parent="Props" index="1"]
+visible = false
+
+[node name="Bucket" type="Node2D" parent="Props"]
+position = Vector2(1980, 604)
+script = ExtResource("prop")
+kind = 34
+
+[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1900, 604)
+npc_data = ExtResource("n_senko")
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("glow")
+
+[node name="Stars" type="Node2D" parent="Props/Glow"]
+position = Vector2(0, 604)
+script = ExtResource("prop")
+kind = 22
+width = 3840.0

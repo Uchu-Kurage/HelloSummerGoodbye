@@ -9,11 +9,44 @@
 
 [node name="Day02" instance=ExtResource("base")]
 
+[node name="Sign" parent="." index="2"]
+position = Vector2(330, 604)
+
 [node name="Spot1" parent="ItemSpots" index="0"]
-position = Vector2(1900, 604)
+position = Vector2(2400, 604)
+
+[node name="Kominkan" type="Node2D" parent="Props"]
+position = Vector2(820, 604)
+script = ExtResource("prop")
+kind = 24
+
+[node name="Board" type="PanelContainer" parent="Props/Kominkan"]
+offset_left = -100.0
+offset_top = -244
+offset_right = 100.0
+offset_bottom = -192
+mouse_filter = 2
+theme_type_variation = &"SignBoard"
+
+[node name="Label" type="Label" parent="Props/Kominkan/Board"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "こうみんかん"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RadioKids" type="Node2D" parent="Props"]
+position = Vector2(560, 606)
+script = ExtResource("prop")
+kind = 26
+width = 460.0
+
+[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1110, 604)
+npc_data = ExtResource("npc_natsumi")
 
 [node name="Shop" type="Node2D" parent="Props"]
-position = Vector2(1000, 604)
+position = Vector2(1560, 604)
 script = ExtResource("prop")
 kind = 0
 
@@ -33,18 +66,14 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="MarbleRing" type="Node2D" parent="Props"]
-position = Vector2(1440, 604)
+position = Vector2(2000, 604)
 script = ExtResource("prop")
 kind = 1
 
 [node name="Obachan" parent="Props" instance=ExtResource("npc")]
-position = Vector2(860, 604)
+position = Vector2(1420, 604)
 npc_data = ExtResource("npc_dagashi_obachan")
 
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
-position = Vector2(1340, 604)
+position = Vector2(1900, 604)
 npc_data = ExtResource("npc_takeru")
-
-[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
-position = Vector2(2900, 604)
-npc_data = ExtResource("npc_natsumi")

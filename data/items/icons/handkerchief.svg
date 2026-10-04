@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <ellipse cx="64" cy="116" rx="40" ry="6" fill="#7A6A55" opacity="0.18"/>
+  <!-- たたんだ ハンカチ（ふちに ちいさな花） -->
+  <g transform="rotate(6 64 64)">
+    <path d="M26 34 H102 V96 H26 Z" fill="#F4D9DE" stroke="#D8A7B1" stroke-width="2"/>
+    <path d="M32 40 H96 V90 H32 Z" fill="none" stroke="#E7B9C2" stroke-width="2" stroke-dasharray="4 4"/>
+    <path d="M26 34 L102 96" stroke="#E9C6CD" stroke-width="2"/>
+    <g fill="#D97A8D"><circle cx="82" cy="78" r="4"/><circle cx="88" cy="74" r="4"/><circle cx="88" cy="82" r="4"/><circle cx="94" cy="78" r="4"/></g>
+    <circle cx="88" cy="78" r="2.5" fill="#F2D27A"/>
+  </g>
+</svg>

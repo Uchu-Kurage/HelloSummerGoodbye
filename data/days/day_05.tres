@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="item_script"]
 [ext_resource type="Resource" path="res://data/items/festival_mask.tres" id="item_base"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://data/day_variant.gd" id="v_script"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="c_script"]
 [ext_resource type="Resource" path="res://data/items/broken_katanuki.tres" id="item_takeru"]
+[ext_resource type="Resource" path="res://data/items/goldfish_bag.tres" id="item_n_goldfish_bag"]
 
 [sub_resource type="Resource" id="cond_takeru"]
 script = ExtResource("c_script")
@@ -26,7 +27,8 @@ require_all = Array[StringName]([&"route_natsumi"])
 script = ExtResource("v_script")
 condition = SubResource("cond_natsumi")
 scene_path = "res://days/variants/day_05_natsumi.tscn"
-title = "なつみと 夏祭り"
+items = Array[ExtResource("item_script")]([ExtResource("item_n_goldfish_bag")])
+time_from = 0.5
 
 [resource]
 script = ExtResource("day_script")

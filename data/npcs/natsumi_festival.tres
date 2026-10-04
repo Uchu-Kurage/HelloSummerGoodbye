@@ -7,8 +7,9 @@
 script = ExtResource("1")
 id = &"natsumi_festival"
 display_name = "なつみ"
-lines = Array[String](["ゆかた、にあう？", "りんごあめ、はんぶんこ しよう。"])
-repeat_lines = Array[String](["はなび、もうすぐ かな。"])
+lines = Array[String](["……へん？", "@choice にあってる:good | いつもと ちがう:diff", "#good", "@heart", "……ありがと。", "@goto go", "#diff", "……ゆかた、だもん。", "#go", "きんぎょすくい、しよ。", "@game kingyo", "@if_flag kingyo_good many", "……やぶれちゃった。", "@goto bag", "#many", "すごい。……いっぱい とれたね。", "#bag", "おじさん：はい、1ぴき もってきな。", "@give goldfish_bag"])
+repeat_lines = Array[String](["きんぎょ、なまえ つけてね。"])
+auto_talk = true
 sprite = ExtResource("sprite")
 placeholder_color = Color(0.910, 0.655, 0.627, 1)
 height = 148.0

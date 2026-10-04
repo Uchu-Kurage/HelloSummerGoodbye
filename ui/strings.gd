@@ -142,6 +142,49 @@ const KATANUKI_CLEAN := "おっ、ぬけたね"
 ## 寄りの画面の上に出す、タケルのひとこと
 const SPEECH_FORMAT := "%s「%s」"
 
+## --- 初恋ルート（なつみ）のミニゲーム ---
+## スケッチ（3日目）：見本の景色に近い色や形を選んでいく
+const SKETCH_HINT_TOUCH := "いろや かたちを タップで えらぶ"
+const SKETCH_HINT_KEY := "やじるしで えらんで けってい"
+## 描くところと、なつみの声かけ（SKETCH_STEPS の順）
+const SKETCH_STEPS := ["まずは そら。どの いろ？", "つぎは やま。どんな かたち？", "かわは、どの いろかな。", "さいごに いし。"]
+const SKETCH_MATCH := "うん。そっくり。"
+const SKETCH_OTHER := "……それも いいね。"
+const SKETCH_DONE := "できた。"
+## 金魚すくい（5日目）
+const KINGYO_HINT_TOUCH := "きんぎょが ポイの うえに きたら タップ"
+const KINGYO_HINT_KEY := "きんぎょが ポイの うえに きたら Space"
+const KINGYO_START := "ポイは、ななめに いれるんだよ。"
+const KINGYO_GOT := "とれた！"
+const KINGYO_MISS := "……にげちゃった。"
+const KINGYO_BROKE := "あ、やぶれた。"
+const KINGYO_COUNT := "%dひき"
+## 貝がら拾い（6日目）
+const KAIGARA_HINT_TOUCH := "なみが ひいたら、かいがらを タップ"
+const KAIGARA_HINT_KEY := "なみが ひいたら、やじるしで えらんで けってい"
+const KAIGARA_WAIT := "なみが ひくまで まってね。"
+const KAIGARA_START := "なみが ひいたら、いまだよ。"
+const KAIGARA_PLAIN := "しろくて きれい。"
+const KAIGARA_SAKURA := "それ、さくらがい！"
+const KAIGARA_GONE := "……なみに もってかれちゃった。"
+## 線香花火（9日目）。「押しつづけ」は気づきにくいので、始める前に必ず案内を出す
+const SENKO_GUIDE := "おしつづけてね。てが ぶれると、おちちゃうから。"
+const SENKO_HINT_TOUCH := "がめんを おしつづけて、ひの たまを おとさない（おすと はじまるよ）"
+const SENKO_HINT_KEY := "Space を おしつづけて、ひの たまを おとさない（おすと はじまるよ）"
+const SENKO_HOLD_TOUCH := "はなさないでね"
+const SENKO_HOLD_KEY := "Space を はなさないでね"
+const SENKO_WIND := "……かぜ。"
+const SENKO_HERS_FELL := "……あ。わたしの、おちちゃった。"
+const SENKO_MINE_FELL := "あ……おちちゃったね。"
+const SENKO_END := "……さいごまで、おちなかったね。"
+## 映画会（7日目）：暗転と音だけで表す（上の小札に、音を書く）
+const MOVIE_SOUNDS := ["（ジジ……カタカタカタ……）", "（ギィ……）", "（ひた、ひた、ひた……）", "（……キャーッ！）", "（あかりが ついた）"]
+## 絵を広げる（10日目・高）
+const DRAWING_TITLE := "なつやすみの おもいで"
+const DRAWING_NAME := "なつみ"
+const DRAWING_HINT_TOUCH := "タップで とじる"
+const DRAWING_HINT_KEY := "Space で とじる"
+
 const ROTATE_NOTICE := "よこむきにしてね"
 const ROTATE_SUB := "スマホを よこに すると あそべるよ"
 

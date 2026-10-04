@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/goldfish_bag.svg" id="icon"]
+
+[resource]
+script = ExtResource("1")
+id = &"goldfish_bag"
+display_name = "金魚ぶくろ"
+description = "あかいのが 1ぴき。なまえは まだない。"
+icon = ExtResource("icon")
+day_number = 5
+placeholder_color = Color(0.886, 0.333, 0.227, 1)
+on_ground = false

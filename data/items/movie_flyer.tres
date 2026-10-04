@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/movie_flyer.svg" id="icon"]
+
+[resource]
+script = ExtResource("1")
+id = &"movie_flyer"
+display_name = "映画会のチラシ"
+description = "うらに なつみが らくがき した。"
+icon = ExtResource("icon")
+day_number = 7
+placeholder_color = Color(0.247, 0.306, 0.431, 1)
+on_ground = false
