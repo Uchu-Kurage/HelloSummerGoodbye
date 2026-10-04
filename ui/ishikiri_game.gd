@@ -36,8 +36,20 @@ const HOP := 0.4
 const HOP_DECAY := 0.85
 ## 石が沈んだあと、水の輪を眺める時間
 const SHOW_TIME := 1.6
-## 石が跳ねる水面の高さ（画面の高さに対する割合）
-const SKIM_Y := 0.7
+## 背景の絵（川原と、浅い川と、向こう岸の木）
+const BG: Texture2D = preload("res://ui/minigame_bg/ishikiri.jpg")
+## 絵の中で、石が跳ねる水面の高さ（絵の高さに対する割合。川のまん中）
+const SKIM_Y := 0.655
+## 絵の中の、ふたりの足もと（手前の川原。絵の幅・高さに対する割合）
+const THROWER_AT := Vector2(0.15, 0.87)
+const TAKERU_AT := Vector2(0.07, 0.85)
+## 絵の中の川の上と下（水のきらめきを置く幅）
+const WATER_TOP := 0.6
+const WATER_BOTTOM := 0.68
+## 跳ねていく石をカメラが追う、いちばん大きい量（画面の幅に対する割合）。絵はその分だけ横に大きく敷く
+const PAN_MAX := 0.125
+## 絵のどこを残すか（横長の画面では空を少し切り、川と川原を残す）
+const BG_FOCUS := Vector2(0.3, 0.6)
 ## 水の輪が広がりきるまでと、消えるまでの秒数
 const RING_GROW := 2.0
 const RING_LIFE := 4.5
@@ -444,18 +456,18 @@ func _stone_now() -> Vector2:
 
 func _draw() -> void:
 	var s := size
-	var water_y := s.y * 0.6
-	# 石が跳ねる水面の高さ（向こう岸と手前の川原のあいだ）
-	var skim_y := s.y * SKIM_Y
-	var thrower := Vector2(s.x * 0.16, s.y * 0.86)
-	var tk_pos := Vector2(s.x * 0.08, s.y * 0.84)
+	# 石が跳ねる水面の高さ（絵の川のまん中）
+	var skim_y := _bg_point(Vector2(0.0, SKIM_Y)).y
+	var thrower := _bg_point(THROWER_AT)
+	var tk_pos := _bg_point(TAKERU_AT)
 	var from := tk_pos if _demo else thrower
-	# 跳ねていく石を、カメラが少しだけ追う
+	# 跳ねていく石を、カメラが少しだけ追う（絵も、ふたりも、いっしょに動く）
 	var pan := 0.0
 	if phase in [Phase.DEMO, Phase.FLY, Phase.SHOW] and not UiAnim.reduced():
-		pan = clampf(_stone_now().x - 0.3, 0.0, 0.25) * s.x * 0.5
+		pan = clampf(_stone_now().x - 0.3, 0.0, 0.25) * 2.0 * PAN_MAX * s.x
 	draw_set_transform(Vector2(-pan, 0))
-	_draw_river(s, water_y, pan)
+	MinigameBg.draw_cover(self, BG, _bg_rect(), BG_FOCUS)
+	_draw_glints()
 	# 水の輪（いくつも残る）
 	for r in _rings:
 		var age: float = _clock_t - r[1]
@@ -475,43 +487,40 @@ func _draw() -> void:
 			var at := Vector2(from.x + sp.x * s.x, skim_y - sp.y)
 			draw_circle(at + Vector2(0, sp.y + 6), 6, Color(0, 0, 0, 0.12))
 			_draw_stone(at, 1.0, stone if not _demo else STONES[0])
-	draw_set_transform(Vector2.ZERO)
-	# 川原の手前（ふたり）
-	_draw_bank(s)
+	# 川原のふたり
 	_draw_kid(tk_pos, true, 0.0, _demo and phase == Phase.DEMO and _t < 0.3)
 	var pull := 0.0
 	if phase == Phase.AIM and _hold.is_down:
 		pull = clampf(_hold.held_time / PULL_MAX, 0.0, 1.0)
 	_draw_kid(thrower, false, pull, not _demo and phase == Phase.FLY and _t < 0.3)
+	draw_set_transform(Vector2.ZERO)
 
 
-func _draw_river(s: Vector2, water_y: float, pan: float) -> void:
-	var w := s.x + pan * 2.0 + 40.0
-	draw_rect(Rect2(-20, 0, w, water_y), Color("#A8D4EA"))
-	# 向こう岸の山と木
-	draw_rect(Rect2(-20, water_y - s.y * 0.14, w, s.y * 0.14), P.HILL_FAR)
-	for i in 14:
-		var x := -20 + i * w / 13.0
-		draw_circle(Vector2(x, water_y - s.y * 0.14), s.y * 0.07, P.WOODS_DARK if i % 2 == 0 else P.NEAR_BUSH)
-	draw_rect(Rect2(-20, water_y - 10, w, 10), P.STONE_LIGHT)
-	# 水面（光のすじ）
-	draw_rect(Rect2(-20, water_y, w, s.y - water_y), P.WATER)
+## 絵を敷く場所（カメラが追う分だけ、画面より横に大きい）
+func _bg_rect() -> Rect2:
+	return Rect2(Vector2.ZERO, Vector2(size.x * (1.0 + PAN_MAX), size.y))
+
+
+## 絵の中の点（絵の幅・高さに対する割合）が、画面のどこに来るか（MinigameBg.draw_cover と同じ計算）
+func _bg_point(f: Vector2) -> Vector2:
+	var r := _bg_rect()
+	var ts := BG.get_size()
+	var k := maxf(r.size.x / ts.x, r.size.y / ts.y)
+	var src_pos := (ts - r.size / k) * BG_FOCUS
+	return r.position + (f * ts - src_pos) * k
+
+
+## 水面のきらめき（絵の川の上に、ほんの少し。動きを減らす設定では止まる）
+func _draw_glints() -> void:
+	var top := _bg_point(Vector2(0.0, WATER_TOP)).y
+	var bottom := _bg_point(Vector2(0.0, WATER_BOTTOM)).y
+	var w := _bg_rect().size.x
 	var c := _clock()
-	for i in 10:
-		var y := water_y + 16 + (i % 5) * 22
-		var x := fposmod(i * 197.0 + c * 22.0, w) - 20
-		draw_line(Vector2(x, y), Vector2(x + 50 + (i % 3) * 20, y), Color(P.WATER_LIGHT, 0.7), 3.0)
-
-
-## 手前の川原（丸い石がごろごろ）
-func _draw_bank(s: Vector2) -> void:
-	var top := s.y * 0.8
-	draw_colored_polygon(PackedVector2Array([Vector2(0, top - 20), Vector2(s.x * 0.34, top), Vector2(s.x * 0.5, s.y),
-		Vector2(0, s.y)]), P.STONE_LIGHT)
-	for i in 9:
-		var x := fposmod(i * 61.0, s.x * 0.4)
-		var y := top + 20 + (i % 3) * 22
-		_draw_ellipse(Vector2(x, y), 14 + (i % 2) * 6, 8, P.ROCK if i % 2 == 0 else P.ROCK_DARK)
+	for i in 8:
+		var y := lerpf(top, bottom, (i % 4 + 0.5) / 4.0)
+		var x := fposmod(i * 197.0 + c * 18.0, w)
+		var a := 0.25 + 0.15 * sin(c * 1.7 + i)
+		draw_line(Vector2(x, y), Vector2(x + 24 + (i % 3) * 10, y), Color(P.WATER_LIGHT, a), 2.0)
 
 
 ## 石（仮の絵）。足もとに並べるときと、飛んでいるとき
