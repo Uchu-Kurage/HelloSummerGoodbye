@@ -5,7 +5,7 @@
 #   cloud_*       … 切り抜いて、まわりの余白を落とす
 #   clouds_small / stones / thickets / lanterns / boxes … 横に並んだものを1つずつ切り分ける
 #                   （SPLITS の名前に番号をつけて書き出す。例: stone_1.png, stone_2.png, …）
-#   mountains / trees / paddies … 横にくり返せる帯にする（右端を左端に重ねてなじませる）
+#   mountains / trees / paddies / river / road … 横にくり返せる帯にする（右端を左端に重ねてなじませる）
 #   branch / cloud_wide … 左右の端をぼかす（絵の端で切れている部分を見せない）
 # 必要: pillow, numpy
 import sys
@@ -13,14 +13,13 @@ from PIL import Image, ImageFilter
 import numpy as np
 
 OUT = 'world/scenery/painted/'
-# JPEG のマゼンタ（少しにごる）
-M = np.array([250.0, 8.0, 248.0])
 # 帯：[使う行の範囲（上, 下。None は最後まで）, 左右を重ねる幅]
 STRIPS = {
 	'mountains': [(0, 400), 300],
 	'trees': [(0, None), 240],
 	'paddies': [(0, 300), 260],
 	'river': [(0, None), 220],
+	'road': [(0, None), 200],
 }
 ## 切り抜く前に、元の絵のこの範囲だけを使う：[左, 上, 右, 下]（None は端まで）
 ## 同じ絵から2つ取り出すときは、名前を変えて2回わたす（例: prop_diverock=岩.jpg dive_pool=岩.jpg）
@@ -56,7 +55,11 @@ def key(path, crop=None):
 	a = np.array(im).astype(float)
 	# マゼンタらしさ：R と B が G よりどれだけ大きいか
 	m = np.minimum(a[..., 0], a[..., 2]) - a[..., 1]
-	alpha = np.clip((205.0 - m) / 175.0, 0, 1)
+	# 背景のマゼンタは絵によって少しちがう（#FF00FF より暗いことがある）ので、絵の中の背景の色から決める
+	bg = m > 120
+	m_bg = float(np.median(m[bg])) if bg.any() else 240.0
+	M = np.median(a[bg], axis=0) if bg.any() else np.array([250.0, 8.0, 248.0])
+	alpha = np.clip((m_bg - 30.0 - m) / (m_bg - 60.0), 0, 1)
 	# 小さなノイズ（JPEG のにじみ）を消す
 	al = Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(3))
 	alpha = np.array(al).astype(float) / 255
@@ -125,7 +128,9 @@ def strip(fg, al, rows, ov):
 	wr = (a_r * (1 - t)) / np.maximum(a_r * (1 - t) + a_l * t, 1e-4)
 	fg2[:, :ov] = fg[:, w - ov:] * wr[..., None] + fg[:, :ov] * (1 - wr[..., None])
 	im = to_image(fg2, al2)
-	top = im.getbbox()[1]
+	# 上の透明な部分を落とす（JPEG のノイズの点が残っていても、行の中でまとまって見えるところから）
+	rows = np.nonzero((al2 > 0.1).sum(axis=1) > 4)[0]
+	top = int(rows[0]) if len(rows) else 0
 	return im.crop((0, top, im.width, im.height))
 
 
