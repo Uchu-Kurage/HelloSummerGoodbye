@@ -35,7 +35,14 @@ const STEP_EVERY := 0.55
 const CAUGHT_TIME := 2.4
 ## つかんだ瞬間に鳴き出す蝉（環境音）
 const DAWN_CICADA_AMBIENT := "cicada_dawn_burst"
-## カブトムシのいる高さ（画面の高さに対する割合。手をのばして届く、頭くらいの高さ）
+## 背景の水彩の絵と、横長の画面で残すところ（下の地面と、右寄りの大きなクヌギ）
+const BG: Texture2D = preload("res://ui/minigame_bg/kabuto.jpg")
+const BG_FOCUS := Vector2(0.6, 0.75)
+## 絵の中の、罠の木（クヌギ）の幹のまん中と太さ、子どもが歩く地面の高さ（絵の幅・高さに対する割合）
+const BG_TREE_X := 0.632
+const BG_TREE_W := 0.073
+const BG_GROUND := 0.83
+## カブトムシのいる高さ（絵の高さに対する割合。手をのばして届く、頭くらいの高さ）
 const BEETLE_Y := 0.6
 ## タケルの小声が消えるまで
 const WHISPER_TIME := 3.0
@@ -291,31 +298,24 @@ func _input(event: InputEvent) -> void:
 
 # --- 絵 -----------------------------------------------------------------------
 
+## 絵の中の点（0〜1の割合）を、画面の位置に直す（MinigameBg.draw_cover と同じ切り取り方）
+func _bg_point(f: Vector2) -> Vector2:
+	var ts := BG.get_size()
+	var k := maxf(size.x / ts.x, size.y / ts.y)
+	var src_pos := (ts - size / k) * BG_FOCUS
+	return (f * ts - src_pos) * k
+
+
 func _draw() -> void:
 	var s := size
-	var ground := s.y * 0.82
-	# 早朝の、暗く青い林（つかむと明るくなる）
-	var sky := P.KABUTO_SKY.lerp(P.KABUTO_SKY_DAWN, _dawn)
-	draw_rect(Rect2(Vector2.ZERO, s), sky)
-	for i in 7:
-		var x := s.x * (0.04 + i * 0.16)
-		var far := P.KABUTO_FAR_TREE.lerp(P.KABUTO_FAR_TREE.lightened(0.25), _dawn)
-		draw_rect(Rect2(x, s.y * 0.1, 26, ground - s.y * 0.1), far)
-		draw_circle(Vector2(x + 13, s.y * 0.14), 60, far)
-	draw_rect(Rect2(0, ground, s.x, s.y - ground), P.KABUTO_GROUND.lerp(P.KABUTO_GROUND.lightened(0.2), _dawn))
-	# 落ち葉
-	for i in 22:
-		var x := fposmod(i * 113.0, s.x)
-		var y := ground + 10 + (i % 4) * 14
-		_ellipse(Vector2(x, y), 9, 3.5, P.KABUTO_LEAF if i % 2 == 0 else P.KABUTO_LEAF.darkened(0.2))
-	# 罠の木（クヌギ）とバナナ
-	var tree_x := s.x * 0.76
-	var trunk_w := s.x * 0.07
-	draw_rect(Rect2(tree_x - trunk_w * 0.5, 0, trunk_w, ground + 6), P.KABUTO_TRUNK.lerp(P.WOODS_TRUNK, _dawn))
-	for i in 6:
-		var y := s.y * (0.1 + i * 0.13)
-		draw_line(Vector2(tree_x - trunk_w * 0.3, y), Vector2(tree_x - trunk_w * 0.1, y + 30), P.KABUTO_TRUNK.darkened(0.3), 3.0)
-	var spot := Vector2(tree_x - trunk_w * 0.5, s.y * BEETLE_Y)
+	# 早朝の、暗く青いクヌギ林（水彩の絵）。横長の画面では上を切って、足もとを残す
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
+	var ground := _bg_point(Vector2(0.0, BG_GROUND)).y
+	# 罠の木（絵のまん中より右の、大きなクヌギ）とバナナ
+	var tree_x := _bg_point(Vector2(BG_TREE_X, 0.0)).x
+	var trunk_w := _bg_point(Vector2(BG_TREE_X + BG_TREE_W, 0.0)).x - tree_x
+	# バナナとカブトムシは、幹の左の縁より少し内側（からだが空にはみ出さないように）
+	var spot := Vector2(tree_x - trunk_w * 0.22, _bg_point(Vector2(0.0, BEETLE_Y)).y)
 	draw_rect(Rect2(spot.x - 4, spot.y - 34, 10, 52), P.BANANA.darkened(0.25))
 	draw_rect(Rect2(spot.x - 2, spot.y - 30, 6, 44), P.BANANA)
 	# カブトムシ
@@ -327,8 +327,9 @@ func _draw() -> void:
 	var bob := 0.0 if UiAnim.reduced() else absf(sin(_walk_clock * 5.0)) * 3.0
 	var reach := 1.0 if phase in [Phase.GRAB, Phase.CAUGHT, Phase.DONE] else 0.0
 	_draw_kid(Vector2(me_x, ground + 4 - bob), false, 0.25, reach, spot)
-	# 暗い林の、うっすらとした暗がり（つかむと晴れる）
+	# 暗い林の、うっすらとした暗がり（つかむと晴れて、朝の光がさす）
 	draw_rect(Rect2(Vector2.ZERO, s), Color(P.KABUTO_SKY.darkened(0.6), 0.25 * (1.0 - _dawn)))
+	draw_rect(Rect2(Vector2.ZERO, s), Color(P.KABUTO_SKY_DAWN, 0.18 * _dawn))
 
 
 func _draw_beetle(s: Vector2, spot: Vector2, tree_x: float, trunk_w: float, ground: float) -> void:

@@ -29,6 +29,23 @@ const SURFACE_TIME := 1.6
 ## 押しているあいだ足がふるえる大きさ（px）
 const SHAKE := 3.0
 const P := preload("res://world/world_palette.gd")
+## 背景の絵（左に高い岩、右に淵）と、切り取るとき残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/dive.jpg")
+const BG_FOCUS := Vector2(0.45, 0.5)
+## 絵の中の位置（0〜1）。岩の上の右のふち、二人の立つところ、跳んで水に入るまでのずれ
+const EDGE := Vector2(0.39, 0.34)
+const ME_START := Vector2(0.325, 0.345)
+const TAKERU_START := Vector2(0.365, 0.34)
+const JUMP := Vector2(0.17, 0.39)
+## 跳んだはじめに浮く高さ（絵の px）
+const HOP := 30.0
+## 子どもの大きさ（絵の 1px あたり）
+const KID_SCALE := 0.42
+## のぞきこむはじめに寄っている度合い
+const LOOK_ZOOM := 1.08
+## 水面に顔を出すところの寄りと、顔の大きさ
+const SURFACE_ZOOM := 1.5
+const SURFACE_HEAD := 0.6
 
 var hud: Hud
 var phase := Phase.LOOK
@@ -46,6 +63,8 @@ var _hold: HoldInput
 var _chip: PanelContainer
 var _line: Label
 var _hint: Label
+## いま絵を敷いている場所（画面座標）
+var _bg_rect := Rect2()
 
 
 func _ready() -> void:
@@ -230,53 +249,57 @@ func _draw() -> void:
 			_draw_cliff(s)
 
 
-## 岩のふちと、ずっと下の淵（のぞきこむと、思ったより高い）
+## 岩のふちと、ずっと下の淵（水彩の絵）。のぞきこむあいだ、絵が少し寄ったところから引いていく
 func _draw_cliff(s: Vector2) -> void:
-	var look := 1.0
-	if phase == Phase.LOOK:
-		look = smoothstep(0.0, 1.0, _t / LOOK_TIME)
-	# 画面は「上から下をのぞきこむ」。look が進むほど岩のふちが上へ、淵が見えてくる
-	var pan := lerpf(0.0, s.y * 0.25, look)
-	draw_rect(Rect2(Vector2.ZERO, s), P.HILL_FAR.lerp(Color("#9FD0EA"), 0.4))
-	var water_y := s.y * 1.05 - pan
-	draw_rect(Rect2(0, water_y, s.x, s.y), P.WATER_DEEP)
+	var zoom := 1.0
+	if phase == Phase.LOOK and not UiAnim.reduced():
+		zoom = lerpf(LOOK_ZOOM, 1.0, smoothstep(0.0, 1.0, _t / LOOK_TIME))
+	_bg_rect = _cover_rect(s, zoom, _img(EDGE, Rect2(Vector2.ZERO, s)))
+	MinigameBg.draw_cover(self, BG, _bg_rect, BG_FOCUS)
+	var k := _img_scale()
+	# 淵の水面にゆれる光（ごく控えめに）
 	for i in 6:
-		var y := water_y + 20 + i * 26
-		var x := fposmod(i * 173.0 + _clock() * 18.0, s.x)
-		draw_line(Vector2(x, y), Vector2(x + 70, y), P.WATER, 3.0)
-	# 岩（左から張り出す）
-	var top := s.y * 0.55 - pan
-	draw_colored_polygon(PackedVector2Array([Vector2(0, top), Vector2(s.x * 0.42, top), Vector2(s.x * 0.46, top + 30),
-		Vector2(s.x * 0.36, s.y * 1.4), Vector2(0, s.y * 1.4)]), P.ROCK)
-	draw_rect(Rect2(0, top - 6, s.x * 0.42, 8), P.STONE_LIGHT)
+		var f := Vector2(0.5 + fposmod(i * 0.317 + _clock() * 0.012, 0.42), 0.68 + i * 0.045)
+		var p := _img(f, _bg_rect)
+		draw_line(p, p + Vector2(40 * k, 0), Color(P.WATER_LIGHT, 0.35), 2.0)
 	# ふたり（跳ぶ前は岩のふち。押しているあいだ、主人公の足がふるえる）
-	var edge := s.x * 0.4
 	var shake := 0.0
 	if phase == Phase.CHARGE:
 		shake = 0.0 if UiAnim.reduced() else sin(_clock() * 60.0) * SHAKE * clampf(_t / COUNT_NO, 0.0, 1.0)
-	var crouch := 8.0 if phase == Phase.CHARGE else 0.0
-	var me_pos := _fall_pos(_me_jump, Vector2(edge - 90, top), water_y, s)
-	var tk_pos := _fall_pos(_takeru_jump, Vector2(edge - 30, top), water_y, s)
-	_draw_kid(tk_pos, true, crouch if _takeru_jump < 0.0 else 0.0, 0.0)
-	_draw_kid(me_pos, false, crouch if _me_jump < 0.0 else 0.0, shake)
+	var kk := KID_SCALE * k
+	var crouch := 8.0 * kk if phase == Phase.CHARGE else 0.0
+	var me_land := _img(ME_START + JUMP, _bg_rect)
+	var tk_land := _img(TAKERU_START + JUMP, _bg_rect)
+	var me_pos := _fall_pos(_me_jump, _img(ME_START, _bg_rect), me_land, k)
+	var tk_pos := _fall_pos(_takeru_jump, _img(TAKERU_START, _bg_rect), tk_land, k)
+	# 水に入ったら姿は消え、しぶきだけ残る
+	if not _landed(_takeru_jump):
+		_draw_kid(tk_pos, true, crouch if _takeru_jump < 0.0 else 0.0, 0.0, kk)
+	if not _landed(_me_jump):
+		_draw_kid(me_pos, false, crouch if _me_jump < 0.0 else 0.0, shake, kk)
 	# 水しぶき（ぴったりなら重なる）
 	for j in [_me_jump, _takeru_jump]:
 		if j >= 0.0 and _air_t > j + AIR_TIME * 0.92:
-			var k := clampf((_air_t - j - AIR_TIME * 0.92) / (AIR_TIME * 0.2), 0.0, 1.0)
-			var cx := (me_pos.x if j == _me_jump else tk_pos.x)
-			draw_arc(Vector2(cx, water_y), 30 + 70 * k, PI, TAU, 20, Color(P.WATER_LIGHT, 1.0 - k), 5.0)
+			var t := clampf((_air_t - j - AIR_TIME * 0.92) / (AIR_TIME * 0.2), 0.0, 1.0)
+			var land := me_land if j == _me_jump else tk_land
+			draw_arc(land, (14 + 34 * t) * k, PI, TAU, 20, Color(P.WATER_LIGHT, 1.0 - t), 3.0)
+
+
+func _landed(jump: float) -> bool:
+	return jump >= 0.0 and _air_t >= jump + AIR_TIME
 
 
 ## 跳んだあとの位置。まん中あたりで一瞬スローになる
-func _fall_pos(jump: float, start: Vector2, water_y: float, s: Vector2) -> Vector2:
+func _fall_pos(jump: float, start: Vector2, land: Vector2, k: float) -> Vector2:
 	if jump < 0.0 or _air_t < jump:
 		return start
 	var u := clampf((_air_t - jump) / AIR_TIME, 0.0, 1.0)
 	# スロー：0.35〜0.6 のあいだ、時間の進みをゆっくりにする
 	var w := u + 0.12 * sin(u * TAU)
 	w = clampf(w, 0.0, 1.0)
-	var x := start.x + s.x * 0.28 * w
-	var y := start.y - 80.0 * 4.0 * w * (1.0 - w) * 0.6 + (water_y - start.y) * w * w
+	var x := lerpf(start.x, land.x, w)
+	# はじめに少し浮いてから、淵へ落ちていく
+	var y := start.y - HOP * k * 4.0 * w * (1.0 - w) + (land.y - start.y) * w * w
 	return Vector2(x, y)
 
 
@@ -301,31 +324,67 @@ func _draw_under(s: Vector2) -> void:
 	_draw_kid(Vector2(s.x * 0.5 + gap, s.y * 0.55 + sink + (0.0 if result == &"perfect" else -30.0)), true, 0.0, 0.0, 0.8)
 
 
-## 水面に顔を出して、二人で笑う
+## 水面に顔を出して、二人で笑う（同じ絵の淵に寄って）
 func _draw_surface(s: Vector2) -> void:
-	draw_rect(Rect2(Vector2.ZERO, s), Color("#9FD0EA"))
-	var wy := s.y * 0.62
-	var bob := sin(_clock() * 3.0) * 4.0
+	var mid := (ME_START + TAKERU_START) * 0.5 + JUMP
+	_bg_rect = _cover_rect(s, SURFACE_ZOOM, _img(mid, Rect2(Vector2.ZERO, s)))
+	MinigameBg.draw_cover(self, BG, _bg_rect, BG_FOCUS)
+	var k := _img_scale()
+	var c := _img(mid, _bg_rect)
+	var r := 26.0 * k * SURFACE_HEAD
+	var bob := sin(_clock() * 3.0) * 3.0
 	for side in [-1.0, 1.0]:
-		var hx: float = s.x * 0.5 + side * 60.0
 		var is_takeru: bool = side > 0.0
 		var skin := Color("#C68E62") if is_takeru else P.PLAYER_SKIN
-		var head := Vector2(hx, wy - 30 + bob * side)
-		draw_circle(head, 26, skin)
+		var wy: float = c.y + bob * side
+		var head := Vector2(c.x + side * r * 2.4, wy - r * 0.55)
+		# あごから下は水の中（水面より上だけ描く）
+		_draw_disc_above(head, r, wy, skin)
 		if is_takeru:
-			draw_arc(head, 22, PI * 0.9, PI * 2.1, 12, Color("#211D1A"), 11.0)
+			draw_arc(head, r * 0.85, PI * 0.9, PI * 2.1, 12, Color("#211D1A"), r * 0.42)
 		else:
 			# 帽子は岩の上に置いてきた。ぬれた髪
-			draw_arc(head, 22, PI * 1.0, PI * 2.0, 12, Color("#3B3226"), 9.0)
+			draw_arc(head, r * 0.85, PI * 1.0, PI * 2.0, 12, Color("#3B3226"), r * 0.35)
 		# 笑っている口
-		draw_arc(head + Vector2(0, 6), 9, 0.2, PI - 0.2, 8, Color("#3B3226"), 2.5)
-	# 水は顔のあとに描いて、あごから下を沈める
-	draw_rect(Rect2(0, wy, s.x, s.y), P.WATER_DEEP)
-	for i in 6:
-		var y := wy + 14 + i * 22
-		var x := fposmod(i * 211.0 + _clock() * 26.0, s.x)
-		draw_line(Vector2(x, y), Vector2(x + 60, y), P.WATER, 3.0)
-	draw_line(Vector2(0, wy), Vector2(s.x, wy), P.WATER_LIGHT, 3.0)
+		draw_arc(head + Vector2(0, r * 0.1), r * 0.3, 0.2, PI - 0.2, 8, Color("#3B3226"), 2.0)
+		# 顔のまわりの波の輪（水面に寝かせただ円）
+		var rw := r * 1.5 * (1.0 + 0.12 * sin(_clock() * 2.0 + side))
+		var ring := PackedVector2Array()
+		for i in 33:
+			ring.append(Vector2(head.x, wy) + Vector2(cos(TAU * i / 32.0) * rw, sin(TAU * i / 32.0) * rw * 0.22))
+		draw_polyline(ring, Color(P.WATER_LIGHT, 0.6), 2.0)
+
+
+## 円のうち、y が cut より上の部分だけを塗る
+func _draw_disc_above(center: Vector2, r: float, cut: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 25:
+		var p := center + Vector2.from_angle(PI + PI * i / 24.0) * r
+		pts.append(p)
+	# 下半分は cut で切る
+	for i in 25:
+		var p := center + Vector2.from_angle(PI * i / 24.0) * r
+		pts.append(Vector2(p.x, minf(p.y, cut)))
+	draw_colored_polygon(pts, col)
+
+
+## 絵をどこに敷くか。zoom は anchor（画面の点）を中心に寄る。1 なら画面ちょうど
+func _cover_rect(s: Vector2, zoom: float, anchor: Vector2) -> Rect2:
+	return Rect2(anchor * (1.0 - zoom), s * zoom)
+
+
+## 絵の中の点（0〜1）が、画面のどこに来るか（MinigameBg.draw_cover と同じ切り取りかた）
+func _img(f: Vector2, rect: Rect2) -> Vector2:
+	var ts := BG.get_size()
+	var k := maxf(rect.size.x / ts.x, rect.size.y / ts.y)
+	var src_pos := (ts - rect.size / k) * BG_FOCUS
+	return rect.position + (f * ts - src_pos) * k
+
+
+## 絵の 1px が、いま画面で何 px か
+func _img_scale() -> float:
+	var ts := BG.get_size()
+	return maxf(_bg_rect.size.x / ts.x, _bg_rect.size.y / ts.y)
 
 
 ## 子ども（仮の姿）。pos は足もと、takeru なら日焼け・黒髪、主人公は麦わら帽子

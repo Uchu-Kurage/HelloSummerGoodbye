@@ -24,7 +24,13 @@ const STARS_TIME := 4.5
 const LIGHT_RADIUS := 0.3
 ## さみしい一言のとき、光がゆれる大きさ（px）
 const LIGHT_SHAKE := 6.0
+## 穴に寄った絵の、床の絵の拡大率
+const HOLE_ZOOM := 1.5
+## 床の絵に重ねる、夜の暖かい暗さ（光の中でも絵ははっきり見えるくらい）
+const FLOOR_NIGHT := Color(0.12, 0.08, 0.05, 0.3)
 const P := preload("res://world/world_palette.gd")
+## 基地の床を真上から見た水彩の絵（板きれ、小石、枯れ葉）
+const BG: Texture2D = preload("res://ui/minigame_bg/capsule.jpg")
 
 var hud: Hud
 ## 会話の @game の名前（capsule / capsule_stars）
@@ -361,38 +367,46 @@ func _draw() -> void:
 	_draw_flashlight(s)
 
 
+## 基地の床（真上から見た水彩の絵）。夜なので、暗い色を少し重ねる
+## zoom が 1 より大きいと、選んだ場所のまわりに寄る（その場所が画面の center に来る）
+func _draw_paint(s: Vector2, zoom: float, center: Vector2) -> void:
+	var size2 := s * zoom
+	var pos := center - Vector2(s.x * SPOTS[maxi(spot, 0)], s.y * 0.7) * zoom
+	# 寄っても画面のはしにすき間が出ないように
+	pos = pos.clamp(s - size2, Vector2.ZERO)
+	MinigameBg.draw_cover(self, BG, Rect2(pos, size2))
+	draw_rect(Rect2(Vector2.ZERO, s), FLOOR_NIGHT)
+
+
 ## 基地の床（3つの場所）。懐中電灯が選んでいる場所を照らす
 func _draw_floor(s: Vector2) -> void:
-	draw_rect(Rect2(Vector2.ZERO, s), BaseArt.interior_color().darkened(0.3))
-	var floor_y := s.y * 0.55
-	draw_rect(Rect2(0, floor_y, s.x, s.y - floor_y), P.SOIL)
-	for i in 30:
-		var x := fposmod(i * 97.0, s.x)
-		var y := floor_y + 12 + (i % 6) * (s.y - floor_y) / 7.0
-		draw_circle(Vector2(x, y), 2.0 + (i % 3), P.SOIL.darkened(0.25))
+	_draw_paint(s, 1.0, Vector2.ZERO)  # 寄らない（画面いっぱいに敷くだけ）
+	# 掘れそうな場所（土がやわらかいところ。うっすら）
 	for i in SPOTS.size():
 		var c := Vector2(s.x * SPOTS[i], s.y * 0.7)
-		_ellipse(c, s.x * 0.07, s.y * 0.035, P.SOIL.darkened(0.15))
-		_ellipse(c, s.x * 0.05, s.y * 0.02, P.SOIL.lightened(0.08))
+		_ellipse(c, s.x * 0.06, s.y * 0.03, Color(P.SOIL.darkened(0.2), 0.35))
 	# タケルの持つ懐中電灯の、床に落ちる光（重ね絵の暗さは _draw_flashlight）
 
 
 ## 穴に寄った絵：掘るほど深くなる。缶、土、ならした跡
 func _draw_hole(s: Vector2) -> void:
-	draw_rect(Rect2(Vector2.ZERO, s), P.SOIL)
-	for i in 40:
-		var x := fposmod(i * 131.0, s.x)
-		var y := fposmod(i * 71.0, s.y)
-		draw_circle(Vector2(x, y), 2.0 + (i % 3), P.SOIL.darkened(0.2))
 	var c := Vector2(s.x * 0.5, s.y * 0.55)
+	_draw_paint(s, HOLE_ZOOM, c)
 	var depth := float(scoops) / float(Strings.CAPSULE_DIG_LINES.size())
 	var rx := s.y * 0.22
 	var ry := s.y * 0.1
-	# 掘った土の山（穴の右上。懐中電灯の光の中）
-	_ellipse(c + Vector2(rx * 0.75, -ry * 1.5), rx * 0.35 * depth + 4, ry * 0.5 * depth + 2, P.SOIL.lightened(0.12))
-	# 穴（深くなるほど暗い）
+	# 掘った土の山（穴の右上。懐中電灯の光の中）。水彩の床になじむよう、うすい色を重ねる
+	var heap := c + Vector2(rx * 0.75, -ry * 1.5)
+	for k in 3:
+		var o := Vector2((k - 1) * rx * 0.12 * depth, k * ry * 0.08)
+		_ellipse(heap + o, rx * (0.35 - k * 0.07) * depth + 4, ry * (0.5 - k * 0.1) * depth + 2,
+			Color(P.SOIL.lightened(0.04 + k * 0.06), 0.75))
+	# 穴（深くなるほど暗い）。まわりにほぐれた土、内側は上のふちが影になる
 	if depth > 0.0:
-		_ellipse(c, rx * (0.4 + 0.6 * depth), ry * (0.4 + 0.6 * depth), P.SOIL.darkened(0.25 + 0.45 * depth))
+		var hr := 0.4 + 0.6 * depth
+		_ellipse(c, rx * hr * 1.18, ry * hr * 1.3, Color(P.SOIL, 0.55))
+		_ellipse(c, rx * hr, ry * hr, P.SOIL.darkened(0.2 + 0.3 * depth))
+		_ellipse(c + Vector2(0, ry * hr * 0.15), rx * hr * 0.82, ry * hr * 0.75, P.SOIL.darkened(0.3 + 0.45 * depth))
 	var can_in := phase in [Phase.COVER, Phase.PAT, Phase.END]
 	if can_in:
 		# 缶（ふたが見える）
