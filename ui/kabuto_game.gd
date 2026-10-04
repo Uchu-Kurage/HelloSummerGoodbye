@@ -46,6 +46,21 @@ const BG_GROUND := 0.83
 const BEETLE_Y := 0.6
 ## タケルの小声が消えるまで
 const WHISPER_TIME := 3.0
+## 子どもの絵（右向き、足もとが下の端）。頭の高さ（あご〜帽子・髪のてっぺん、絵の画素）をそろえて、
+## しのび足でも手をのばしても、同じ子の大きさに見えるようにする
+const KID_ME_SNEAK: Texture2D = preload("res://world/scenery/painted/player_mg2_1.png")
+const KID_ME_REACH: Texture2D = preload("res://world/scenery/painted/player_mg2_2.png")
+const KID_TAKERU_SNEAK: Texture2D = preload("res://world/scenery/painted/takeru_mg1_6.png")
+const KID_TAKERU_STAND: Texture2D = preload("res://world/scenery/painted/npc_takeru.png")
+const KID_HEAD_PX := {
+	KID_ME_SNEAK: 100.0, KID_ME_REACH: 105.0, KID_TAKERU_SNEAK: 95.0, KID_TAKERU_STAND: 205.0,
+}
+## 画面での頭の高さ（背景の絵の画素で。絵を拡大したぶん子どもも大きくなる）
+const KID_HEAD := 36.0
+## 手をのばす絵の、手のひらの位置（絵の画素。足もとのまん中から）
+const KID_REACH_HAND := Vector2(103, -328)
+## 夜明け前の暗さに合わせた、子どもの色（つかむと 白 = そのままの色 にもどる）
+const KID_SHADE := Color(0.7, 0.75, 0.9)
 const P := preload("res://world/world_palette.gd")
 
 var hud: Hud
@@ -301,9 +316,15 @@ func _input(event: InputEvent) -> void:
 ## 絵の中の点（0〜1の割合）を、画面の位置に直す（MinigameBg.draw_cover と同じ切り取り方）
 func _bg_point(f: Vector2) -> Vector2:
 	var ts := BG.get_size()
-	var k := maxf(size.x / ts.x, size.y / ts.y)
+	var k := _bg_scale()
 	var src_pos := (ts - size / k) * BG_FOCUS
 	return (f * ts - src_pos) * k
+
+
+## 背景の絵を、画面でどれだけ拡大しているか
+func _bg_scale() -> float:
+	var ts := BG.get_size()
+	return maxf(size.x / ts.x, size.y / ts.y)
 
 
 func _draw() -> void:
@@ -320,13 +341,26 @@ func _draw() -> void:
 	draw_rect(Rect2(spot.x - 2, spot.y - 30, 6, 44), P.BANANA)
 	# カブトムシ
 	_draw_beetle(s, spot, tree_x, trunk_w, ground)
-	# うしろでしゃがむタケル
-	_draw_kid(Vector2(s.x * 0.1, ground + 4), true, 0.45, 0.0)
-	# しのび足の主人公（近づくほど木の近くへ）
-	var me_x := lerpf(s.x * 0.22, tree_x - trunk_w * 0.5 - s.x * 0.08, progress)
+	var bgk := _bg_scale()
+	# うしろでしゃがんで「しーっ」とするタケル（つかんだら、立ち上がる）
+	var caught := phase in [Phase.CAUGHT, Phase.DONE]
+	_draw_kid(KID_TAKERU_STAND if caught else KID_TAKERU_SNEAK, Vector2(s.x * 0.1, ground + 4), bgk)
+	# しのび足の主人公（近づくほど木の近くへ）。木の前では、のばした手がカブトムシのすぐ手前に来る
+	var reach_k := KID_HEAD * bgk / KID_HEAD_PX[KID_ME_REACH]
+	var reach_x := spot.x - 36.0 * bgk - KID_REACH_HAND.x * reach_k
+	var me_x := lerpf(s.x * 0.22, reach_x, progress)
 	var bob := 0.0 if UiAnim.reduced() else absf(sin(_walk_clock * 5.0)) * 3.0
-	var reach := 1.0 if phase in [Phase.GRAB, Phase.CAUGHT, Phase.DONE] else 0.0
-	_draw_kid(Vector2(me_x, ground + 4 - bob), false, 0.25, reach, spot)
+	if phase in [Phase.GRAB, Phase.CAUGHT, Phase.DONE]:
+		var feet := Vector2(reach_x, ground + 4)
+		_draw_kid(KID_ME_REACH, feet, bgk)
+		if caught:
+			# つかんだカブトムシを、朝の光のほうへかかげる
+			var hand := feet + KID_REACH_HAND * reach_k
+			var k := maxf(s.y / 720.0, 0.6)
+			_ellipse(hand + Vector2(0, -6 * k), 10 * k, 14 * k, P.BEETLE)
+			draw_line(hand + Vector2(0, -18 * k), hand + Vector2(0, -34 * k), P.BEETLE, 4.0 * k)
+	else:
+		_draw_kid(KID_ME_SNEAK, Vector2(me_x, ground + 4 - bob), bgk)
 	# 暗い林の、うっすらとした暗がり（つかむと晴れて、朝の光がさす）
 	draw_rect(Rect2(Vector2.ZERO, s), Color(P.KABUTO_SKY.darkened(0.6), 0.25 * (1.0 - _dawn)))
 	draw_rect(Rect2(Vector2.ZERO, s), Color(P.KABUTO_SKY_DAWN, 0.18 * _dawn))
@@ -380,35 +414,11 @@ func _draw_beetle(s: Vector2, spot: Vector2, tree_x: float, trunk_w: float, grou
 			draw_line(head + dir * 34 * k, head + dir * 46 * k, Color(P.KABUTO_SKY_DAWN, 0.9), 3.0)
 
 
-## 子ども（仮の姿）。pos は足もと。crouch はしゃがむ量、reach は手をのばす量（つかむ）
-func _draw_kid(pos: Vector2, takeru: bool, crouch: float, reach: float, target := Vector2.ZERO) -> void:
-	var shade := Color(0.75, 0.78, 0.9).lerp(Color.WHITE, _dawn)
-	var skin := (Color("#C68E62") if takeru else P.PLAYER_SKIN) * shade
-	var shirt := (Color("#E9E3D3") if takeru else P.PLAYER_BODY) * shade
-	var pants := (Color("#3E5A7A") if takeru else P.PLAYER_SHORTS) * shade
-	var c := 30.0 * crouch
-	var p := pos + Vector2(0, c)
-	draw_rect(Rect2(p.x - 13, p.y - 36, 10, 36 - c), skin)
-	draw_rect(Rect2(p.x + 3, p.y - 36, 10, 36 - c), skin)
-	draw_rect(Rect2(p.x - 17, p.y - 58, 34, 24), pants)
-	draw_rect(Rect2(p.x - 19, p.y - 100, 38, 44), shirt)
-	var head := Vector2(p.x + (6.0 if not takeru else 0.0) * crouch * 4.0, p.y - 120)
-	draw_circle(head, 21, skin)
-	if takeru:
-		draw_arc(head, 18, PI * 0.9, PI * 2.1, 12, Color("#211D1A") * shade, 9)
-	else:
-		draw_rect(Rect2(head.x - 28, head.y - 20, 56, 7), P.PLAYER_HAT * shade)
-		draw_rect(Rect2(head.x - 18, head.y - 35, 36, 16), P.PLAYER_HAT * shade)
-	# 腕：ふだんは前に少し出して構える。届いたら木のカブトムシへのばす
-	var shoulder := Vector2(p.x + 10, p.y - 92)
-	var hand := shoulder + Vector2(30, 20)
-	if reach > 0.0 and target != Vector2.ZERO:
-		hand = shoulder.lerp(target + Vector2(-8, 10), 0.85)
-	draw_line(shoulder, hand, skin, 9.0)
-	if not takeru and phase in [Phase.CAUGHT, Phase.DONE]:
-		# つかんだカブトムシ
-		_ellipse(hand + Vector2(4, -4), 10, 14, P.BEETLE)
-		draw_line(hand + Vector2(4, -16), hand + Vector2(4, -32), P.BEETLE, 4.0)
+## 子ども（手描きの絵）。pos は足もと。夜明け前は暗く青っぽく、夜が明けると元の色へ
+func _draw_kid(tex: Texture2D, pos: Vector2, bgk: float) -> void:
+	var k: float = KID_HEAD * bgk / KID_HEAD_PX[tex]
+	var sz := tex.get_size() * k
+	draw_texture_rect(tex, Rect2(pos - Vector2(sz.x * 0.5, sz.y), sz), false, KID_SHADE.lerp(Color.WHITE, _dawn))
 
 
 func _ellipse(c: Vector2, rx: float, ry: float, col: Color) -> void:
