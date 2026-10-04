@@ -41,11 +41,29 @@ const JUMP := Vector2(0.17, 0.39)
 const HOP := 30.0
 ## 子どもの大きさ（絵の 1px あたり）
 const KID_SCALE := 0.42
+## 子どもの姿（水彩の立ち絵。どれも右向き）
+const ME_STAND: Texture2D = preload("res://world/scenery/painted/player_1.png")
+const ME_CROUCH: Texture2D = preload("res://world/scenery/painted/player_mg1_1.png")
+const ME_AIR: Texture2D = preload("res://world/scenery/painted/player_mg1_2.png")
+const ME_FACE: Texture2D = preload("res://world/scenery/painted/player_mg1_3.png")
+const TK_STAND: Texture2D = preload("res://world/scenery/painted/npc_takeru.png")
+const TK_CROUCH: Texture2D = preload("res://world/scenery/painted/takeru_mg1_1.png")
+const TK_AIR: Texture2D = preload("res://world/scenery/painted/takeru_mg1_2.png")
+const TK_FACE: Texture2D = preload("res://world/scenery/painted/takeru_mg1_3.png")
+## 絵ごとに解像度がちがうので、頭（てっぺんからあごまで）の高さを絵の px で覚えておき、どの姿でも頭が同じ大きさに見えるようにそろえる
+const HEAD_PX := {
+	ME_STAND: 84.0, ME_CROUCH: 79.0, ME_AIR: 89.0, ME_FACE: 101.0,
+	TK_STAND: 202.0, TK_CROUCH: 116.0, TK_AIR: 97.0, TK_FACE: 119.0,
+}
+## 頭の高さ（KID_SCALE をかける前の単位。立つと頭四つぶんほど）
+const HEAD := 36.0
+## 押しはじめてから、しゃがみきるまで（秒）
+const CROUCH_TIME := 0.12
 ## のぞきこむはじめに寄っている度合い
 const LOOK_ZOOM := 1.08
-## 水面に顔を出すところの寄りと、顔の大きさ
+## 水面に顔を出すところの寄りと、顔の大きさ（岩の上の何倍か）
 const SURFACE_ZOOM := 1.5
-const SURFACE_HEAD := 0.6
+const SURFACE_HEAD := 2.0
 
 var hud: Hud
 var phase := Phase.LOOK
@@ -262,27 +280,40 @@ func _draw_cliff(s: Vector2) -> void:
 		var f := Vector2(0.5 + fposmod(i * 0.317 + _clock() * 0.012, 0.42), 0.68 + i * 0.045)
 		var p := _img(f, _bg_rect)
 		draw_line(p, p + Vector2(40 * k, 0), Color(P.WATER_LIGHT, 0.35), 2.0)
-	# ふたり（跳ぶ前は岩のふち。押しているあいだ、主人公の足がふるえる）
+	# ふたり（跳ぶ前は岩のふち。押しているあいだはしゃがみ、主人公の足がふるえる）
 	var shake := 0.0
+	var crouch := 0.0
 	if phase == Phase.CHARGE:
 		shake = 0.0 if UiAnim.reduced() else sin(_clock() * 60.0) * SHAKE * clampf(_t / COUNT_NO, 0.0, 1.0)
+		crouch = 1.0 if UiAnim.reduced() else clampf(_t / CROUCH_TIME, 0.0, 1.0)
+	elif phase == Phase.AIR:
+		# 遅れて跳ぶほうは、しゃがんだまま待つ
+		crouch = 1.0
 	var kk := KID_SCALE * k
-	var crouch := 8.0 * kk if phase == Phase.CHARGE else 0.0
 	var me_land := _img(ME_START + JUMP, _bg_rect)
 	var tk_land := _img(TAKERU_START + JUMP, _bg_rect)
 	var me_pos := _fall_pos(_me_jump, _img(ME_START, _bg_rect), me_land, k)
 	var tk_pos := _fall_pos(_takeru_jump, _img(TAKERU_START, _bg_rect), tk_land, k)
 	# 水に入ったら姿は消え、しぶきだけ残る
 	if not _landed(_takeru_jump):
-		_draw_kid(tk_pos, true, crouch if _takeru_jump < 0.0 else 0.0, 0.0, kk)
+		_draw_kid(_pose(true, _takeru_jump, crouch), tk_pos, kk)
 	if not _landed(_me_jump):
-		_draw_kid(me_pos, false, crouch if _me_jump < 0.0 else 0.0, shake, kk)
+		_draw_kid(_pose(false, _me_jump, crouch), me_pos + Vector2(shake if _me_jump < 0.0 else 0.0, 0), kk)
 	# 水しぶき（ぴったりなら重なる）
 	for j in [_me_jump, _takeru_jump]:
 		if j >= 0.0 and _air_t > j + AIR_TIME * 0.92:
 			var t := clampf((_air_t - j - AIR_TIME * 0.92) / (AIR_TIME * 0.2), 0.0, 1.0)
 			var land := me_land if j == _me_jump else tk_land
 			draw_arc(land, (14 + 34 * t) * k, PI, TAU, 20, Color(P.WATER_LIGHT, 1.0 - t), 3.0)
+
+
+## いまの姿。跳んだら空中の絵、跳ぶ前はしゃがみ具合で立ち絵としゃがみ絵を切りかえる
+func _pose(takeru: bool, jump: float, crouch: float) -> Texture2D:
+	if jump >= 0.0 and _air_t >= jump:
+		return TK_AIR if takeru else ME_AIR
+	if crouch >= 0.5:
+		return TK_CROUCH if takeru else ME_CROUCH
+	return TK_STAND if takeru else ME_STAND
 
 
 func _landed(jump: float) -> bool:
@@ -318,10 +349,12 @@ func _draw_under(s: Vector2) -> void:
 		var bx := fposmod(i * 0.618, 1.0) * s.x
 		var by := s.y - fposmod(c * 40.0 + i * 70.0, s.y)
 		draw_arc(Vector2(bx, by), 3 + (i % 3) * 2, 0, TAU, 10, Color(P.WATER_LIGHT, 0.6), 1.5)
+	# 跳んだときの姿のまま、水の色にそまって並んでしずむ
 	var sink := minf(_t / UNDER_TIME, 1.0) * 40.0
 	var gap := 50.0 if result == &"perfect" else 110.0
-	_draw_kid(Vector2(s.x * 0.5 - gap, s.y * 0.55 + sink), false, 0.0, 0.0, 0.8)
-	_draw_kid(Vector2(s.x * 0.5 + gap, s.y * 0.55 + sink + (0.0 if result == &"perfect" else -30.0)), true, 0.0, 0.0, 0.8)
+	var tint := Color(P.WATER_LIGHT.lerp(P.WATER, 0.4), 0.8)
+	_draw_kid(ME_AIR, Vector2(s.x * 0.5 - gap, s.y * 0.7 + sink), 0.8, tint)
+	_draw_kid(TK_AIR, Vector2(s.x * 0.5 + gap, s.y * 0.7 + sink + (0.0 if result == &"perfect" else -30.0)), 0.8, tint)
 
 
 ## 水面に顔を出して、二人で笑う（同じ絵の淵に寄って）
@@ -331,41 +364,24 @@ func _draw_surface(s: Vector2) -> void:
 	MinigameBg.draw_cover(self, BG, _bg_rect, BG_FOCUS)
 	var k := _img_scale()
 	var c := _img(mid, _bg_rect)
-	var r := 26.0 * k * SURFACE_HEAD
+	var kk := KID_SCALE * k * SURFACE_HEAD
+	var r := HEAD * kk * 0.5
 	var bob := sin(_clock() * 3.0) * 3.0
 	for side in [-1.0, 1.0]:
 		var is_takeru: bool = side > 0.0
-		var skin := Color("#C68E62") if is_takeru else P.PLAYER_SKIN
 		var wy: float = c.y + bob * side
-		var head := Vector2(c.x + side * r * 2.4, wy - r * 0.55)
-		# あごから下は水の中（水面より上だけ描く）
-		_draw_disc_above(head, r, wy, skin)
-		if is_takeru:
-			draw_arc(head, r * 0.85, PI * 0.9, PI * 2.1, 12, Color("#211D1A"), r * 0.42)
-		else:
-			# 帽子は岩の上に置いてきた。ぬれた髪
-			draw_arc(head, r * 0.85, PI * 1.0, PI * 2.0, 12, Color("#3B3226"), r * 0.35)
-		# 笑っている口
-		draw_arc(head + Vector2(0, r * 0.1), r * 0.3, 0.2, PI - 0.2, 8, Color("#3B3226"), 2.0)
-		# 顔のまわりの波の輪（水面に寝かせただ円）
-		var rw := r * 1.5 * (1.0 + 0.12 * sin(_clock() * 2.0 + side))
-		var ring := PackedVector2Array()
-		for i in 33:
-			ring.append(Vector2(head.x, wy) + Vector2(cos(TAU * i / 32.0) * rw, sin(TAU * i / 32.0) * rw * 0.22))
-		draw_polyline(ring, Color(P.WATER_LIGHT, 0.6), 2.0)
-
-
-## 円のうち、y が cut より上の部分だけを塗る
-func _draw_disc_above(center: Vector2, r: float, cut: float, col: Color) -> void:
-	var pts := PackedVector2Array()
-	for i in 25:
-		var p := center + Vector2.from_angle(PI + PI * i / 24.0) * r
-		pts.append(p)
-	# 下半分は cut で切る
-	for i in 25:
-		var p := center + Vector2.from_angle(PI * i / 24.0) * r
-		pts.append(Vector2(p.x, minf(p.y, cut)))
-	draw_colored_polygon(pts, col)
+		var at := Vector2(c.x + side * r * 2.2, wy)
+		# 顔のまわりの波の輪（水面に寝かせただ円）。奥の半分は体のうしろ、手前の半分は体の前に
+		var rw := r * 1.7 * (1.0 + 0.12 * sin(_clock() * 2.0 + side))
+		var back := PackedVector2Array()
+		var front := PackedVector2Array()
+		for i in 17:
+			back.append(Vector2(at.x, wy) + Vector2(cos(PI + PI * i / 16.0) * rw, sin(PI + PI * i / 16.0) * rw * 0.22))
+			front.append(Vector2(at.x, wy) + Vector2(cos(PI * i / 16.0) * rw, sin(PI * i / 16.0) * rw * 0.22))
+		draw_polyline(back, Color(P.WATER_LIGHT, 0.6), 2.0)
+		# あごから下は水の中。絵の下のふちが水面。タケルはこちらを向いて笑う
+		_draw_kid(TK_FACE if is_takeru else ME_FACE, at, kk, Color.WHITE, is_takeru)
+		draw_polyline(front, Color(P.WATER_LIGHT, 0.6), 2.0)
 
 
 ## 絵をどこに敷くか。zoom は anchor（画面の点）を中心に寄る。1 なら画面ちょうど
@@ -387,24 +403,12 @@ func _img_scale() -> float:
 	return maxf(_bg_rect.size.x / ts.x, _bg_rect.size.y / ts.y)
 
 
-## 子ども（仮の姿）。pos は足もと、takeru なら日焼け・黒髪、主人公は麦わら帽子
-func _draw_kid(pos: Vector2, takeru: bool, crouch: float, shake: float, scale_k := 1.0) -> void:
-	var k := scale_k
-	var skin := Color("#C68E62") if takeru else P.PLAYER_SKIN
-	var shirt := Color("#E9E3D3") if takeru else P.PLAYER_BODY
-	var pants := Color("#3E5A7A") if takeru else P.PLAYER_SHORTS
-	var p := pos + Vector2(0, crouch)
-	draw_rect(Rect2(p.x - 13 * k + shake, p.y - 36 * k, 10 * k, 36 * k - crouch), skin)
-	draw_rect(Rect2(p.x + 3 * k - shake, p.y - 36 * k, 10 * k, 36 * k - crouch), skin)
-	draw_rect(Rect2(p.x - 17 * k, p.y - 58 * k, 34 * k, 24 * k), pants)
-	draw_rect(Rect2(p.x - 19 * k, p.y - 100 * k, 38 * k, 44 * k), shirt)
-	var head := Vector2(p.x, p.y - 120 * k)
-	draw_circle(head, 21 * k, skin)
-	if takeru:
-		draw_arc(head, 18 * k, PI * 0.9, PI * 2.1, 12, Color("#211D1A"), 9 * k)
-	else:
-		draw_rect(Rect2(head.x - 28 * k, head.y - 20 * k, 56 * k, 7 * k), P.PLAYER_HAT)
-		draw_rect(Rect2(head.x - 18 * k, head.y - 35 * k, 36 * k, 16 * k), P.PLAYER_HAT)
+## 子どもを描く。pos は足もと（顔だけの絵なら下のふち）のまん中。scale_k は KID_SCALE の単位 1 が画面で何 px か
+func _draw_kid(tex: Texture2D, pos: Vector2, scale_k: float, tint := Color.WHITE, flip := false) -> void:
+	var sz := tex.get_size() * (HEAD * scale_k / float(HEAD_PX[tex]))
+	draw_set_transform(pos, 0.0, Vector2(-1.0 if flip else 1.0, 1.0))
+	draw_texture_rect(tex, Rect2(-sz.x * 0.5, -sz.y, sz.x, sz.y), false, tint)
+	draw_set_transform(Vector2.ZERO)
 
 
 ## 絵の動き（動きを減らす設定では止める）
