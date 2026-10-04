@@ -3,7 +3,7 @@
 # 生成AIの絵（背景はマゼンタ #FF00FF の単色）を切り抜き、world/scenery/painted/<名前>.png に書き出す。
 # 名前ごとの処理（RECIPES）：
 #   cloud_*       … 切り抜いて、まわりの余白を落とす
-#   clouds_small / stones / thickets / lanterns / boxes / player / base_materials … 横に並んだものを1つずつ切り分ける
+#   clouds_small / stones / thickets / lanterns / boxes / player / base_materials / player_mg* / takeru_mg* … 横に並んだものを1つずつ切り分ける
 #                   （SPLITS の名前に番号をつけて書き出す。例: stone_1.png, stone_2.png, …）
 #   mountains / trees / paddies / river / road … 横にくり返せる帯にする（右端を左端に重ねてなじませる）
 #   branch / cloud_wide … 左右の端をぼかす（絵の端で切れている部分を見せない）
@@ -40,6 +40,10 @@ SPLITS = {
 	'boxes': 'box',
 	'player': 'player',
 	'base_materials': 'base_mat',
+	'player_mg1': 'player_mg1',
+	'player_mg2': 'player_mg2',
+	'takeru_mg1': 'takeru_mg1',
+	'takeru_mg2': 'takeru_mg2',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {
