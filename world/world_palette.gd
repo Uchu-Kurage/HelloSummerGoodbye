@@ -5,6 +5,9 @@ class_name WorldPalette
 const GROUND := Color("#8DAA6E")
 const GROUND_DARK := Color("#6F8C57")
 const ROAD := Color("#CDB993")
+## 道の土のむら・小石の明るいところ／わだちや影の暗いところ
+const ROAD_LIGHT := Color("#DCCBA6")
+const ROAD_DARK := Color("#A99470")
 const HILL_FAR := Color("#A9C3B6")
 const HILL_FAR_2 := Color("#97B5A6")
 const NEAR_BUSH := Color("#7C9C63")

@@ -47,6 +47,9 @@ enum Kind {
 
 const P := preload("res://world/world_palette.gd")
 const ART := "res://world/scenery/painted/%s.png"
+const EDGE_FADE := preload("res://world/shaders/strip_edge_fade.gdshader")
+## 川の帯の高さ
+const RIVER_H := 90.0
 ## 絵に地面の影はないので、足もとにうすい影を描く
 const SHADOW := Color(0.12, 0.16, 0.08, 0.22)
 ## 提灯の絵：本体のまん中（絵の上から px）と、本体の高さ
@@ -67,6 +70,13 @@ var _tex_cache := {}
 
 
 func _ready() -> void:
+	# 川は左右の端と上のふちをぼかす（切れ目を見せない）
+	if kind == Kind.RIVER:
+		var mat := ShaderMaterial.new()
+		mat.shader = EDGE_FADE
+		mat.set_shader_parameter("width", width)
+		mat.set_shader_parameter("top_y", -RIVER_H + 4.0)
+		material = mat
 	if not Engine.is_editor_hint() and show_on_event != "":
 		visible = false
 
@@ -145,7 +155,7 @@ func _marble_ring() -> void:
 func _river() -> void:
 	# 道の向こうを流れる浅瀬。手前は丸い石の岸。絵の帯を width いっぱいに並べる
 	var tex := _tex("river")
-	var h := 90.0
+	var h := RIVER_H
 	var n := maxi(1, roundi(width / (h * tex.get_width() / tex.get_height())))
 	var tile := width / n
 	for i in n:
