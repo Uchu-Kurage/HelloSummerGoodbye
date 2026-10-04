@@ -52,6 +52,8 @@ var _talk_index := 0
 var _talk_data: NpcData
 var _talk_npc: Npc
 var _next_show: ItemData
+## 会話パネルに出す顔（立ち絵の頭のまわりを切り出したもの）。立ち絵ごとに1つ作っておく
+var _faces := {}
 var _choice_list: MenuList
 var _choosing := false
 var _choice_at := 0
@@ -458,18 +460,50 @@ func _talk_day() -> DayBase:
 func _show_line(e: String) -> void:
 	var speaker := _talk_data.display_name
 	var color := _talk_data.placeholder_color
-	var icon: Texture2D = null
+	var icon: Texture2D = _face(_talk_data.sprite)
 	var colon := e.find("：")
 	if colon > 0 and colon <= SPEAKER_MAX:
 		speaker = e.substr(0, colon)
 		e = e.substr(colon + 1)
 		if speaker == Strings.ME:
 			color = WorldPalette.PLAYER_HAT
+			icon = _face(Player.FRAMES[0])
+		elif speaker != _talk_data.display_name:
+			icon = null
 	if _next_show:
 		color = _next_show.placeholder_color
 		icon = _next_show.icon
 		_next_show = null
 	_open_message(speaker, e, color, icon)
+
+
+## 立ち絵から顔（頭のまわりの正方形）を切り出す。頭の位置は、絵の上のほうの不透明な部分から決める
+func _face(tex: Texture2D) -> Texture2D:
+	if tex == null:
+		return null
+	if _faces.has(tex):
+		return _faces[tex]
+	var img := tex.get_image()
+	if img == null:
+		return null
+	if img.is_compressed():
+		img.decompress()
+	var w := img.get_width()
+	# 4頭身なので、頭はだいたい上から 1/4。少し広めに、首もとまで入れる
+	var side := mini(int(img.get_height() * 0.3), w)
+	var left := w
+	var right := 0
+	for y in range(0, side, 4):
+		for x in range(0, w, 2):
+			if img.get_pixel(x, y).a > 0.5:
+				left = mini(left, x)
+				right = maxi(right, x)
+	var cx := int((left + right) / 2.0) if right >= left else int(w / 2.0)
+	var at := AtlasTexture.new()
+	at.atlas = tex
+	at.region = Rect2(clampi(cx - int(side / 2.0), 0, w - side), 0, side, side)
+	_faces[tex] = at
+	return at
 
 
 ## 「ことば:目印 | ことば:目印」の選択肢を出す。目印がなければ、そのまま次へ進む
