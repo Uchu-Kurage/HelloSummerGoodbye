@@ -11,6 +11,20 @@ const DASH_DELAY := 0.8
 const DASH_RAMP := 0.4
 ## 足もとの高さ（地面）
 const GROUND_Y := 604.0
+## 主人公の絵（Google Gemini で生成し、背景を切り抜いたもの）。0 は立ち姿、1〜4 は歩く絵（右向き。左向きは反転）
+const FRAMES: Array[Texture2D] = [
+	preload("res://world/scenery/painted/player_1.png"),
+	preload("res://world/scenery/painted/player_2.png"),
+	preload("res://world/scenery/painted/player_3.png"),
+	preload("res://world/scenery/painted/player_4.png"),
+	preload("res://world/scenery/painted/player_5.png"),
+]
+## 絵ごとの頭のまん中（絵の中の x px）。ここを足もとの原点にそろえ、歩いても頭がぶれないようにする
+const FRAME_HEAD_X := [47.5, 75.0, 66.5, 87.0, 65.0]
+## 画面での背の高さ（帽子のてっぺんまで）
+const BODY_HEIGHT := 160.0
+## 歩く絵を1秒に何枚めくるか（歩きの速さで割合がかわる）
+const WALK_FPS := 6.0
 
 ## 日の切り替わりの間は true
 var locked := false
@@ -68,18 +82,16 @@ func _physics_process(delta: float) -> void:
 	else:
 		_walk_t = 0.0
 	_visual.scale.x = _facing
-	_visual.position.y = -absf(sin(_walk_t * 9.0)) * 4.0
+	_visual.position.y = -absf(sin(_walk_t * 9.0)) * 1.5
 	_visual.queue_redraw()
 
 
 func _draw_body() -> void:
-	var v := _visual
-	var leg := sin(_walk_t * 9.0) * 8.0
-	v.draw_rect(Rect2(-14 + leg * 0.5, -36, 10, 36), WorldPalette.PLAYER_SKIN)
-	v.draw_rect(Rect2(4 - leg * 0.5, -36, 10, 36), WorldPalette.PLAYER_SKIN)
-	v.draw_rect(Rect2(-18, -58, 36, 26), WorldPalette.PLAYER_SHORTS)
-	v.draw_rect(Rect2(-20, -100, 40, 46), WorldPalette.PLAYER_BODY)
-	v.draw_circle(Vector2(0, -122), 22, WorldPalette.PLAYER_SKIN)
-	v.draw_rect(Rect2(-30, -142, 60, 8), WorldPalette.PLAYER_HAT)
-	v.draw_rect(Rect2(-20, -158, 40, 18), WorldPalette.PLAYER_HAT)
-	v.draw_circle(Vector2(10, -124), 3, WorldPalette.POLE)
+	# 立ち止まっているときは立ち姿、歩いているときは歩く絵を順にくり返す
+	var frame := 0
+	if _walk_t > 0.0:
+		frame = 1 + int(_walk_t * WALK_FPS) % (FRAMES.size() - 1)
+	var tex: Texture2D = FRAMES[frame]
+	var k := BODY_HEIGHT / tex.get_height()
+	var head_x: float = FRAME_HEAD_X[frame]
+	_visual.draw_texture_rect(tex, Rect2(-head_x * k, -BODY_HEIGHT, tex.get_width() * k, BODY_HEIGHT), false)
