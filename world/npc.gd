@@ -20,6 +20,8 @@ var _player: Node2D
 
 func _ready() -> void:
 	super()
+	# 絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
+	_visual.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	if npc_data:
 		bubble_height = npc_data.height + 40.0
 	# 出てくる条件に合わないときは、いないことにする（フラグが変わったら見直す）

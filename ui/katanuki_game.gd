@@ -102,6 +102,8 @@ var _hint: Label
 
 
 func _ready() -> void:
+	# 人物の絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	for i in PARTS.size():
