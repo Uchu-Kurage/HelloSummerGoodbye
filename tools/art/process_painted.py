@@ -192,13 +192,25 @@ def split(fg, al, name):
 			if 0 <= yy < h and 0 <= xx < w and full[yy, xx] and not label[yy, xx]:
 				label[yy, xx] = label[y, x]
 				queue.append((yy, xx))
-	parts = []
+	# 上から段に分け（縦に重なるものは同じ段）、段ごとに左から順に番号をつける
+	boxes = []
 	for i in range(1, n + 1):
 		ys, xs = np.nonzero(label == i)
 		if len(xs) == 0:
 			continue
-		parts.append((xs.min(), i))
-	parts.sort()
+		boxes.append((ys.min(), ys.max(), xs.min(), i))
+	boxes.sort()
+	rows = []
+	for b in boxes:
+		if rows and b[0] < rows[-1][0]:
+			rows[-1][0] = max(rows[-1][0], b[1])
+			rows[-1][1].append(b)
+		else:
+			rows.append([b[1], [b]])
+	parts = []
+	for r, (_, bs) in enumerate(rows):
+		for b in sorted(bs, key=lambda b: b[2]):
+			parts.append((r, b[3]))
 	# 各部分を元の大きさにもどし、少し広げて（ふちの半透明を含める）その部分だけを残す
 	for k, (_, i) in enumerate(parts):
 		m = Image.fromarray(((label == i) * 255).astype(np.uint8)).resize((al.shape[1], al.shape[0]), Image.NEAREST)
