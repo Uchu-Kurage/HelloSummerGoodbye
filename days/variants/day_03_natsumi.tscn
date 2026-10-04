@@ -1,0 +1,17 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_03.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_river.tres" id="n_river"]
+
+[node name="Day03_natsumi" instance=ExtResource("base")]
+
+[node name="Gakuban" type="Node2D" parent="Props"]
+position = Vector2(1700, 604)
+script = ExtResource("prop")
+kind = 27
+
+[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1640, 604)
+npc_data = ExtResource("n_river")

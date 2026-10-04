@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="item_script"]
 [ext_resource type="Resource" path="res://data/items/straw_hat.tres" id="item_base"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://data/day_variant.gd" id="v_script"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="c_script"]
 [ext_resource type="Resource" path="res://data/items/capsule_map.tres" id="item_takeru"]
+[ext_resource type="Resource" path="res://data/items/senko_ash.tres" id="item_n_senko_ash"]
 
 [sub_resource type="Resource" id="cond_takeru"]
 script = ExtResource("c_script")
@@ -18,6 +19,17 @@ scene_path = "res://days/variants/day_09_takeru.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_takeru")])
 time_from = 0.8
 
+[sub_resource type="Resource" id="cond_natsumi"]
+script = ExtResource("c_script")
+require_all = Array[StringName]([&"route_natsumi"])
+
+[sub_resource type="Resource" id="var_natsumi"]
+script = ExtResource("v_script")
+condition = SubResource("cond_natsumi")
+scene_path = "res://days/variants/day_09_natsumi.tscn"
+items = Array[ExtResource("item_script")]([ExtResource("item_n_senko_ash")])
+time_from = 0.85
+
 [resource]
 script = ExtResource("day_script")
 day_number = 9
@@ -26,4 +38,4 @@ day = 30
 title = "最後の夜"
 scene_path = "res://days/day_09.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_base")])
-variants = Array[ExtResource("v_script")]([SubResource("var_takeru")])
+variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi")])

@@ -47,6 +47,16 @@ func _spawn_items() -> void:
 		$Items.add_child(p)
 
 
+## アイテムを道に落とす（会話の @drop。走り去った人が落としていくものなど）。x はその日の中の位置
+func drop_item(item: ItemData, x: float) -> void:
+	if GameState.is_collected(item.id):
+		return
+	var p: ItemPickup = PICKUP_SCENE.instantiate()
+	p.item = item
+	p.position = Vector2(x, GROUND_Y)
+	$Items.add_child(p)
+
+
 ## 会話の @event を、Props の下の小物に知らせる（水しぶき、バスの出発など）
 func on_talk_event(event_name: String) -> void:
 	for c in $Props.get_children():

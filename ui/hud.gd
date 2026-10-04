@@ -29,6 +29,13 @@ const MINIGAMES := {
 	"capsule": preload("res://ui/capsule_game.gd"),
 	"capsule_stars": preload("res://ui/capsule_game.gd"),
 	"hat": preload("res://ui/hat_game.gd"),
+	# 初恋ルート（なつみ）
+	"sketch": preload("res://ui/sketch_game.gd"),
+	"kingyo": preload("res://ui/kingyo_game.gd"),
+	"kaigara": preload("res://ui/kaigara_game.gd"),
+	"senko": preload("res://ui/senko_game.gd"),
+	"movie": preload("res://ui/movie_scene.gd"),
+	"drawing": preload("res://ui/drawing_reveal.gd"),
 }
 
 var player: Player
@@ -405,6 +412,13 @@ func _run_command(e: String) -> _Step:
 				_jump(b)
 		"flag":
 			GameState.set_flag(StringName(a))
+		"heart":
+			GameState.add_heart()
+		"drop":
+			var it := GameState.find_item(StringName(a))
+			var day := _talk_day()
+			if it and day and _talk_npc and is_instance_valid(_talk_npc):
+				day.drop_item(it, _talk_npc.position.x)
 		"choice":
 			_show_choices(e.substr(e.find(" ") + 1))
 			return _Step.WAIT

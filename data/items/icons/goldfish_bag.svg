@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <ellipse cx="64" cy="116" rx="40" ry="6" fill="#7A6A55" opacity="0.18"/>
+  <!-- 金魚ぶくろ（あかいのが 1ぴき） -->
+  <path d="M58 14 Q64 22 70 14" fill="none" stroke="#C25B4A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M54 26 C50 22, 78 22, 74 26 C96 44, 104 70, 94 92 C86 108, 42 108, 34 92 C24 70, 32 44, 54 26 Z" fill="#DCEFF3" stroke="#A9C7CF" stroke-width="2" opacity="0.95"/>
+  <path d="M36 66 C48 62, 80 62, 96 66 C100 80, 94 98, 82 104 C68 110, 50 108, 40 98 C32 88, 32 76, 36 66 Z" fill="#9FCBD8" opacity="0.8"/>
+  <path d="M54 26 H74" stroke="#C25B4A" stroke-width="4" stroke-linecap="round"/>
+  <g transform="translate(64 82)">
+    <ellipse cx="0" cy="0" rx="12" ry="7" fill="#E2553A"/>
+    <path d="M10 0 L22 -8 L19 0 L22 8 Z" fill="#EE7A55"/>
+    <circle cx="-6" cy="-2" r="1.6" fill="#2B2420"/>
+  </g>
+  <path d="M42 46 C40 54, 40 60, 42 64" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+</svg>

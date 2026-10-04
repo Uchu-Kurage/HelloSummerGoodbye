@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="item_script"]
 [ext_resource type="Resource" path="res://data/items/onigiri_wrap.tres" id="item_base"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://data/day_variant.gd" id="v_script"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="c_script"]
 [ext_resource type="Resource" path="res://data/items/takeru_hat.tres" id="item_takeru"]
+[ext_resource type="Resource" path="res://data/items/natsumi_drawing.tres" id="item_natsumi"]
 
 [sub_resource type="Resource" id="cond_takeru"]
 script = ExtResource("c_script")
@@ -18,6 +19,17 @@ scene_path = "res://days/variants/day_10_takeru.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_takeru")])
 time_to = 0.3
 
+[sub_resource type="Resource" id="cond_natsumi_high"]
+script = ExtResource("c_script")
+require_all = Array[StringName]([&"route_natsumi", &"natsumi_heart_high"])
+
+[sub_resource type="Resource" id="var_natsumi_high"]
+script = ExtResource("v_script")
+condition = SubResource("cond_natsumi_high")
+scene_path = "res://days/variants/day_10_natsumi_high.tscn"
+items = Array[ExtResource("item_script")]([ExtResource("item_natsumi")])
+time_to = 0.3
+
 [sub_resource type="Resource" id="cond_natsumi"]
 script = ExtResource("c_script")
 require_all = Array[StringName]([&"route_natsumi"])
@@ -26,7 +38,7 @@ require_all = Array[StringName]([&"route_natsumi"])
 script = ExtResource("v_script")
 condition = SubResource("cond_natsumi")
 scene_path = "res://days/variants/day_10_natsumi.tscn"
-title = "なつみと さよなら"
+time_to = 0.3
 
 [resource]
 script = ExtResource("day_script")
@@ -36,4 +48,4 @@ day = 31
 title = "帰る日"
 scene_path = "res://days/day_10.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_base")])
-variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi")])
+variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi_high"), SubResource("var_natsumi")])

@@ -193,7 +193,10 @@ func _run() -> void:
 	check(seen_days.size() == GameState.day_count(), "visited all days %s" % str(seen_days))
 	check(max_loaded <= 3, "max loaded days %d" % max_loaded)
 	check(not cam_back, "camera never moved left")
-	check(GameState.collected.size() == GameState.day_count() - 1, "collected %d items %s" % [GameState.collected.size(), str(GameState.collected.keys())])
+	# 1日目になつみが落とす色えんぴつは、宝箱の枠に数えない（2日目に話しかけなければ、持ったまま）
+	var counted := GameState.collected.keys().filter(func(id): return not GameState.is_extra(GameState.find_item(id)))
+	check(counted.size() == GameState.day_count() - 1, "collected %d items %s" % [counted.size(), str(GameState.collected.keys())])
+	check(GameState.holds(&"blue_pencil") and not GameState.has_flag(&"route_natsumi"), "day 1: natsumi drops the blue pencil (kept without returning it)")
 	var skipped := GameState.day_items(GameState.get_day(skip_day))[0]
 	check(not GameState.is_collected(skipped.id), "skipped item remains empty (%s)" % skipped.id)
 	check(get_tree().current_scene and get_tree().current_scene.name == "Ending", "ending reached")
@@ -344,7 +347,14 @@ func _run() -> void:
 	GameState.set_flag(&"route_natsumi")
 	check(GameState.current_ending().id == &"natsumi", "natsumi route -> natsumi ending")
 	check(GameState.day_scene_path(GameState.get_day(9)).ends_with("day_10_natsumi.tscn"), "natsumi day 10 scene")
-	check(GameState.day_items(GameState.get_day(3))[0].id == &"cicada_shell", "natsumi route keeps normal items")
+	check(GameState.day_items(GameState.get_day(3))[0].id == &"handkerchief", "natsumi route swaps items (day 4: handkerchief)")
+	check(GameState.day_scene_path(GameState.get_day(9)).ends_with("day_10_natsumi.tscn") and GameState.current_ending().id == &"natsumi",
+		"natsumi low: nobody on the paddy path")
+	GameState.set_flag(&"natsumi_heart_mid")
+	check(GameState.current_ending().id == &"natsumi_mid" and GameState.day_items(GameState.get_day(9))[0].id == &"onigiri_wrap", "natsumi mid ending keeps the onigiri")
+	GameState.set_flag(&"natsumi_heart_high")
+	check(GameState.current_ending().id == &"natsumi_high" and GameState.day_scene_path(GameState.get_day(9)).ends_with("day_10_natsumi_high.tscn")
+		and GameState.day_items(GameState.get_day(9))[0].id == &"natsumi_drawing", "natsumi high: day 10 with the drawing")
 	GameState.flags.clear()
 	check(GameState.current_ending().id == &"default", "flags cleared -> default ending")
 	check(GameState.day_scene_path(GameState.get_day(4)) == GameState.get_day(4).scene_path, "no route -> original day 5")
@@ -359,6 +369,7 @@ func _run() -> void:
 	var c1 := TimeOfDay.sky_color(0.4, 1.0)
 	check(c1.s < c0.s, "sky fades late summer")
 	await _wait(6.0)
+	await _natsumi_route()
 	await _check_debug_jump()
 
 
@@ -371,6 +382,13 @@ func _check_debug_jump() -> void:
 	check(GameState.is_collected(&"takeru_letter") == false and GameState.collected.size() == 7, "debug: items of days 1-7 (%d)" % GameState.collected.size())
 	DebugJump.apply(2, 4)
 	check(GameState.has_flag(&"route_natsumi") and not GameState.has_flag(&"route_takeru"), "debug: natsumi flags")
+	check(GameState.gone_note(&"blue_pencil") != "" and GameState.natsumi_heart == 4 + 1, "debug: natsumi pencil returned, hearts up to day 4 (%d)" % GameState.natsumi_heart)
+	DebugJump.apply(2, 9)
+	check(GameState.has_flag(&"natsumi_heart_high") and GameState.current_ending().id == &"natsumi_high", "debug: natsumi high reaches the high ending")
+	DebugJump.apply(3, 9)
+	check(GameState.current_ending().id == &"natsumi_mid", "debug: natsumi mid (%d)" % GameState.natsumi_heart)
+	DebugJump.apply(4, 9)
+	check(GameState.current_ending().id == &"natsumi" and GameState.find_item(&"senko_ash").text().begins_with("ぼくのが"), "debug: natsumi low")
 	DebugJump.apply(0, 9)
 	check(GameState.flags.is_empty() and GameState.collected.size() == 9, "debug: default route keeps flags empty")
 	# 画面から：タイトルの「デバッグ」で、タケルの8日目を選ぶ
@@ -656,6 +674,8 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 			await _play_ishikiri(hud.minigame(), [&"flat", &"flat", &"flat"], [IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT])
 		elif hud.minigame() is KatanukiGame:
 			await _play_katanuki(hud.minigame(), true)
+		elif hud.minigame() is NatsumiScreen:
+			await _play_natsumi(hud.minigame())
 		elif hud.is_in_minigame():
 			await _play_base_build(hud)
 		elif box.is_open:
@@ -670,3 +690,160 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		else:
 			TouchControls.fire_action(&"interact")
 		await _wait(0.1)
+
+
+# --- 初恋ルート（なつみ） -------------------------------------------------------
+
+## 1日目から歩いて、なつみに色えんぴつを返し、10日目のバスまで。会話は最初の選択肢、ミニゲームは高得点をねらう。
+## 8日目だけ最初の選択肢（「また こんど」）が好みでないので、好感度は 8＋4＝12（高）
+func _natsumi_route() -> void:
+	GameState.reset()
+	get_tree().change_scene_to_file("res://world/main.tscn")
+	await _wait(0.5)
+	var main := get_tree().current_scene
+	var hud: Hud = main.get_node("HUD")
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	var streamer: DayStreamer = main.get_node("DayStreamer")
+	var paths := {}
+	var held_pencil_day2 := false
+	Input.action_press("move_right")
+	var t := 0.0
+	while t < 600.0 and get_tree().current_scene == main:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		if not is_instance_valid(main) or not main.is_inside_tree():
+			break
+		var day := GameState.current_day_index
+		var loaded: Dictionary = streamer._loaded
+		if loaded.has(day) and not paths.has(day):
+			paths[day] = (loaded[day] as Node).scene_file_path
+		if day == 1 and GameState.holds(&"blue_pencil"):
+			held_pencil_day2 = true
+		if hud.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		var target := hud.current_target()
+		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk:
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.2)
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		if target is ItemPickup:
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.3)
+			TouchControls.fire_action(&"interact")
+			TouchControls.fire_action(&"interact")
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	await _wait(1.5)
+	check(held_pencil_day2 and GameState.gone_note(&"blue_pencil") == "なつみに かえした", "natsumi: pencil picked on day 1 and returned on day 2")
+	check(GameState.has_flag(&"route_natsumi") and not GameState.has_flag(&"route_takeru"), "natsumi: route flag")
+	for i in range(2, 9):
+		check(str(paths.get(i, "")).ends_with("day_%02d_natsumi.tscn" % (i + 1)), "natsumi day %d swapped: %s" % [i + 1, paths.get(i, "")])
+	check(str(paths.get(9, "")).ends_with("day_10_natsumi_high.tscn"), "natsumi day 10 (high): %s" % paths.get(9, ""))
+	for id in [&"natsumi_paddy", &"natsumi", &"natsumi_river", &"natsumi_rain", &"natsumi_festival", &"natsumi_festival_home",
+			&"natsumi_sea", &"natsumi_movie", &"natsumi_okuribi", &"natsumi_typhoon", &"natsumi_senko"]:
+		check(GameState.has_talked(id), "natsumi talks: %s" % id)
+	for g in ["sketch", "kingyo", "kaigara", "senko"]:
+		check(GameState.has_flag(StringName(g + "_good")), "natsumi minigame high score: %s" % g)
+	check(GameState.natsumi_heart == 12, "natsumi hearts: 8 choices + 4 minigames (%d)" % GameState.natsumi_heart)
+	check(GameState.has_flag(&"natsumi_promise"), "natsumi: fireworks promise on day 5")
+	check(GameState.find_item(&"senko_ash").text() == "なつみのが さきに おちた。", "natsumi: her senko fell first")
+	for id in NATSUMI_ITEMS:
+		check(GameState.was_received(id), "natsumi gives: %s" % id)
+	check(GameState.is_collected(&"cancel_notice"), "natsumi: notice picked up on day 8")
+	check(_drawing_opened, "natsumi: the drawing is unrolled on the bus")
+	var scene := get_tree().current_scene
+	check(scene and scene.name == "Ending", "natsumi: ending reached")
+	if scene and scene.name == "Ending":
+		var end_box: TreasureBox = scene.get_node("TreasureBox")
+		check(GameState.current_ending().id == &"natsumi_high" and end_box.header_caption.text == GameState.current_ending().title, "natsumi high ending shown")
+		check(end_box._slots[-1].item.id == &"natsumi_drawing" and end_box._slots[-1].collected, "natsumi: the drawing appears last")
+		check(not end_box._slots.any(func(sl): return sl.item.id == &"blue_pencil"), "natsumi: returned pencil is not in the box")
+		check(end_box._found == [GameState.day_count(), GameState.day_count()], "natsumi: every treasure found %s" % str(end_box._found))
+	# 線香花火：とちゅうで離すと、ぼくのが先に落ちる（線香花火の画面だけで確かめる）
+	var keep := GameState.flags.duplicate()
+	var keep_heart := GameState.natsumi_heart
+	GameState.flags.clear()
+	var senko := SenkoGame.new()
+	get_tree().root.add_child(senko)
+	await get_tree().process_frame
+	senko._hold.press()
+	var n := 0
+	while senko.burn < 2.0 and n < 2000:
+		await get_tree().process_frame
+		n += 1
+	senko._hold.release()
+	n = 0
+	while senko.phase != SenkoGame.Phase.DONE and n < 3000:
+		await get_tree().process_frame
+		n += 1
+	check(senko.mine_fell and not senko.hers_fell and GameState.has_flag(&"senko_miss"), "senko: letting go drops mine first")
+	check(GameState.find_item(&"senko_ash").text() == "ぼくのが さきに おちた。", "senko: ash text when mine fell first")
+	senko.queue_free()
+	GameState.flags = keep
+	GameState.natsumi_heart = keep_heart
+	GameState.add_heart(5)
+	check(GameState.natsumi_heart == GameState.HEART_MAX, "hearts stop at the max")
+
+
+const NATSUMI_ITEMS := [&"river_sketch", &"handkerchief", &"goldfish_bag", &"sakura_shell", &"movie_flyer", &"senko_ash", &"natsumi_drawing"]
+var _drawing_opened := false
+
+
+## なつみの画面：それぞれ高得点になるように遊ぶ（映画会と絵は見届ける）
+func _play_natsumi(game: NatsumiScreen) -> void:
+	var n := 0
+	if game is SketchGame:
+		var sk := game as SketchGame
+		while sk.step < SketchGame.STEPS and n < 2000:
+			if sk.phase == SketchGame.Phase.CHOOSE:
+				sk.choose(sk.correct_index())
+			await get_tree().process_frame
+			n += 1
+	elif game is KingyoGame:
+		var kg := game as KingyoGame
+		while kg.phase != KingyoGame.Phase.BROKEN and kg.phase != KingyoGame.Phase.DONE and n < 20000:
+			if kg.phase == KingyoGame.Phase.PLAY and kg.fish_under_poi().size() > 0:
+				kg.scoop()
+			await get_tree().process_frame
+			n += 1
+	elif game is KaigaraGame:
+		var kc := game as KaigaraGame
+		while kc.phase != KaigaraGame.Phase.END and n < 20000:
+			if kc.can_pick():
+				kc.pick(kc.sakura_slot() if kc.sakura_slot() >= 0 else 0)
+			await get_tree().process_frame
+			n += 1
+	elif game is SenkoGame:
+		var sg := game as SenkoGame
+		await get_tree().process_frame
+		sg._hold.press()
+		while sg.phase == SenkoGame.Phase.BURN or sg.phase == SenkoGame.Phase.GUIDE:
+			await get_tree().process_frame
+			n += 1
+			if n > 20000:
+				break
+		sg._hold.release()
+	elif game is DrawingReveal:
+		var dr := game as DrawingReveal
+		while not dr.is_open() and n < 2000:
+			await get_tree().process_frame
+			n += 1
+		_drawing_opened = dr.is_open()
+		var ev := InputEventAction.new()
+		ev.action = &"ui_accept"
+		ev.pressed = true
+		Input.parse_input_event(ev)
+	n = 0
+	while is_instance_valid(game) and not game.done and n < 4000:
+		await get_tree().process_frame
+		n += 1
+	while is_instance_valid(game) and game.is_inside_tree() and n < 6000:
+		await get_tree().process_frame
+		n += 1

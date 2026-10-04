@@ -7,8 +7,6 @@
 script = ExtResource("1")
 id = &"natsumi_farewell"
 display_name = "なつみ"
-lines = Array[String](["これ、てがみ。バスで よんでね。", "……また らいねん。"])
-repeat_lines = Array[String](["てがみ、なくさないでね。"])
 sprite = ExtResource("sprite")
 placeholder_color = Color(0.910, 0.655, 0.627, 1)
 height = 148.0

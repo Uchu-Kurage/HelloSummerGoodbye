@@ -10,3 +10,6 @@ extends Resource
 @export var items: Array[ItemData] = []
 ## フラグによる場面の差し替え。上から順に見て、最初に条件が合ったものを使う
 @export var variants: Array[DayVariant] = []
+## 宝箱の枠に数えないアイテム（道には置かず、会話の @drop で落ちる。人に返すものなど）。
+## 持っているあいだだけ宝箱に出る（例：1日目になつみが落とす色えんぴつ）
+@export var extra_items: Array[ItemData] = []

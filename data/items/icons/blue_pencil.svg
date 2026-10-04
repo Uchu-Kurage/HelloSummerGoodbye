@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <ellipse cx="64" cy="116" rx="40" ry="6" fill="#7A6A55" opacity="0.18"/>
+  <!-- みじかくなった あおい色えんぴつ -->
+  <g transform="rotate(-35 64 64)">
+    <rect x="40" y="54" width="44" height="20" rx="2" fill="#3F78B5"/>
+    <rect x="40" y="54" width="44" height="6" fill="#5B93CC"/>
+    <rect x="34" y="54" width="8" height="20" rx="2" fill="#C9B79A"/>
+    <path d="M84 54 L102 64 L84 74 Z" fill="#E9D3AE"/>
+    <path d="M96 60.6 L102 64 L96 67.4 Z" fill="#2E5F96"/>
+    <path d="M48 64 H78" stroke="#2E5F96" stroke-width="1.5" opacity="0.6"/>
+  </g>
+</svg>

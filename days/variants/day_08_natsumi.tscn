@@ -1,0 +1,58 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_08.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_typhoon.tres" id="n_typhoon"]
+[ext_resource type="Script" path="res://world/rain_zone.gd" id="rain"]
+
+[node name="Day08_natsumi" instance=ExtResource("base")]
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(2560, 604)
+
+[node name="Kominkan" type="Node2D" parent="Props"]
+position = Vector2(1900, 604)
+script = ExtResource("prop")
+kind = 24
+
+[node name="Board" type="PanelContainer" parent="Props/Kominkan"]
+offset_left = -100.0
+offset_top = -244
+offset_right = 100.0
+offset_bottom = -192
+mouse_filter = 2
+theme_type_variation = &"SignBoard"
+
+[node name="Label" type="Label" parent="Props/Kominkan/Board"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "こうみんかん"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Notice" type="PanelContainer" parent="Props/Kominkan"]
+offset_left = -196.0
+offset_top = -140
+offset_right = -104.0
+offset_bottom = -20
+mouse_filter = 2
+theme_type_variation = &"SignBoard"
+
+[node name="Label" type="Label" parent="Props/Kominkan/Notice"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "はなび
+たいかい
+ちゅうし"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2160, 604)
+npc_data = ExtResource("n_typhoon")
+
+[node name="Rain" type="Node2D" parent="Props"]
+script = ExtResource("rain")
+from_x = 200.0
+to_x = 4200.0

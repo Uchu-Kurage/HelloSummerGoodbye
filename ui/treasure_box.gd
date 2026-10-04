@@ -156,17 +156,21 @@ func _rebuild_slots() -> void:
 	_selected = null
 	var items := GameState.all_items()
 	var got := 0
+	var total := 0
 	for it in items:
 		var s := ItemSlot.new()
-		got += 1 if GameState.is_collected(it.id) else 0
+		# 人に返すもの（色えんぴつなど）は、たからものの数に入れない
+		if not GameState.is_extra(it):
+			total += 1
+			got += 1 if GameState.is_collected(it.id) else 0
 		# 手ばなしたもの（あげた・うめた）は、枠にそのひとことを出す
 		s.setup(it, GameState.holds(it.id), GameState.gone_note(it.id))
 		s.pressed.connect(_on_slot_pressed.bind(s))
 		s.focus_entered.connect(_on_slot_focused.bind(s))
 		_grid.add_child(s)
 		_slots.append(s)
-	_count.text = Strings.ENDING_COUNT % [got, items.size()]
-	_found = [got, items.size()]
+	_count.text = Strings.ENDING_COUNT % [got, total]
+	_found = [got, total]
 	_fit_grid(items.size())
 	await get_tree().process_frame
 	_link_focus()

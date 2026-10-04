@@ -52,6 +52,13 @@ var capsule_spot := -1
 var kabuto_drops := -1
 ## 型抜き（5日目）の結果：&"clean"（ぬけた）／&"broken"（われた）。空ならまだ
 var katanuki_result := &""
+## なつみの好感度（初恋ルート）。エンディングの差分だけに使う（ルートから外れる条件にはしない）
+var natsumi_heart := 0
+
+## 好感度の最大（会話の選択肢 9 か所＋ミニゲーム 4 種）と、エンディングの段階のしきい値（遊んでみて調整する）
+const HEART_MAX := 13
+const HEART_HIGH := 10
+const HEART_MID := 5
 
 
 func _ready() -> void:
@@ -69,6 +76,7 @@ func reset() -> void:
 	base_cell_piece.clear()
 	dive_result = &""
 	katanuki_result = &""
+	natsumi_heart = 0
 	ishikiri_best = 0
 	kabuto_drops = -1
 	capsule_spot = -1
@@ -141,7 +149,7 @@ func gone_note(id: StringName) -> String:
 ## id からアイテムを探す（ルートの差し替えのアイテムも含む）
 func find_item(id: StringName) -> ItemData:
 	for d in day_list.days:
-		for it in d.items:
+		for it in d.items + d.extra_items:
 			if it and it.id == id:
 				return it
 		for v in d.variants:
@@ -244,6 +252,27 @@ func set_katanuki_result(r: StringName) -> void:
 	set_flag(StringName("katanuki_" + r))
 
 
+## なつみの好感度を上げる（会話の @heart、ミニゲームの高得点）。
+## しきい値をこえたらフラグ natsumi_heart_mid / natsumi_heart_high を立てる（10日目の場面とエンディングの段階を選ぶため）
+func add_heart(n := 1) -> void:
+	natsumi_heart = mini(natsumi_heart + n, HEART_MAX)
+	if natsumi_heart >= HEART_MID:
+		set_flag(&"natsumi_heart_mid")
+	if natsumi_heart >= HEART_HIGH:
+		set_flag(&"natsumi_heart_high")
+
+
+## なつみルートのミニゲーム（スケッチ・金魚すくい・貝がら拾い・線香花火）の結果。
+## 会話で分けられるよう、フラグ <name>_good（高得点）／ <name>_miss を立てる。高得点なら好感度 +1
+func set_natsumi_game(game: StringName, good: bool) -> void:
+	var f := StringName(String(game) + ("_good" if good else "_miss"))
+	if has_flag(f):
+		return
+	set_flag(f)
+	if good:
+		add_heart()
+
+
 ## 屋根と壁のすき間が、ぜんぶふさがったか
 func base_done() -> bool:
 	for c in _base_puzzle.holes():
@@ -301,12 +330,24 @@ func current_ending() -> EndingData:
 	return null
 
 
-## 宝箱に並べる全アイテム（いまのフラグで決まるルートのもの）
+## 宝箱に並べる全アイテム（いまのフラグで決まるルートのもの）。
+## 人に返すもの（extra_items。なつみの色えんぴつなど）は、持っているあいだだけ、その日の枠のうしろに出す
 func all_items() -> Array[ItemData]:
 	var out: Array[ItemData] = []
 	for d in day_list.days:
 		out.append_array(day_items(d))
+		for it in d.extra_items:
+			if it and holds(it.id):
+				out.append(it)
 	return out
+
+
+## 宝箱の枠に数えないもの（extra_items）か
+func is_extra(item: ItemData) -> bool:
+	for d in day_list.days:
+		if d.extra_items.has(item):
+			return true
+	return false
 
 
 func day_for_item(item: ItemData) -> DayData:

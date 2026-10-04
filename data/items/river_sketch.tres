@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/river_sketch.svg" id="icon"]
+
+[resource]
+script = ExtResource("1")
+id = &"river_sketch"
+display_name = "川の絵"
+description = "なつみが『いいね』って いった。"
+icon = ExtResource("icon")
+day_number = 3
+placeholder_color = Color(0.498, 0.663, 0.784, 1)
+on_ground = false

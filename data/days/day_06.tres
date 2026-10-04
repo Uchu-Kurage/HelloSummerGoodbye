@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="item_script"]
 [ext_resource type="Resource" path="res://data/items/senko_hanabi.tres" id="item_base"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://data/day_variant.gd" id="v_script"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="c_script"]
 [ext_resource type="Resource" path="res://data/items/bug_cage.tres" id="item_takeru"]
+[ext_resource type="Resource" path="res://data/items/sakura_shell.tres" id="item_n_sakura_shell"]
 
 [sub_resource type="Resource" id="cond_takeru"]
 script = ExtResource("c_script")
@@ -19,6 +20,16 @@ items = Array[ExtResource("item_script")]([ExtResource("item_takeru")])
 dawn_tint = Color(0.5, 0.56, 0.86, 1)
 dawn_until = 0.55
 
+[sub_resource type="Resource" id="cond_natsumi"]
+script = ExtResource("c_script")
+require_all = Array[StringName]([&"route_natsumi"])
+
+[sub_resource type="Resource" id="var_natsumi"]
+script = ExtResource("v_script")
+condition = SubResource("cond_natsumi")
+scene_path = "res://days/variants/day_06_natsumi.tscn"
+items = Array[ExtResource("item_script")]([ExtResource("item_n_sakura_shell")])
+
 [resource]
 script = ExtResource("day_script")
 day_number = 6
@@ -27,4 +38,4 @@ day = 13
 title = "お盆（迎え火）"
 scene_path = "res://days/day_06.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_base")])
-variants = Array[ExtResource("v_script")]([SubResource("var_takeru")])
+variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi")])

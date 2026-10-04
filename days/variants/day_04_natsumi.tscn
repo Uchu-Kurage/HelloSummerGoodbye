@@ -1,0 +1,36 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_04.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_rain.tres" id="n_rain"]
+[ext_resource type="Script" path="res://world/rain_zone.gd" id="rain"]
+
+[node name="Day04_natsumi" instance=ExtResource("base")]
+
+[node name="Torii" type="Node2D" parent="Props"]
+position = Vector2(2000, 604)
+script = ExtResource("prop")
+kind = 7
+
+[node name="Shrine" type="Node2D" parent="Props"]
+position = Vector2(2560, 604)
+script = ExtResource("prop")
+kind = 28
+
+[node name="Puddles" type="Node2D" parent="Props"]
+position = Vector2(1700, 604)
+script = ExtResource("prop")
+kind = 29
+width = 1600
+show_on_event = "rain_stop"
+
+[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2640, 604)
+npc_data = ExtResource("n_rain")
+
+[node name="Rain" type="Node2D" parent="Props"]
+script = ExtResource("rain")
+from_x = 1700.0
+to_x = 3300.0
+stop_on_event = "rain_stop"

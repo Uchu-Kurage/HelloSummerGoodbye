@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_natsumi.png" id="sprite"]
+
+[resource]
+script = ExtResource("1")
+id = &"natsumi_typhoon"
+display_name = "なつみ"
+lines = Array[String](["……ざんねん。", "@choice また こんど:next | ……:quiet", "#quiet", "@heart", "……となりに いてくれて、ありがと。", "@end", "#next", "……こんどって、いつ？"])
+repeat_lines = Array[String](["あめ、やまないね。"])
+auto_talk = true
+sprite = ExtResource("sprite")
+placeholder_color = Color(0.910, 0.655, 0.627, 1)
+height = 148.0
+skin_color = Color(0.922, 0.765, 0.627, 1)
+hair_color = Color(0.227, 0.180, 0.149, 1)
+shirt_color = Color(0.910, 0.655, 0.627, 1)
+pants_color = Color(0.949, 0.902, 0.816, 1)
+hair_full = true

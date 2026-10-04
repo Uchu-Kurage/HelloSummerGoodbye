@@ -10,6 +10,10 @@ const MAIN_SCENE := "res://world/main.tscn"
 const DAY_COLUMNS := 5
 ## 石切りの結果ごとの、いちばんよく跳ねた回数（デバッグでとぶときに入れておく）
 const ISHIKIRI_BEST := {&"win": 7, &"draw": 5, &"lose": 3}
+## 初恋ルートで、なつみから「もらう」アイテム
+const NATSUMI_RECEIVED := [&"river_sketch", &"handkerchief", &"goldfish_bag", &"sakura_shell", &"movie_flyer", &"senko_ash", &"natsumi_drawing"]
+## 初恋ルートのミニゲーム（結果のフラグの頭）
+const NATSUMI_GAMES := ["sketch_", "kingyo_", "kaigara_", "senko_"]
 ## ルートごとの、その日を終えたときに立っているフラグ（キーは日の番号 day_number）。
 ## dive_ で始まるものは飛び込みの結果、katanuki_ で始まるものは型抜きの結果、kabuto_ で始まるものはカブトムシとりの結果、capsule_ で始まるものはタイムカプセルを埋めた場所、ishikiri_ で始まるものは石切りの結果として記録する
 ## （GameState.set_dive_result／set_katanuki_result／set_kabuto_result／set_capsule_spot／set_ishikiri_best）。
@@ -33,11 +37,32 @@ const ROUTES := [
 		"received": [&"river_stone", &"base_plaque", &"broken_katanuki", &"bug_cage", &"ramune_bottle", &"capsule_map"],
 		"given": {3: {&"marble": "タケルに あげた"}},
 	},
+	# 初恋ルート：好感度の段階ごと（エンディングが 高／中／低 でかわる）。
+	# hearts は、その日の会話で好みの選択肢を選んだ数。sketch_ / kingyo_ / kaigara_ / senko_ で始まるものはミニゲームの結果
+	# （GameState.set_natsumi_game。_good なら好感度 +1）。picked はその日に拾った、宝箱の枠に数えないもの
 	{
-		"name": "なつみ",
-		"flags": {2: [&"route_natsumi"]},
-		"received": [],
-		"given": {},
+		"name": "なつみ高",
+		"flags": {2: [&"route_natsumi"], 3: [&"sketch_good"], 5: [&"kingyo_good", &"natsumi_promise"], 6: [&"kaigara_good"], 9: [&"senko_good"]},
+		"hearts": {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1},
+		"picked": {1: [&"blue_pencil"]},
+		"received": NATSUMI_RECEIVED,
+		"given": {2: {&"blue_pencil": "なつみに かえした"}},
+	},
+	{
+		"name": "なつみ中",
+		"flags": {2: [&"route_natsumi"], 3: [&"sketch_good"], 5: [&"kingyo_miss", &"natsumi_promise"], 6: [&"kaigara_miss"], 9: [&"senko_good"]},
+		"hearts": {1: 1, 2: 1, 4: 1, 7: 1},
+		"picked": {1: [&"blue_pencil"]},
+		"received": NATSUMI_RECEIVED,
+		"given": {2: {&"blue_pencil": "なつみに かえした"}},
+	},
+	{
+		"name": "なつみ低",
+		"flags": {2: [&"route_natsumi"], 3: [&"sketch_miss"], 5: [&"kingyo_miss", &"natsumi_promise"], 6: [&"kaigara_miss"], 9: [&"senko_miss"]},
+		"hearts": {},
+		"picked": {1: [&"blue_pencil"]},
+		"received": NATSUMI_RECEIVED,
+		"given": {2: {&"blue_pencil": "なつみに かえした"}},
 	},
 ]
 
@@ -88,8 +113,15 @@ static func apply(route: int, day_index: int) -> void:
 				GameState.set_kabuto_result(0 if s == "kabuto_clean" else 1)
 			elif s.begins_with("katanuki_"):
 				GameState.set_katanuki_result(StringName(s.trim_prefix("katanuki_")))
+			elif NATSUMI_GAMES.any(func(g): return s.begins_with(g)):
+				GameState.set_natsumi_game(StringName(s.get_slice("_", 0)), s.ends_with("_good"))
 			else:
 				GameState.set_flag(f)
+		GameState.add_heart(r.get("hearts", {}).get(d.day_number, 0))
+		for id in r.get("picked", {}).get(d.day_number, []):
+			var extra := GameState.find_item(id)
+			if extra:
+				GameState.collect(extra)
 		var given: Dictionary = r.given.get(d.day_number, {})
 		for id in given:
 			var item := GameState.find_item(id)
