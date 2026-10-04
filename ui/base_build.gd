@@ -18,7 +18,9 @@ const SLOT := Vector2(88, 88)
 const SLOT_CELL := 15.0
 ## 5列×3行（ピース13こ。小さい画面でも、下の余白にかからない高さ）
 const TRAY_COLUMNS := 5
-const RAIN_STREAKS := 90
+## 雨のすじ（絵にも雨は描いてあるので、動きを足すだけのうすいもの）
+const RAIN_STREAKS := 60
+const BG: Texture2D = preload("res://ui/minigame_bg/base_build.jpg")
 
 var hud: Hud
 ## 互換のため（HUD が入れる）。寄りの画面では使わない
@@ -452,11 +454,10 @@ func _refresh() -> void:
 
 
 func _draw() -> void:
-	# 寄りの画面の背景：雨の空と、降る雨（動きを減らす設定では止まったすじ）
+	# 寄りの画面の背景：雨の林の作りかけの基地（水彩の絵）と、降る雨（動きを減らす設定では止まったすじ）
 	var r := get_rect()
-	draw_rect(r, WorldPalette.RAIN_SKY.darkened(0.25))
-	draw_rect(Rect2(0, r.size.y * 0.78, r.size.x, r.size.y * 0.22), WorldPalette.GROUND_DARK.darkened(0.3))
-	var c := Color(WorldPalette.RAIN_STREAK, 0.35)
+	MinigameBg.draw_cover(self, BG, r, Vector2(0.3, 0.5))
+	var c := Color(WorldPalette.RAIN_STREAK, 0.22)
 	for i in RAIN_STREAKS:
 		var x := fposmod(i * 0.6180339, 1.0) * r.size.x
 		var y := fposmod(i * 0.4142135 + _t * 1.4, 1.0) * r.size.y
