@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_grandpa.png" id="sprite"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,7 @@ id = &"grandpa"
 display_name = "おじいちゃん"
 lines = Array[String](["おお、よう きたな。", "バス、ながかったろう。", "なつやすみは ながいぞ。ゆっくり していけ。"])
 repeat_lines = Array[String](["きょうも あついのう。"])
+sprite = ExtResource("sprite")
 placeholder_color = Color(0.72, 0.65, 0.55, 1)
 height = 176.0
 skin_color = Color(0.886, 0.722, 0.58, 1)

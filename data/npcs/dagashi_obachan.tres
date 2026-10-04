@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_obachan.png" id="sprite"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,7 @@ id = &"dagashi_obachan"
 display_name = "おばちゃん"
 lines = Array[String](["おや、〇〇さんちの おまごさん？", "タケルちゃんと あそんであげてね。", "あの子も、さみしくなるからねえ。"])
 repeat_lines = Array[String](["タケルちゃんと あそんであげてね。"])
+sprite = ExtResource("sprite")
 placeholder_color = Color(0.780, 0.627, 0.706, 1)
 height = 158.0
 skin_color = Color(0.886, 0.722, 0.580, 1)

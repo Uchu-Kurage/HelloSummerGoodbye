@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="NpcData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="NpcData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_natsumi.png" id="sprite"]
 
 [sub_resource type="Resource" id="appear"]
 script = ExtResource("2")
@@ -15,8 +16,9 @@ lines = Array[String](["こんにちは。おばあちゃんちの 子？", "わ
 repeat_lines = Array[String](["おまつり、たのしみだね。"])
 appear_if = SubResource("appear")
 set_flags = Array[StringName]([&"route_natsumi"])
+sprite = ExtResource("sprite")
 placeholder_color = Color(0.910, 0.655, 0.627, 1)
-height = 136.0
+height = 148.0
 skin_color = Color(0.922, 0.765, 0.627, 1)
 hair_color = Color(0.227, 0.180, 0.149, 1)
 shirt_color = Color(0.910, 0.655, 0.627, 1)

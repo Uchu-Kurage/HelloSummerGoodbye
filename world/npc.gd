@@ -22,11 +22,6 @@ func _ready() -> void:
 	super()
 	if npc_data:
 		bubble_height = npc_data.height + 40.0
-		if npc_data.sprite:
-			var s := Sprite2D.new()
-			s.texture = npc_data.sprite
-			s.offset = Vector2(0, -npc_data.sprite.get_height() / 2.0)
-			_visual.add_child(s)
 	# 出てくる条件に合わないときは、いないことにする（フラグが変わったら見直す）
 	_present = FlagCondition.met(npc_data.appear_if) if npc_data else true
 	visible = _present
@@ -34,7 +29,7 @@ func _ready() -> void:
 	GameState.flags_changed.connect(_on_flags_changed)
 	body_entered.connect(_on_player_near)
 	body_exited.connect(func(b): if b == _player: _player = null)
-	_visual.draw.connect(_draw_placeholder)
+	_visual.draw.connect(_draw_body)
 
 
 func _process(delta: float) -> void:
@@ -116,10 +111,21 @@ func interact(hud: Node) -> void:
 	hud.start_talk(npc_data, lines, self)
 
 
-## 仮の姿（絵が入るまで）。足もとが原点、+x が向いている方向
-func _draw_placeholder() -> void:
-	if npc_data == null or npc_data.sprite:
+## 姿。足もとが原点、+x が向いている方向（絵は右向きに描いてある）。
+## 絵（sprite）があれば、高さ height にそろえて足もとに立たせる。なければ仮の姿を描く
+func _draw_body() -> void:
+	if npc_data == null:
 		return
+	if npc_data.sprite:
+		var tex := npc_data.sprite
+		var k := npc_data.height / tex.get_height()
+		_visual.draw_texture_rect(tex, Rect2(-tex.get_width() * k / 2.0, -npc_data.height, tex.get_width() * k, npc_data.height), false)
+		return
+	_draw_placeholder()
+
+
+## 仮の姿（絵が入るまで）
+func _draw_placeholder() -> void:
 	var d := npc_data
 	var v := _visual
 	var h := d.height

@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="NpcData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="NpcData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_takeru.png" id="sprite"]
 
 [sub_resource type="Resource" id="appear"]
 script = ExtResource("2")
@@ -15,8 +16,9 @@ lines = Array[String](["せーの、でな。", "@game dive", "@if_flag dive_ear
 appear_if = SubResource("appear")
 set_flags = Array[StringName]([&"takeru_d7_jump"])
 auto_talk = true
+sprite = ExtResource("sprite")
 placeholder_color = Color(0.659, 0.357, 0.271, 1)
-height = 140.0
+height = 154.0
 skin_color = Color(0.776, 0.557, 0.384, 1)
 hair_color = Color(0.129, 0.114, 0.102, 1)
 shirt_color = Color(0.914, 0.890, 0.827, 1)
