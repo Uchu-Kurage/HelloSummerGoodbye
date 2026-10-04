@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/base_plaque.svg" id="icon"]
 
 [resource]
 script = ExtResource("1")
 id = &"base_plaque"
 display_name = "基地の木の札"
 description = "タケルが『かいいん』って かいた。"
+icon = ExtResource("icon")
 day_number = 4
 placeholder_color = Color(0.690, 0.541, 0.369, 1)
 on_ground = false

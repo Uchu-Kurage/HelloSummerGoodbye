@@ -19,6 +19,9 @@ func _ready() -> void:
 	if item and item.icon:
 		var s := Sprite2D.new()
 		s.texture = item.icon
+		# 絵の大きさにかかわらず、ICON_SIZE より少し大きめにそろえる（絵のまわりには余白がある）
+		var sz := item.icon.get_size()
+		s.scale = Vector2.ONE * ICON_SIZE * 1.3 / maxf(sz.x, sz.y)
 		_visual.add_child(s)
 	_visual.draw.connect(_draw_placeholder)
 	_visual.queue_redraw()

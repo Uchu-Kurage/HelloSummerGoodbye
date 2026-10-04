@@ -518,6 +518,10 @@ func _draw_hat(p: Vector2, rot: float, k: float) -> void:
 	var it := GameState.find_item(&"takeru_hat")
 	var c := it.placeholder_color if it else P.BUS_STRIPE
 	draw_set_transform(p, rot, Vector2(k, k) * maxf(size.y / 720.0, 0.6) * 1.6)
+	if it and it.icon:
+		draw_texture_rect(it.icon, Rect2(-20, -26, 40, 40), false)
+		draw_set_transform(Vector2.ZERO)
+		return
 	draw_rect(Rect2(-14, -10, 28, 12), c)
 	draw_rect(Rect2(6, -2, 16, 5), c.darkened(0.2))
 	draw_set_transform(Vector2.ZERO)

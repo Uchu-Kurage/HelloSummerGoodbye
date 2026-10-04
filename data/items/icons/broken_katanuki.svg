@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <ellipse cx="64" cy="116" rx="40" ry="6" fill="#7A6A55" opacity="0.18"/>
+  <!-- 左のかけら -->
+  <path d="M18 34 L60 30 L54 50 L62 66 L52 84 L58 100 L20 100 C16 100, 14 96, 14 92 L14 40 C14 36, 16 34, 18 34 Z" fill="#F1E3C4" stroke="#B89A6A" stroke-width="2" stroke-linejoin="round"/>
+  <!-- 右のかけら（少しずれている） -->
+  <g transform="translate(8 6) rotate(6 90 66)">
+    <path d="M64 30 L106 30 C110 30, 112 32, 112 36 L112 92 C112 96, 110 98, 106 98 L64 98 L58 82 L68 66 L60 50 Z" fill="#EEDDBA" stroke="#B89A6A" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+  <!-- ひよこの型（まっぷたつ） -->
+  <path d="M54 50 C46 42, 34 46, 34 56 C26 58, 26 68, 32 72 C30 82, 40 88, 54 86" fill="none" stroke="#C9A36A" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="42" cy="54" r="2.5" fill="#8A6A44"/>
+  <path d="M28 58 L22 60 L28 62" fill="#E7B05A" stroke="#C98A3A" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M70 62 C80 56, 92 62, 92 74 C92 86, 82 94, 70 92" fill="none" stroke="#C9A36A" stroke-width="3" stroke-linecap="round" transform="translate(8 6) rotate(6 90 66)"/>
+  <g fill="#F7EEDA"><circle cx="64" cy="106" r="2"/><circle cx="70" cy="104" r="1.5"/><circle cx="58" cy="108" r="1.2"/></g>
+</svg>

@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/bug_cage.svg" id="icon"]
 
 [resource]
 script = ExtResource("1")
 id = &"bug_cage"
 display_name = "虫かご"
 description = "なかで ごそごそ いってる。"
+icon = ExtResource("icon")
 day_number = 6
 placeholder_color = Color(0.561, 0.690, 0.478, 1)
 on_ground = false
