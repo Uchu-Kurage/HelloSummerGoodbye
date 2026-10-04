@@ -53,6 +53,25 @@ const BG_FOCUS := Vector2(0.3, 0.6)
 ## 水の輪が広がりきるまでと、消えるまでの秒数
 const RING_GROW := 2.0
 const RING_LIFE := 4.5
+## ふたりの絵（手描き。どれも右の川を向く）。[絵, 絵の中の頭の高さ px]
+## ポーズごとに描いた大きさがちがうので、頭の大きさでそろえる（しゃがむ姿は、そのぶん背が低くなる）
+const KID_ART := {
+	&"player": [preload("res://world/scenery/painted/player_1.png"), 84.0],
+	&"player_windup": [preload("res://world/scenery/painted/player_mg1_4.png"), 84.0],
+	&"player_throw": [preload("res://world/scenery/painted/player_mg1_5.png"), 87.0],
+	&"takeru": [preload("res://world/scenery/painted/npc_takeru.png"), 213.0],
+	&"takeru_windup": [preload("res://world/scenery/painted/takeru_mg1_4.png"), 108.0],
+	&"takeru_throw": [preload("res://world/scenery/painted/takeru_mg1_5.png"), 110.0],
+}
+## 頭の高さ（背景の絵の高さに対する割合）
+const KID_HEAD := 0.046
+## 立っている主人公の、石を持つ手（絵の幅・高さに対する割合）
+const PLAYER_HAND := Vector2(0.5, 0.66)
+## 腕を引きはじめたとみなす量と、投げたあとの姿を見せる秒数
+const PULL_POSE := 0.06
+const THROW_POSE := 0.6
+## お手本で、タケルが振りかぶっている秒数（石が手を離れるまで）
+const DEMO_WINDUP := 0.5
 const P := preload("res://world/world_palette.gd")
 const COUNT := ["いち", "にー", "さん", "しー", "ご", "ろく", "なな", "はち", "きゅう", "じゅう"]
 
@@ -85,6 +104,8 @@ var _repick: Button
 
 
 func _ready() -> void:
+	# 人物の絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_hold = HoldInput.new()
@@ -231,6 +252,8 @@ func _process(delta: float) -> void:
 	_clock_t += d
 	match phase:
 		Phase.DEMO, Phase.FLY:
+			if phase == Phase.DEMO and _t >= 0.0 and _t - d < 0.0:
+				SfxPlayer.play("throw")
 			# 跳ねるたびに水の輪が広がり、タケルが数える
 			var hops := _hop_times()
 			while _counted < _skips and _t >= hops[_counted]:
@@ -264,8 +287,12 @@ func _start_throw(n: int, high: bool, weak: bool) -> void:
 	_counted = 0
 	_rings.clear()
 	_speed = 1.0
-	SfxPlayer.play("throw")
 	_go(Phase.DEMO if _demo else Phase.FLY)
+	if _demo:
+		# お手本は、タケルが振りかぶるところから（手を離れたときに音）
+		_t = -DEMO_WINDUP
+	else:
+		SfxPlayer.play("throw")
 
 
 ## 石が水に沈んだ（最後の着水）
@@ -481,18 +508,28 @@ func _draw() -> void:
 			if alpha > 0.0:
 				_draw_ring(Vector2(cx, skim_y + 4), rad, rad * 0.22, Color(P.WATER_LIGHT, alpha))
 	# 石
-	if phase in [Phase.DEMO, Phase.FLY] or (phase == Phase.SHOW and _t < 0.1):
+	if (phase in [Phase.DEMO, Phase.FLY] and _t >= 0.0) or (phase == Phase.SHOW and _t < 0.1):
 		var sp := _stone_now()
 		if sp.y >= 0.0:
 			var at := Vector2(from.x + sp.x * s.x, skim_y - sp.y)
 			draw_circle(at + Vector2(0, sp.y + 6), 6, Color(0, 0, 0, 0.12))
 			_draw_stone(at, 1.0, stone if not _demo else STONES[0])
 	# 川原のふたり
-	_draw_kid(tk_pos, true, 0.0, _demo and phase == Phase.DEMO and _t < 0.3)
+	# タケル：お手本で振りかぶる → 投げた姿 → 立つ
+	var tk_pose := &"takeru"
+	if _demo and phase == Phase.DEMO:
+		tk_pose = &"takeru_windup" if _t < 0.0 else (&"takeru_throw" if _t < THROW_POSE else &"takeru")
+	_draw_kid(tk_pos, tk_pose, 0.0)
+	# 主人公：押しているあいだ腕を引く → 投げた姿 → 立つ
 	var pull := 0.0
 	if phase == Phase.AIM and _hold.is_down:
 		pull = clampf(_hold.held_time / PULL_MAX, 0.0, 1.0)
-	_draw_kid(thrower, false, pull, not _demo and phase == Phase.FLY and _t < 0.3)
+	var pose := &"player"
+	if pull > PULL_POSE:
+		pose = &"player_windup"
+	elif not _demo and phase == Phase.FLY and _t < THROW_POSE:
+		pose = &"player_throw"
+	_draw_kid(thrower, pose, pull)
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -505,9 +542,16 @@ func _bg_rect() -> Rect2:
 func _bg_point(f: Vector2) -> Vector2:
 	var r := _bg_rect()
 	var ts := BG.get_size()
-	var k := maxf(r.size.x / ts.x, r.size.y / ts.y)
+	var k := _bg_scale()
 	var src_pos := (ts - r.size / k) * BG_FOCUS
 	return r.position + (f * ts - src_pos) * k
+
+
+## 絵の 1px が、画面の何 px になるか
+func _bg_scale() -> float:
+	var r := _bg_rect()
+	var ts := BG.get_size()
+	return maxf(r.size.x / ts.x, r.size.y / ts.y)
 
 
 ## 水面のきらめき（絵の川の上に、ほんの少し。動きを減らす設定では止まる）
@@ -563,33 +607,20 @@ func _draw_pick(art: Control, b: Button) -> void:
 	art.draw_string(font, Vector2(0, art.size.y - UiTokens.SPACE_S), st.display_name, HORIZONTAL_ALIGNMENT_CENTER, art.size.x, fs, col)
 
 
-## 子ども（仮の姿）。pos は足もと。pull は腕を後ろへ引いた量（0〜1。腰も低くなる）、throwing は投げた瞬間
-func _draw_kid(pos: Vector2, takeru: bool, pull: float, throwing: bool) -> void:
-	var skin := Color("#C68E62") if takeru else P.PLAYER_SKIN
-	var shirt := Color("#E9E3D3") if takeru else P.PLAYER_BODY
-	var pants := Color("#3E5A7A") if takeru else P.PLAYER_SHORTS
-	var crouch := 14.0 * pull
-	var p := pos + Vector2(0, crouch)
-	draw_rect(Rect2(p.x - 13, p.y - 36, 10, 36 - crouch), skin)
-	draw_rect(Rect2(p.x + 3, p.y - 36, 10, 36 - crouch), skin)
-	draw_rect(Rect2(p.x - 17, p.y - 58, 34, 24), pants)
-	draw_rect(Rect2(p.x - 19, p.y - 100, 38, 44), shirt)
-	var head := Vector2(p.x, p.y - 120)
-	draw_circle(head, 21, skin)
-	if takeru:
-		draw_arc(head, 18, PI * 0.9, PI * 2.1, 12, Color("#211D1A"), 9)
-	else:
-		draw_rect(Rect2(head.x - 28, head.y - 20, 56, 7), P.PLAYER_HAT)
-		draw_rect(Rect2(head.x - 18, head.y - 35, 36, 16), P.PLAYER_HAT)
-	# 投げる腕：かまえる（前）→ 引く（後ろへ、引きすぎるほど後ろ）→ 投げる（前へ低く）
-	var shoulder := Vector2(p.x + 6, p.y - 92)
-	var ang := lerpf(0.5, PI - 0.2, pull)
-	if throwing:
-		ang = 0.15
-	var hand := shoulder + Vector2(cos(ang) * 40.0, 18.0 - sin(ang) * 10.0)
-	draw_line(shoulder, hand, skin, 9.0)
-	if phase == Phase.AIM and not takeru and stone:
-		_draw_stone(hand, 0.8, stone)
+## 子ども（手描きの絵）。pos は足もと。pull は腕を後ろへ引いた量（0〜1。引くほど腰を落とし、後ろへ）
+func _draw_kid(pos: Vector2, pose: StringName, pull: float) -> void:
+	var art: Array = KID_ART[pose]
+	var tex: Texture2D = art[0]
+	var k: float = _bg_scale() * BG.get_height() * KID_HEAD / art[1]
+	var sz := tex.get_size() * k
+	var p := pos + Vector2(-0.25, 0.12) * pull * sz.y * 0.2
+	# 足もとの影
+	_draw_ellipse(pos + Vector2(0, -2), sz.x * 0.38, sz.y * 0.03, Color(0, 0, 0, 0.12))
+	var rect := Rect2(p - Vector2(sz.x * 0.5, sz.y), sz)
+	draw_texture_rect(tex, rect, false)
+	# かまえて、まだ引いていないあいだは、選んだ石を手に持つ
+	if pose == &"player" and phase == Phase.AIM and stone:
+		_draw_stone(rect.position + PLAYER_HAND * sz, 0.8, stone)
 
 
 ## 水の輪（だ円の線）

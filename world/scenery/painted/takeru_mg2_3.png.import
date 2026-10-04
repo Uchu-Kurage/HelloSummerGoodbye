@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://l7uqbag4868c"
-path="res://.godot/imported/player_2.png-c65c43db4cbebd5f53d6a01cefbedcf7.ctex"
+uid="uid://bndsardjqn4or"
+path="res://.godot/imported/takeru_mg2_3.png-da46d2324c110867f371ff20cf03a395.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://world/scenery/painted/player_2.png"
-dest_files=["res://.godot/imported/player_2.png-c65c43db4cbebd5f53d6a01cefbedcf7.ctex"]
+source_file="res://world/scenery/painted/takeru_mg2_3.png"
+dest_files=["res://.godot/imported/takeru_mg2_3.png-da46d2324c110867f371ff20cf03a395.ctex"]
 
 [params]
 

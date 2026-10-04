@@ -44,6 +44,8 @@ var _press_t := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
+	# 絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
+	_visual.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_visual.draw.connect(_draw_body)
 
 

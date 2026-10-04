@@ -40,6 +40,30 @@ const AMBIENT_OUTSIDE := "bus_window_open"
 const AMBIENT_WIND := "bus_wind"
 const P := preload("res://world/world_palette.gd")
 const BG: Texture2D = preload("res://ui/minigame_bg/hat.jpg")
+## 自転車のタケル（こいでいる／帽子をふりかぶる／投げたあと）。前から見た絵
+const TAKERU_TEX: Array[Texture2D] = [
+	preload("res://world/scenery/painted/takeru_mg2_3.png"),
+	preload("res://world/scenery/painted/takeru_mg2_4.png"),
+	preload("res://world/scenery/painted/takeru_mg2_5.png"),
+]
+## 絵の中の前輪の接地点の横の位置（絵の幅に対する割合）
+const TAKERU_FOOT_X: Array[float] = [0.503, 0.573, 0.496]
+## 窓の下のふちでの、タケルの高さ（タイヤの下から頭まで。基準画面で）と、そのときの絵の高さ（こいでいる絵）
+const TAKERU_H := 210.0
+const TAKERU_REF_H := 635.0
+## 帽子を投げる手（前輪の接地点から。窓の下のふちでの大きさ）
+const TAKERU_HAND := Vector2(-44, -200)
+## 窓の開きがここまで来たら、タケルが帽子をふりかぶる
+const WINDUP_AT := 0.75
+## 主人公のうしろ姿（座って窓の外を見る／片手を上げて手をふる）
+const ME_TEX: Texture2D = preload("res://world/scenery/painted/player_mg2_3.png")
+const ME_WAVE_TEX: Texture2D = preload("res://world/scenery/painted/player_mg2_4.png")
+## 主人公の絵の高さ（基準画面で。下は画面の外へはみ出す）、頭のまん中の高さ（絵の高さに対する割合）、
+## からだのまん中の横の位置（絵の幅に対する割合）
+const ME_H := 420.0
+const ME_HEAD_Y := 0.2
+const ME_FOOT_X := 0.5
+const ME_WAVE_FOOT_X := 0.34
 
 var hud: Hud
 var phase := Phase.LOOK
@@ -70,6 +94,8 @@ var _hint: Label
 
 
 func _ready() -> void:
+	# 人物の絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_hold = HoldInput.new()
@@ -419,7 +445,7 @@ func _face_pos() -> Vector2:
 ## 帽子の位置：投げた手から窓をくぐって主人公の顔へ、風にあおられながら
 func _hat_pos() -> Vector2:
 	var u := _hat_u
-	var from := _takeru_pos() + Vector2(10, -150) * _takeru_scale()
+	var from := _takeru_pos() + TAKERU_HAND * _takeru_scale()
 	var to := _face_pos()
 	var ctrl := from.lerp(to, 0.5) + Vector2(0, -size.y * 0.3)
 	var p := from.lerp(ctrl, u).lerp(ctrl.lerp(to, u), u)
@@ -521,55 +547,58 @@ func _draw_outside() -> void:
 	_draw_bike(_takeru_pos(), _takeru_scale())
 
 
-## 自転車のタケル（ちかいときは大きく、遠ざかると小さく）
+## 自転車のタケル（ちかいときは大きく、遠ざかると小さく）。こいで追いかける→帽子をふりかぶる→投げたあと
 func _draw_bike(pos: Vector2, k: float) -> void:
-	var c := P.BIKE
-	var skin := Color("#C68E62")
-	var stopped := phase >= Phase.WAVE
-	var bob := 0.0 if (stopped or UiAnim.reduced()) else absf(sin(_t * 10.0)) * 6.0 * k
-	var rear := pos + Vector2(-44, -24) * k
-	var front := pos + Vector2(44, -24) * k
-	for wh in [rear, front]:
-		draw_arc(wh, 24 * k, 0, TAU, 20, c, maxf(4.0 * k, 1.5))
-	draw_line(rear, pos + Vector2(0, -40) * k, c, maxf(4.0 * k, 1.5))
-	draw_line(pos + Vector2(0, -40) * k, front, c, maxf(4.0 * k, 1.5))
-	var hip := pos + Vector2(-4, -88) * k + Vector2(0, -bob)
-	draw_line(hip, pos + Vector2(6, -40) * k, skin, maxf(8.0 * k, 2.0))
-	draw_rect(Rect2(hip.x - 14 * k, hip.y - 10 * k, 28 * k, 16 * k), Color("#3E5A7A"))
-	var chest := hip + Vector2(14, -50) * k
-	draw_line(hip, chest, Color("#E9E3D3"), maxf(22.0 * k, 4.0))
-	var head := chest + Vector2(6, -22) * k
-	draw_circle(head, 15 * k, skin)
-	draw_arc(head, 13 * k, PI * 0.9, PI * 2.05, 12, Color("#211D1A"), maxf(7.0 * k, 2.0))
-	# 投げるまでは帽子をかぶっている。止まったら、手をふる
-	if phase in [Phase.LOOK, Phase.OPEN]:
-		_draw_hat(head + Vector2(0, -12) * k, 0.0, k)
-	var arm_up := stopped or phase == Phase.THROW
-	var hand := chest + (Vector2(20, -46) if arm_up else Vector2(30, 0)) * k
-	if stopped and not UiAnim.reduced():
-		hand += Vector2(sin(_t * 8.0) * 10.0, 0) * k
-	draw_line(chest, hand, skin, maxf(6.0 * k, 2.0))
+	var i := _takeru_pose()
+	var tex: Texture2D = TAKERU_TEX[i]
+	# 絵の px をそろえて、どのポーズでも頭の大きさが同じになるように
+	var f := TAKERU_H / TAKERU_REF_H * k
+	var sz := tex.get_size() * f
+	var rot := 0.0
+	if phase < Phase.WAVE and not UiAnim.reduced():
+		# 立ちこぎで、左右に小さくゆれる
+		pos.y -= absf(sin(_t * 10.0)) * 2.0 * k
+		rot = sin(_t * 10.0) * 0.03
+	var xf := Transform2D(rot, pos)
+	_draw_tex_in_window(tex, xf, Rect2(-sz.x * TAKERU_FOOT_X[i], -sz.y, sz.x, sz.y))
 
 
-## 窓のそばの主人公。帽子をかかえる／ひざに乗った帽子／手をふる
+## タケルのポーズ（0 こいでいる、1 帽子をふりかぶる、2 投げたあと）
+func _takeru_pose() -> int:
+	if phase >= Phase.THROW:
+		return 2
+	if phase == Phase.OPEN and open >= WINDUP_AT:
+		return 1
+	return 0
+
+
+## 絵（テクスチャ）を、窓のあきの中だけに描く。xf は画面への置き方、r はその中での絵の四角
+func _draw_tex_in_window(tex: Texture2D, xf: Transform2D, r: Rect2) -> void:
+	var inv := xf.affine_inverse()
+	for piece in Geometry2D.intersect_polygons(xf * _rect_poly(r), _window_poly()):
+		if piece.size() < 3:
+			continue
+		var uvs := PackedVector2Array()
+		for q in piece:
+			uvs.append(((inv * q) - r.position) / r.size)
+		draw_colored_polygon(piece, Color.WHITE, uvs, tex)
+
+
+## 窓のそばの主人公（うしろ姿）。ふだんは座って窓の外を見ている。手をふる場面では片手を上げる
 func _draw_me(s: Vector2) -> void:
-	var face := _face_pos()
-	var k := s.y / 720.0
-	draw_rect(Rect2(face.x - 30 * k, face.y + 18 * k, 60 * k, s.y - face.y), P.PLAYER_BODY)
-	draw_circle(face, 26 * k, P.PLAYER_SKIN)
-	if landed and not caught:
-		# ひざに乗った帽子
-		_draw_hat(face + Vector2(30, 120) * k, 0.4, 1.0)
-	if caught:
-		# 帽子を胸にかかえる
-		_draw_hat(face + Vector2(10, 70) * k, -0.1, 1.2)
-	# 手をふる：顔の横で、窓のほうへ短く上げる
-	if phase == Phase.WAVE and _wave_t > 0.0:
-		var shoulder := face + Vector2(26, 34) * k
-		var sway := 0.0 if UiAnim.reduced() else sin(_wave_t * 20.0) * 10.0
-		var hand := face + Vector2(48 + sway, -36) * k
-		draw_line(shoulder, hand, P.PLAYER_SKIN, 12.0 * k)
-		draw_circle(hand, 11 * k, P.PLAYER_SKIN)
+	var waving := phase == Phase.WAVE
+	var tex: Texture2D = ME_WAVE_TEX if waving else ME_TEX
+	var h := ME_H * s.y / 720.0
+	var sz := tex.get_size() * h / tex.get_size().y
+	# 頭（帽子）のまん中が _face_pos にくるように。下のはしは画面の外へ
+	var foot := _face_pos() + Vector2(0, h * (1.0 - ME_HEAD_Y))
+	var rot := 0.0
+	if waving and _wave_t > 0.0 and not UiAnim.reduced():
+		# さけぶたびに、からだごと小さくゆれる
+		rot = sin(_wave_t * 20.0) * 0.03
+	draw_set_transform(foot, rot)
+	draw_texture_rect(tex, Rect2(-sz.x * (ME_WAVE_FOOT_X if waving else ME_FOOT_X), -sz.y, sz.x, sz.y), false)
+	draw_set_transform(Vector2.ZERO)
 
 
 ## 受け止めたカット：窓の外の空を背に、両手で帽子をつかむ（少しずつ寄る）
