@@ -32,28 +32,19 @@ func _ready() -> void:
 		SfxPlayer.play_music(TITLE_MUSIC)
 
 
-## 景色を主役にする：パネルは置かず、右上に横書きのタイトルと添え書き、下の道の上に案内とメニュー
+## 景色を主役にする：パネルは置かず、右上に横書きのタイトル、下の道の上に案内とメニュー
 func _build_ui() -> void:
-	var titles := VBoxContainer.new()
-	titles.anchor_left = 1.0
-	titles.anchor_right = 1.0
-	titles.offset_right = -UiTokens.SCREEN_MARGIN - UiTokens.SPACE_L
-	titles.offset_top = UiTokens.SCREEN_MARGIN + UiTokens.SPACE_M
-	titles.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	titles.add_theme_constant_override("separation", 0)
-	titles.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ui.add_child(titles)
 	var title := Label.new()
 	title.text = Strings.GAME_TITLE
 	title.theme_type_variation = &"TitleLabel"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	titles.add_child(title)
-	# 空の上の文字なので INK（TitleSubLabel）で書く
-	var sub := Label.new()
-	sub.text = Strings.GAME_SUBTITLE
-	sub.theme_type_variation = &"TitleSubLabel"
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	titles.add_child(sub)
+	title.anchor_left = 1.0
+	title.anchor_right = 1.0
+	title.offset_right = -UiTokens.SCREEN_MARGIN - UiTokens.SPACE_L
+	title.offset_top = UiTokens.SCREEN_MARGIN + UiTokens.SPACE_M
+	title.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(title)
 
 	# 道の帯（画面の下から 40px の高さ）に案内とメニューを置く
 	var band := Control.new()
