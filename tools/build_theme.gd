@@ -49,12 +49,8 @@ func _labels(theme: Theme) -> void:
 	_label(theme, "BigDateSubLabel", T.FONT_BODY, T.PAPER_DARK)
 	_label(theme, "WorldSignLabel", T.FONT_BODY, T.INK)
 	# 縦書きのタイトル（1文字ずつ改行して並べる。字間は詰める）
-	_label(theme, "TitleVerticalLabel", T.FONT_TITLE, T.INK)
-	theme.set_constant("line_spacing", "TitleVerticalLabel", -roundi(T.FONT_TITLE * 0.15))
 	# 空・缶・道の上の文字は INK_SOFT だとコントラストが足りないので INK を使う
-	_label(theme, "SubVerticalLabel", T.FONT_BODY, T.INK)
 	_label(theme, "OnTinSmallLabel", T.FONT_SMALL, T.INK)
-	theme.set_constant("line_spacing", "SubVerticalLabel", -roundi(T.FONT_BODY * 0.1))
 	theme.set_constant("line_spacing", "RichTextLabel", line_spacing(T.FONT_BODY))
 
 

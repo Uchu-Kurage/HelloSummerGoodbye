@@ -2,9 +2,7 @@ class_name Strings
 ## 画面に出す文言をまとめる（スキル「8. 実装の決まり」）。
 ## キーボードとタッチで変わるものは *_KEY / *_TOUCH の両方を置く。
 
-const GAME_TITLE := "なつやすみ"
-## タイトルに縦書きで添える一言
-const GAME_SUBTITLE := "いなかで すごした とおかかん"
+const GAME_TITLE := "To The Summer"
 const START_PROMPT_TOUCH := "タップして はじめる"
 const START_PROMPT_KEY := "クリック または キーで はじめる"
 const MENU_START := "はじめる"

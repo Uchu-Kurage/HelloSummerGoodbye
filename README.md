@@ -1,4 +1,4 @@
-# なつやすみ（叩き台）
+# To The Summer（叩き台）
 
 田舎の祖父母の家で過ごす夏休みを、右へ歩きながらたどる 2D 横スクロールの散歩ゲームです。
 設計は [`DESIGN.md`](DESIGN.md)、UI/UX の決まりは [`.claude/skills/summer-game-ui/SKILL.md`](.claude/skills/summer-game-ui/SKILL.md) にあります。
