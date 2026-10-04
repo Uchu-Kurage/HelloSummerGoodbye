@@ -47,6 +47,15 @@ const INTRO_TIME := 0.6
 ## 結果を見せる時間（決定キー・タップで早送りできる）
 const RESULT_TIME := 2.4
 const P := preload("res://world/world_palette.gd")
+## 背景の絵（夜の屋台の台。水彩）
+const BG: Texture2D = preload("res://ui/minigame_bg/katanuki.jpg")
+## 絵の中の台の天板（絵の 0〜1 の座標）：向こうのふち、手前のふち
+const TABLE_BACK := 0.66
+const TABLE_FRONT := 0.93
+## タケルが立つ横の位置（絵の 0〜1。左の柱より少し内側）
+const TAKERU_X := 0.27
+## 型は台に寝かせてあるので、少し上から見たように縦をつめる
+const MOLD_TILT := 0.86
 
 ## ひよこの輪郭（型の中の 0〜1 の座標、右向き）。部分ごとの線で、決まった順に削る：頭 → くちばし → 背中 → しっぽ → 足 → おなか
 const OUTLINE := [
@@ -364,10 +373,12 @@ func _make_cracks() -> void:
 
 func _draw() -> void:
 	var s := size
-	_draw_stall(s)
-	# 型は画面のまん中に大きく（スマホでも見えるように）
-	var side := minf(s.y * 0.62, s.x * 0.44)
-	var rect := Rect2(Vector2(s.x * 0.5 - side * 0.5, s.y * 0.52 - side * 0.5), Vector2(side, side))
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s))
+	# 型は台の上のまん中に大きく（スマホでも見えるように）。手前のふちより少し奥に置く
+	var side := minf(s.y * 0.6, s.x * 0.42)
+	var h := side * MOLD_TILT
+	var bottom := minf(_on_bg(Vector2(0.5, TABLE_FRONT)).y - side * 0.04, s.y * 0.88)
+	var rect := Rect2(Vector2(s.x * 0.5 - side * 0.5, bottom - h), Vector2(side, h))
 	var shake := Vector2.ZERO
 	if not UiAnim.reduced():
 		var c := _clock()
@@ -375,34 +386,19 @@ func _draw() -> void:
 			shake += Vector2(sin(c * 70.0), cos(c * 55.0)) * JOLT * (_jolt_t / JOLT_TIME)
 		if phase == Phase.CARVE and _hold.is_down and crack_stage() == 2:
 			shake += Vector2(sin(c * 90.0), cos(c * 77.0)) * TREMBLE
+	# となりのタケル（小さく。型より先に描き、台の向こうに立たせる）
+	_draw_takeru(side)
 	_draw_mold(rect, carved, part, crack, result == &"broken", result == &"clean", _break_at, true)
 	if phase == Phase.CARVE or phase == Phase.INTRO:
 		_draw_needle(rect, _needle_point(), shake)
-	# となりのタケル（小さく）
-	_draw_takeru(s, side)
 
 
-## 夜の屋台：提灯、のれんの台、まわりの暗がり
-func _draw_stall(s: Vector2) -> void:
-	draw_rect(Rect2(Vector2.ZERO, s), Color("#262B4A"))
-	# 屋台の幕（しま）
-	var top := s.y * 0.14
-	for i in 12:
-		var w := s.x / 12.0
-		draw_rect(Rect2(i * w, 0, w, top), P.CANOPY if i % 2 == 0 else P.CANOPY_STRIPE)
-	# 提灯
-	for i in 5:
-		var x := s.x * (0.1 + 0.2 * i)
-		var y := top + 26
-		draw_circle(Vector2(x, y), 34, P.LANTERN_GLOW)
-		draw_rect(Rect2(x - 14, y - 18, 28, 36), P.LANTERN)
-		draw_line(Vector2(x - 14, y), Vector2(x + 14, y), P.LANTERN_LINE, 2.0)
-	# 台（木の板）
-	var desk := s.y * 0.3
-	draw_rect(Rect2(0, desk, s.x, s.y - desk), P.WOOD)
-	for i in 5:
-		var y := desk + 40 + i * (s.y - desk) / 5.0
-		draw_line(Vector2(0, y), Vector2(s.x, y), P.WOOD_DARK, 2.0)
+## 絵の中の場所（0〜1）が、画面のどこに来るか（MinigameBg.draw_cover と同じ切り取り方）
+func _on_bg(f: Vector2) -> Vector2:
+	var ts := BG.get_size()
+	var k := maxf(size.x / ts.x, size.y / ts.y)
+	var src_pos := (ts - size / k) * 0.5
+	return (f * ts - src_pos) * k
 
 
 ## 型（砂糖の板）。rect は板の大きさ、carv は部分ごとの削れ具合、cur はいまの部分
@@ -510,13 +506,19 @@ func _draw_needle(rect: Rect2, at: Vector2, shake: Vector2) -> void:
 
 
 ## となりのタケルと、タケルの型（小さく）
-func _draw_takeru(s: Vector2, side: float) -> void:
+func _draw_takeru(side: float) -> void:
 	var small := side * 0.42
-	var cx := s.x * 0.13
-	var rect := Rect2(Vector2(cx - small * 0.5, s.y * 0.66 - small * 0.5), Vector2(small, small))
-	# タケル（肩から上。台の向こう）
-	var head := Vector2(cx, rect.position.y - small * 0.55)
-	draw_rect(Rect2(cx - small * 0.45, head.y + small * 0.18, small * 0.9, small * 0.5), Color("#E9E3D3"))
+	var back := _on_bg(Vector2(TAKERU_X, TABLE_BACK))
+	var front := _on_bg(Vector2(TAKERU_X, TABLE_FRONT))
+	var cx := back.x
+	var h := small * MOLD_TILT
+	# 型は台の上、手前のふちと向こうのふちのあいだ
+	var cy := lerpf(back.y, front.y, 0.55)
+	var rect := Rect2(Vector2(cx - small * 0.5, cy - h * 0.5), Vector2(small, h))
+	# タケル（肩から上。台の向こうで、肩の下は台のふちにかくれる）
+	var body_top := back.y - small * 0.4
+	var head := Vector2(cx, body_top - small * 0.18)
+	draw_rect(Rect2(cx - small * 0.45, body_top, small * 0.9, back.y - body_top), Color("#E9E3D3"))
 	draw_circle(head, small * 0.26, Color("#C68E62"))
 	draw_arc(head, small * 0.22, PI * 0.9, PI * 2.1, 12, Color("#211D1A"), small * 0.1)
 	if takeru_broken:
