@@ -32,29 +32,28 @@ func _ready() -> void:
 		SfxPlayer.play_music(TITLE_MUSIC)
 
 
-## 景色を主役にする：パネルは置かず、右上に縦書きのタイトル、下の道の上に案内とメニュー
+## 景色を主役にする：パネルは置かず、右上に横書きのタイトルと添え書き、下の道の上に案内とメニュー
 func _build_ui() -> void:
-	var titles := HBoxContainer.new()
+	var titles := VBoxContainer.new()
 	titles.anchor_left = 1.0
 	titles.anchor_right = 1.0
-	titles.offset_right = -UiTokens.SCREEN_MARGIN - UiTokens.SPACE_L * 2
+	titles.offset_right = -UiTokens.SCREEN_MARGIN - UiTokens.SPACE_L
 	titles.offset_top = UiTokens.SCREEN_MARGIN + UiTokens.SPACE_M
 	titles.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	titles.add_theme_constant_override("separation", UiTokens.SPACE_M)
+	titles.add_theme_constant_override("separation", 0)
 	titles.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui.add_child(titles)
-	# 縦書きは右から左へ読むので、添え書きを左、タイトルを右に置く
-	var sub := Label.new()
-	sub.text = _vertical(Strings.GAME_SUBTITLE.replace(" ", ""))
-	sub.theme_type_variation = &"SubVerticalLabel"
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.size_flags_vertical = Control.SIZE_SHRINK_END
-	titles.add_child(sub)
 	var title := Label.new()
-	title.text = _vertical(Strings.GAME_TITLE)
-	title.theme_type_variation = &"TitleVerticalLabel"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = Strings.GAME_TITLE
+	title.theme_type_variation = &"TitleLabel"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	titles.add_child(title)
+	# 空の上の文字なので INK（TitleSubLabel）で書く
+	var sub := Label.new()
+	sub.text = Strings.GAME_SUBTITLE
+	sub.theme_type_variation = &"TitleSubLabel"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	titles.add_child(sub)
 
 	# 道の帯（画面の下から 40px の高さ）に案内とメニューを置く
 	var band := Control.new()
@@ -108,12 +107,6 @@ func _build_ui() -> void:
 		_add_item(Strings.MENU_QUIT, func(): get_tree().quit())
 	_menu_panel.hide()
 
-
-static func _vertical(text: String) -> String:
-	var chars := PackedStringArray()
-	for c in text:
-		chars.append(c)
-	return "\n".join(chars)
 
 
 func _add_item(text: String, cb: Callable) -> void:

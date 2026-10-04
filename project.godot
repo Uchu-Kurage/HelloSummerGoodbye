@@ -5,7 +5,7 @@ config_version=5
 
 [application]
 
-config/name="なつやすみ"
+config/name="To The Summer"
 config/description="2D横スクロールの夏休み散歩ゲーム（叩き台）"
 run/main_scene="res://ui/title.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
