@@ -54,6 +54,14 @@ const TABLE_BACK := 0.66
 const TABLE_FRONT := 0.93
 ## タケルが立つ横の位置（絵の 0〜1。左の柱より少し内側）
 const TAKERU_X := 0.27
+## タケルの絵（水彩）：削っているところ／割れて両手をあげたところ。どちらも正面の上半身
+const TAKERU_CARVE: Texture2D = preload("res://world/scenery/painted/takeru_mg2_1.png")
+const TAKERU_BROKEN: Texture2D = preload("res://world/scenery/painted/takeru_mg2_2.png")
+## 削っている絵は、下の板を台の向こうのふちで切る（絵の上からの px。手は残る）
+const TAKERU_CARVE_CUT := 300.0
+## 絵 1px が画面で何 px か（タケルの型の大きさに対して）。絵ごとに解像度がちがうので、頭の幅がそろうように合わせる
+const TAKERU_CARVE_SCALE := 0.0042
+const TAKERU_BROKEN_SCALE := 0.0049
 ## 型は台に寝かせてあるので、少し上から見たように縦をつめる
 const MOLD_TILT := 0.86
 
@@ -515,15 +523,14 @@ func _draw_takeru(side: float) -> void:
 	# 型は台の上、手前のふちと向こうのふちのあいだ
 	var cy := lerpf(back.y, front.y, 0.55)
 	var rect := Rect2(Vector2(cx - small * 0.5, cy - h * 0.5), Vector2(small, h))
-	# タケル（肩から上。台の向こうで、肩の下は台のふちにかくれる）
-	var body_top := back.y - small * 0.4
-	var head := Vector2(cx, body_top - small * 0.18)
-	draw_rect(Rect2(cx - small * 0.45, body_top, small * 0.9, back.y - body_top), Color("#E9E3D3"))
-	draw_circle(head, small * 0.26, Color("#C68E62"))
-	draw_arc(head, small * 0.22, PI * 0.9, PI * 2.1, 12, Color("#211D1A"), small * 0.1)
-	if takeru_broken:
-		# 口を大きくあけて「あーっ！」
-		draw_circle(head + Vector2(0, small * 0.08), small * 0.06, Color("#3B3226"))
+	# タケル（台の向こうで前かがみ。腰から下は台のふちにかくれる）
+	var tex := TAKERU_BROKEN if takeru_broken else TAKERU_CARVE
+	var k := small * (TAKERU_BROKEN_SCALE if takeru_broken else TAKERU_CARVE_SCALE)
+	var src := Rect2(Vector2.ZERO, tex.get_size())
+	if not takeru_broken:
+		src.size.y = TAKERU_CARVE_CUT
+	var dst := Rect2(Vector2(cx - src.size.x * k * 0.5, back.y - src.size.y * k), src.size * k)
+	draw_texture_rect_region(tex, dst, src)
 	# タケルの型（あたま・くちばし・せなかまで削ったところで割れる）
 	var tk: Array[float] = [1.0, 1.0, 0.6, 0.0, 0.0, 0.0]
 	if not takeru_broken:
