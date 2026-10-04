@@ -38,6 +38,7 @@ SPLITS = {
 	'thickets': 'thicket',
 	'lanterns': 'lantern',
 	'boxes': 'box',
+	'player': 'player',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {
@@ -55,10 +56,13 @@ def key(path, crop=None):
 	a = np.array(im).astype(float)
 	# マゼンタらしさ：R と B が G よりどれだけ大きいか
 	m = np.minimum(a[..., 0], a[..., 2]) - a[..., 1]
-	# 背景のマゼンタは絵によって少しちがう（#FF00FF より暗いことがある）ので、絵の中の背景の色から決める
-	bg = m > 120
-	m_bg = float(np.median(m[bg])) if bg.any() else 240.0
-	M = np.median(a[bg], axis=0) if bg.any() else np.array([250.0, 8.0, 248.0])
+	# 背景のマゼンタは絵によって少しちがう（#FF00FF より暗い・くすんだことがある）ので、
+	# 絵のふち（上下左右の端の数 px）のうち、マゼンタらしいところの色から決める
+	edge = np.concatenate([a[:4].reshape(-1, 3), a[-4:].reshape(-1, 3), a[:, :4].reshape(-1, 3), a[:, -4:].reshape(-1, 3)])
+	em = np.minimum(edge[:, 0], edge[:, 2]) - edge[:, 1]
+	edge = edge[em > 60] if (em > 60).any() else np.array([[250.0, 8.0, 248.0]])
+	M = np.median(edge, axis=0)
+	m_bg = float(min(M[0], M[2]) - M[1])
 	alpha = np.clip((m_bg - 30.0 - m) / (m_bg - 60.0), 0, 1)
 	# 小さなノイズ（JPEG のにじみ）を消す
 	al = Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(3))
