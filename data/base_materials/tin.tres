@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="BaseMaterial" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="BaseMaterial" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/base_material.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/base_materials/tin.png" id="tex"]
 
 [resource]
 script = ExtResource("1")
@@ -9,6 +10,7 @@ display_name = "トタン"
 look = 1
 color = Color(0.655, 0.690, 0.706, 1)
 color_2 = Color(0.467, 0.506, 0.541, 1)
+texture = ExtResource("tex")
 place_sfx = "place_tin"
 roof_rain_ambient = "rain_roof_tin"
 takeru_line = "トタンは うるせーけど かっこいい。"

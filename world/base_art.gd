@@ -3,6 +3,11 @@ class_name BaseArt
 ## 本番の絵が入ったら、材料ごとのマスの絵（BaseMaterial.texture）と、骨組み・入口の絵に差し替える。
 
 const P := preload("res://world/world_palette.gd")
+## 骨組みの角材の絵（Google Gemini で生成）
+const FRAME_TEX: Texture2D = preload("res://data/base_materials/frame.png")
+## 材料の絵1枚で、何マス分を覆うか（となりのマスは絵の続きを使い、板やトタンがつながって見える）
+const TILE_SPAN := 3
+const FRAME_SPAN := 2
 
 
 ## 盤ぜんぶを描く。origin は盤の左上、cell は1マスの大きさ
@@ -15,8 +20,7 @@ static func draw_board(ci: CanvasItem, pz: BasePuzzle, origin: Vector2, cell: fl
 			var r := Rect2(origin + Vector2(x, y) * cell, Vector2(cell, cell))
 			var k := pz.at(c)
 			if k == "#":
-				ci.draw_rect(r, P.WOOD_DARK)
-				ci.draw_line(r.position + Vector2(0, cell * 0.5), r.position + Vector2(cell, cell * 0.5), P.WOOD, maxf(1.0, cell * 0.06))
+				ci.draw_texture_rect_region(FRAME_TEX, r, _span_region(FRAME_TEX, c, FRAME_SPAN))
 			elif k == "o":
 				ci.draw_rect(r, inside)
 			elif pz.is_hole(c):
@@ -64,7 +68,7 @@ static func draw_outlines(ci: CanvasItem, pz: BasePuzzle, origin: Vector2, cell:
 ## 材料のマス1つ。c（盤のマス）で模様を少しずらし、続けて並べたときに自然に見せる
 static func draw_tile(ci: CanvasItem, m: BaseMaterial, r: Rect2, c := Vector2i.ZERO, alpha := 1.0) -> void:
 	if m.texture:
-		ci.draw_texture_rect(m.texture, r, false, Color(1, 1, 1, alpha))
+		ci.draw_texture_rect_region(m.texture, r, _span_region(m.texture, c, TILE_SPAN), Color(1, 1, 1, alpha))
 		return
 	var c1 := Color(m.color, alpha)
 	var c2 := Color(m.color_2, alpha)
@@ -119,6 +123,12 @@ static func interior_color() -> Color:
 		if m and m.look == BaseMaterial.Look.SHEET:
 			return P.SHOP_DARK.lerp(P.BLUE_SHEET, 0.35)
 	return P.SHOP_DARK
+
+
+## 絵を span×span マスで1枚になるよう分けたうちの、マス c が使う部分
+static func _span_region(tex: Texture2D, c: Vector2i, span: int) -> Rect2:
+	var sz := tex.get_size() / float(span)
+	return Rect2(Vector2(posmod(c.x, span), posmod(c.y, span)) * sz, sz)
 
 
 ## その文字のマス全体を囲む四角
