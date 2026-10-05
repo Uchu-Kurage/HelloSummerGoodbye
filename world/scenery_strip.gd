@@ -5,11 +5,17 @@ extends Node2D
 ## 切り抜きは tools/art/process_painted.py）。帯の絵は height の高さで、width にちょうど収まる枚数だけ並べる。
 ## 電柱と電線は図形で描く。時間帯の色は CanvasModulate が上からかける。出典は res://CREDITS.md。
 
-enum Kind { HILLS, CLOUDS, FIELDS, WIRES, TREES }
+enum Kind {
+	HILLS, CLOUDS, FIELDS, WIRES, TREES,
+	SEA_SKY,  ## 海辺の水平線の近くの空（6日目、山並みのかわり）。下のふちが水平線
+	SEA_MID,  ## 灯台の手前に見える海（6日目、田んぼのかわり）。上のふちが水平線
+}
 
 const MOUNTAINS_TEX: Texture2D = preload("res://world/scenery/painted/mountains.png")
 const PADDIES_TEX: Texture2D = preload("res://world/scenery/painted/paddies.png")
 const TREES_TEX: Texture2D = preload("res://world/scenery/painted/trees.png")
+const SEA_SKY_TEX: Texture2D = preload("res://world/scenery/painted/sky_far.png")
+const SEA_MID_TEX: Texture2D = preload("res://world/scenery/painted/sea_mid.png")
 const CLOUD_TEX: Array[Texture2D] = [
 	preload("res://world/scenery/painted/cloud_tower.png"),
 	preload("res://world/scenery/painted/cloud_wide.png"),
@@ -49,15 +55,20 @@ func _draw() -> void:
 			_wires()
 		Kind.TREES:
 			_strip(TREES_TEX, base_y - height)
+		Kind.SEA_SKY:
+			_strip(SEA_SKY_TEX, base_y - height, false)
+		Kind.SEA_MID:
+			_strip(SEA_MID_TEX, base_y)
 
 
-## 帯の絵（高さ height）を top から描き、width にちょうど収まる枚数だけ横に並べる。下は color で塗りつぶす
-func _strip(tex: Texture2D, top: float) -> void:
+## 帯の絵（高さ height）を top から描き、width にちょうど収まる枚数だけ横に並べる。fill なら下を color で塗りつぶす
+func _strip(tex: Texture2D, top: float, fill := true) -> void:
 	var aspect := float(tex.get_width()) / tex.get_height()
 	var n := maxi(1, roundi(width / (height * aspect)))
 	var tile := width / n
 	var bottom := top + height
-	draw_rect(Rect2(0, bottom - STRIP_OVERLAP, width, 800 + STRIP_OVERLAP), color)
+	if fill:
+		draw_rect(Rect2(0, bottom - STRIP_OVERLAP, width, 800 + STRIP_OVERLAP), color)
 	for i in range(-1, n + 1):
 		# つなぎ目に細い線が出ないよう、となりと少し重ねる
 		draw_texture_rect(tex, Rect2(i * tile - 1.0, top, tile + 2.0, height), false)

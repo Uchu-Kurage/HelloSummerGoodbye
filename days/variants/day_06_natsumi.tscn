@@ -1,11 +1,15 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_06.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
 [ext_resource type="Resource" path="res://data/npcs/natsumi_sea.tres" id="n_sea"]
+[ext_resource type="Script" path="res://world/seaside_zone.gd" id="seaside"]
 
 [node name="Day06_natsumi" instance=ExtResource("base")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
 
 [node name="Sea" type="Node2D" parent="Props"]
 position = Vector2(900, 604)
@@ -32,3 +36,8 @@ kind = 33
 [node name="Natsumi" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2150, 604)
 npc_data = ExtResource("n_sea")
+
+[node name="Seaside" type="Node2D" parent="Props"]
+script = ExtResource("seaside")
+from_x = 700.0
+to_x = 4400.0

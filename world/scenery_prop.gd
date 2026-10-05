@@ -393,7 +393,7 @@ func _soil_mound() -> void:
 
 
 # --- 初恋ルート（なつみ）の場所 ---------------------------------------------------
-# 公民館・ラジオ体操・画板・社・海・砂浜・旗・貝がら・バケツは Gemini の絵。水たまりだけ図形で描く
+# 公民館・ラジオ体操・画板・社・水たまり・海・砂浜・旗・貝がら・バケツは Gemini の絵
 
 ## 公民館の絵の高さと、窓・入口のガラスの場所（絵の幅・高さに対する割合：[左, 上, 右, 下]）。夜の明かり（KOMINKAN_GLOW）も同じ場所に描く
 const KOMINKAN_H := 230.0
@@ -403,8 +403,11 @@ const KOMINKAN_DOOR := [0.396, 0.467, 0.673, 0.685]
 const RADIO_H := 92.0
 const RADIO_KID_H := [98.0, 92.0, 96.0, 76.0]
 const RADIO_KIDS := 4
-## 海の帯の高さ（下のふちは波打ちぎわ）
-const SEA_H := 230.0
+## 水たまりの絵の数と、道に寝かせて見せるときの縦横の比
+const PUDDLES := 4
+const PUDDLE_FLAT := 0.28
+## 海の帯の高さ（下のふちは波打ちぎわ）。うしろに背景の海（Background の SeaMid）が見えるよう低めにする
+const SEA_H := 130.0
 ## 砂浜の道の絵の中で、乾いた砂の行（px）と、それを重ねる道の上下（足もとからの距離。DayBase の ROAD_TOP〜ROAD_BOTTOM）
 const SAND_DRY := Vector2(60, 180)
 const SAND_ROAD := Vector2(-12, 72)
@@ -457,16 +460,16 @@ func _shrine() -> void:
 
 
 func _puddles() -> void:
+	# 雨上がりの水たまり（Gemini の水彩）。道に寝かせて見えるよう、縦をつぶして並べる
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 11
 	var n := maxi(1, int(width / 260))
 	for i in n:
+		var tex := _tex("puddle_%d" % (i % PUDDLES + 1))
+		var w := 70.0 + rng.randf() * 50.0
+		var h := w * PUDDLE_FLAT
 		var c := Vector2(width * (i + 0.3 + rng.randf() * 0.4) / n, 26 + rng.randf() * 28)
-		var r := 34.0 + rng.randf() * 30.0
-		draw_set_transform(c, 0.0, Vector2(1.0, 0.22))
-		draw_circle(Vector2.ZERO, r, Color(P.WATER, 0.7))
-		draw_circle(Vector2(-r * 0.3, -r * 0.2), r * 0.45, Color(P.SKY_REFLECT, 0.6))
-		draw_set_transform(Vector2.ZERO)
+		draw_texture_rect(tex, Rect2(c - Vector2(w, h) / 2.0, Vector2(w, h)), false)
 
 
 func _sea() -> void:
