@@ -18,8 +18,14 @@ enum Run { NONE, RUNNING, TALK, DONE }
 ## 中・低：田んぼ道で絵を描くなつみの場所（この場面の原点から）
 @export var paddy_x := 1500.0
 
-const NATSUMI_TEX: Texture2D = preload("res://world/scenery/painted/npc_natsumi.png")
-const NATSUMI_H := 148.0
+## なつみの姿（水彩の絵。どれも右向き）：走る／絵を差し出す／座って描く／顔を上げて手をふる
+const RUN_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_3.png")
+const GIVE_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_4.png")
+const DRAW_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_1.png")
+const WAVE_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_2.png")
+const NATSUMI_H := 150.0
+## 座っている姿の高さ（足もとの草まで入れて）
+const SIT_H := 124.0
 ## 田んぼ道のなつみは、少し小さく（遠く）見せる
 const PADDY_SCALE := 0.8
 const PADDY_Y := 46.0
@@ -40,6 +46,12 @@ var _nx := -INF
 var _unroll_state := 0
 var _wave_t := -1.0
 var _t := 0.0
+
+
+func _ready() -> void:
+	super()
+	# 人物の絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 
 
 func tier() -> Tier:
@@ -121,35 +133,16 @@ func _unroll() -> void:
 func _draw() -> void:
 	# 走ってきたなつみはバス停（バスの手前）に立つ
 	if _run != Run.NONE:
-		_draw_natsumi(Vector2(_nx, 0), 1.0, _run == Run.RUNNING)
+		var running := _run == Run.RUNNING
+		_draw_natsumi(RUN_TEX if running else GIVE_TEX, Vector2(_nx, 0), NATSUMI_H, running)
 	_draw_bus()
 	if tier() == Tier.MID:
-		_draw_paddy_natsumi()
+		# 田んぼ道で絵を描くなつみ。バスが近づくと顔を上げて、小さく手をふる
+		_draw_natsumi(WAVE_TEX if _wave_t >= 0.0 else DRAW_TEX, Vector2(paddy_x, PADDY_Y), SIT_H * PADDY_SCALE, false)
 
 
-func _draw_natsumi(foot: Vector2, k: float, running: bool) -> void:
-	var tex := NATSUMI_TEX
-	var h := NATSUMI_H * k
+## なつみを描く。foot は足もと（絵の下のふち）のまん中
+func _draw_natsumi(tex: Texture2D, foot: Vector2, h: float, running: bool) -> void:
 	var w := tex.get_width() * h / tex.get_height()
 	var bob := absf(sin(_t * 12.0)) * 6.0 if running else 0.0
 	draw_texture_rect(tex, Rect2(foot.x - w / 2.0, foot.y - h - bob, w, h), false)
-
-
-## 中：田んぼ道で絵を描くなつみ。バスが近づくと顔を上げて、小さく手をふる
-func _draw_paddy_natsumi() -> void:
-	var foot := Vector2(paddy_x, PADDY_Y)
-	var h := NATSUMI_H * PADDY_SCALE
-	# 画板（ひざの前）
-	draw_set_transform(foot + Vector2(34, -4), -0.3)
-	draw_rect(Rect2(-24, -40, 48, 38), P.WOOD)
-	draw_rect(Rect2(-20, -36, 40, 30), P.CLOUD)
-	draw_rect(Rect2(-20, -36, 40, 10), Color(P.PENCIL_BLUE, 0.6))
-	draw_set_transform(Vector2.ZERO)
-	_draw_natsumi(foot, PADDY_SCALE, false)
-	if _wave_t >= 0.0:
-		# 小さく手をふる（肩から上へ。動きを減らす設定では止めた手）
-		var sh := foot + Vector2(-6, -h * 0.6)
-		var a := -1.2 + (0.0 if UiAnim.reduced() else sin(_wave_t * 6.0) * 0.25)
-		var hand := sh + Vector2(cos(a), sin(a)) * h * 0.26
-		draw_line(sh, hand, natsumi.skin_color if natsumi else P.PLAYER_SKIN, 5.0)
-		draw_circle(hand, 4.0, natsumi.skin_color if natsumi else P.PLAYER_SKIN)

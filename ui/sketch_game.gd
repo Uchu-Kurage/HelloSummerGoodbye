@@ -1,7 +1,7 @@
 class_name SketchGame
 extends NatsumiScreen
 ## ミニゲーム「スケッチ」（3日目、初恋ルート）。会話の @game sketch で始まる。
-## 川原で、なつみと並んで絵を描く。左が見本の景色、右が自分の画用紙。
+## 川原で、なつみと並んで絵を描く。背景の景色が見本で、右の岩の上に自分の画用紙。
 ## そら（いろ）→ やま（かたち）→ かわ（いろ）→ いし（かたち）の順に、3つから選んで描いていく。
 ## 失敗も時間制限もない。見本との一致が GOOD_MATCHES 以上なら高得点（好感度 +1、フラグ sketch_good）。
 
@@ -23,7 +23,9 @@ const MOUNTAIN := Color("#8FB28A")
 const GRASS := Color("#B9C98E")
 const STONE := Color("#A8A296")
 const PENCIL := Color(0.4, 0.36, 0.3, 0.35)
-const BG := Color("#CFDDB0")
+## 背景の絵（川原の景色。これが見本になる）と、切り取るとき残したいところ
+const BG_TEX: Texture2D = preload("res://ui/minigame_bg/sketch.jpg")
+const BG_FOCUS := Vector2(0.4, 0.3)
 
 var phase := Phase.CHOOSE
 var step := 0
@@ -139,21 +141,17 @@ func _input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var s := size
-	draw_rect(Rect2(Vector2.ZERO, s), BG)
-	# 見本（左）と画用紙（右）。上の小札と下の選択肢のあいだに並べる
+	# 背景の川原の景色（Gemini の水彩）が、そのまま見本になる
+	MinigameBg.draw_cover(self, BG_TEX, Rect2(Vector2.ZERO, s), BG_FOCUS)
+	# 画用紙は、手前の平らな岩の上（右寄り）に置く。上の小札と下の選択肢のあいだに収める
 	var top := UiTokens.SCREEN_MARGIN + 64.0
 	var bot := s.y - UiTokens.SCREEN_MARGIN - 48.0 - CHOICE_SIZE.y - UiTokens.SPACE_M * 2
 	var h := maxf(bot - top, 120.0)
-	var w := minf(h * 1.4, (s.x - UiTokens.SCREEN_MARGIN * 2 - UiTokens.SPACE_L) / 2.0)
+	var w := minf(h * 1.4, s.x * 0.42)
 	h = w / 1.4
-	var gap := UiTokens.SPACE_L
-	var left := (s.x - w * 2 - gap) / 2.0
-	var sample := Rect2(left, top, w, h)
-	var paper := Rect2(left + w + gap, top, w, h)
-	# 見本：川原の景色そのもの（枠は木の色）
-	draw_rect(sample.grow(6), WorldPalette.WOOD)
-	_landscape(sample, [0, 0, 0, 0])
+	var paper := Rect2(s.x - UiTokens.SCREEN_MARGIN - w, top + (bot - top - h) * 0.5, w, h)
 	# 画用紙：選んだものだけ描かれる。まだのところは、えんぴつの下書き
+	draw_rect(Rect2(paper.position + Vector2(4, 6), paper.size).grow(6), UiTokens.SHADOW)
 	draw_rect(paper.grow(6), UiTokens.PAPER_DARK)
 	draw_rect(paper, UiTokens.PAPER)
 	_landscape(paper, picked, true)

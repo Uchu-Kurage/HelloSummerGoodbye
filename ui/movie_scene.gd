@@ -1,12 +1,15 @@
 class_name MovieScene
 extends NatsumiScreen
 ## 映画会（7日目、初恋ルート）。会話の @game movie で始まる。ミニゲームではなく、見ているだけの場面。
-## 映画は見せず、暗い公民館とスクリーンの明かりのちらつき、音（上の小札に書く）だけで表す。
+## 映画は見せず、うしろの席から見た暗い公民館とスクリーンの明かりのちらつき、音（上の小札に書く）だけで表す。
 ## こわい場面でスクリーンが一瞬明るくなり、最後にあかりがつく。決定キー／タップで早送りできる。
 
 ## 音ひとつぶんの長さ（Strings.MOVIE_SOUNDS の順）
 const SOUND_TIME := 1.7
 const P := preload("res://world/world_palette.gd")
+## 背景の絵と、切り取るとき残したいところ（スクリーン）
+const BG: Texture2D = preload("res://ui/minigame_bg/movie.jpg")
+const BG_FOCUS := Vector2(0.5, 0.4)
 
 var _t := 0.0
 var _shown := -1
@@ -50,24 +53,15 @@ func _brightness() -> float:
 
 func _draw() -> void:
 	var s := size
+	# 夜の公民館の映画会を、うしろの席から（Gemini の水彩）。スクリーンの明かりに合わせて部屋の暗さがちらつく
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
 	var lit := _t >= (Strings.MOVIE_SOUNDS.size() - 1) * SOUND_TIME
-	draw_rect(Rect2(Vector2.ZERO, s), P.SHOP_WALL if lit else Color("#0C0B10"))
-	# 正面のスクリーン（映画の中身は見せない。白い光がちらつくだけ）
-	var screen := Rect2(s.x * 0.2, s.y * 0.14, s.x * 0.6, s.y * 0.42)
 	var b := _brightness()
-	draw_rect(screen, Color(P.SCREEN_LIGHT, 0.15 + 0.5 * b) if not lit else Color(P.CLOUD, 0.9))
-	# 前に座っている村の人たちの頭の影
-	var row_y := s.y * 0.74
-	for i in 9:
-		var x := s.x * (0.06 + i * 0.11)
-		var r := 34.0 + (i % 3) * 4.0
-		draw_circle(Vector2(x, row_y), r, Color("#1A1820") if not lit else P.WOOD_DARK)
-		draw_rect(Rect2(x - r * 1.2, row_y + r * 0.6, r * 2.4, s.y), Color("#1A1820") if not lit else P.WOOD_DARK)
-	# いちばん手前に、なつみとぼく（並んだ頭）
-	var me := Vector2(s.x * 0.58, s.y * 0.94)
-	var her := Vector2(s.x * 0.44, s.y * 0.95)
-	for p in [her, me]:
-		draw_circle(p, 58, Color("#100F14") if not lit else P.SHOP_DARK)
-	# スクリーンの光が、ふたりの頭のふちを照らす
-	draw_arc(her, 58, PI * 1.15, PI * 1.85, 16, Color(P.SCREEN_LIGHT, 0.35 * b), 3.0)
-	draw_arc(me, 58, PI * 1.15, PI * 1.85, 16, Color(P.SCREEN_LIGHT, 0.35 * b), 3.0)
+	if lit:
+		# あかりがついた：部屋があたたかく明るくなる
+		draw_rect(Rect2(Vector2.ZERO, s), Color(P.KOMINKAN_LIGHT, 0.35))
+	else:
+		draw_rect(Rect2(Vector2.ZERO, s), Color(0, 0, 0, 0.55 * (1.0 - b)))
+		# こわい場面：スクリーンが一瞬まっ白に光る
+		if b >= 1.0:
+			draw_rect(Rect2(Vector2.ZERO, s), Color(P.SCREEN_LIGHT, 0.25))

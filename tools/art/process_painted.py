@@ -30,6 +30,11 @@ CROPS = {
 	'prop_slope': [40, None, 1000, 535],
 	# 飛び込み岩の絵から、岩だけ（淵は川の帯を暗くして描く）
 	'prop_diverock': [None, None, 472, None],
+	# なつみのポーズ（地面がつながっているので、縦に切って1つずつ）
+	'natsumi_mg1_1': [None, None, 267, None],
+	'natsumi_mg1_2': [267, None, 515, None],
+	'natsumi_mg1_3': [515, None, 776, None],
+	'natsumi_mg1_4': [776, None, None, None],
 }
 ## 1枚に横に並んだものを切り分けるときの、書き出す名前
 SPLITS = {
@@ -44,6 +49,9 @@ SPLITS = {
 	'player_mg2': 'player_mg2',
 	'takeru_mg1': 'takeru_mg1',
 	'takeru_mg2': 'takeru_mg2',
+	# 初恋ルート（なつみ）
+	'radio_kids': 'radio_kid',
+	'shells': 'shell',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {
