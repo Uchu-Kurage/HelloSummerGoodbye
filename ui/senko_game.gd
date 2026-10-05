@@ -22,6 +22,15 @@ const WINDS := [0.3, 0.62]
 const WIND_TIME := 1.4
 const OUTRO_TIME := 2.2
 const P := preload("res://world/world_palette.gd")
+## 背景の絵（夜の田んぼ道）と、しゃがんだふたりの絵（Gemini の水彩）
+const BG: Texture2D = preload("res://ui/minigame_bg/senko.jpg")
+const BG_FOCUS := Vector2(0.5, 0.5)
+const PAIR: Texture2D = preload("res://world/scenery/painted/senko_pair.png")
+## ふたりの絵の高さと足もと（画面の高さに対する割合）、こよりの先（絵の中の 0〜1。左がなつみ、右がぼく）
+const PAIR_H := 0.74
+const PAIR_FOOT := 0.98
+const TIP_HERS := Vector2(0.4685, 0.6467)
+const TIP_MINE := Vector2(0.5455, 0.6467)
 
 var phase := Phase.GUIDE
 var burn := 0.0
@@ -140,41 +149,31 @@ func _input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var s := size
-	draw_rect(Rect2(Vector2.ZERO, s), P.SENKO_NIGHT)
-	# 星と、田んぼの稲の影
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 3
-	for i in 60:
-		draw_circle(Vector2(rng.randf() * s.x, rng.randf() * s.y * 0.45), 1.0 + rng.randf() * 1.4, Color(P.STAR, 0.7))
-	var ground := s.y * 0.78
-	draw_rect(Rect2(0, ground, s.x, s.y - ground), Color("#0B0D18"))
-	for i in int(s.x / 14):
-		var x := i * 14.0 + rng.randf() * 6.0
-		draw_line(Vector2(x, ground + 4), Vector2(x + rng.randf_range(-4, 4), ground - 18 - rng.randf() * 14), Color("#1C2236"), 2.0)
-	# ふたりの線香花火（左がなつみ、右がぼく）
-	var hold_y := s.y * 0.2
-	_draw_senko(Vector2(s.x * 0.4, hold_y), true)
-	_draw_senko(Vector2(s.x * 0.6, hold_y), false)
+	# 夜の田んぼ道（Gemini の水彩）と、しゃがんで線香花火を持つふたり（左がなつみ、右がぼく）
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
+	var h := s.y * PAIR_H
+	var w := PAIR.get_width() * h / PAIR.get_height()
+	var r := Rect2(s.x * 0.5 - w / 2.0, s.y * PAIR_FOOT - h, w, h)
+	draw_texture_rect(PAIR, r, false)
+	# 火の玉は、絵のこよりの先につく
+	var k := h / PAIR.get_height()
+	_draw_senko(r.position + TIP_HERS * r.size, true, k)
+	_draw_senko(r.position + TIP_MINE * r.size, false, k)
 
 
-func _draw_senko(hand: Vector2, hers: bool) -> void:
+## 火の玉を描く。tip はこよりの先、k は絵の 1px が画面で何 px か
+func _draw_senko(tip: Vector2, hers: bool, k: float) -> void:
 	var fell := hers_fell if hers else mine_fell
 	var fall_t := _hers_fall_t if hers else _mine_fall_t
-	var lit := phase != Phase.GUIDE
-	# 手がぶれる（主人公が離しているとき）・風でゆれる
-	var sway := _wind() * 26.0 * (0.8 if hers else 1.0) * sin(_t * 2.6 + (1.0 if hers else 0.0))
+	# 手がぶれる（主人公が離しているとき）・風でゆれる。こよりの絵から離れすぎないよう、小さく
+	var sway := _wind() * 5.0 * k * sin(_t * 2.6 + (1.0 if hers else 0.0))
 	var shake := 0.0
 	if not hers and not _hold.is_down and phase == Phase.BURN and not mine_fell and not UiAnim.reduced():
-		shake = sin(_t * 50.0) * 6.0 * (_off / GRACE)
+		shake = sin(_t * 50.0) * 3.0 * k * (_off / GRACE)
 	if UiAnim.reduced():
 		sway = 0.0
-	var cord := size.y * 0.32
-	var ball := hand + Vector2(sway + shake, cord)
-	# 指先と、こより
-	draw_circle(hand, 10, Color(P.PLAYER_SKIN, 0.55))
-	var paper := Color("#C25B8E") if hers else Color("#5E8ACB")
-	draw_line(hand, hand.lerp(ball, 0.6), Color(paper, 0.8), 3.0)
-	draw_line(hand.lerp(ball, 0.6), ball, Color(0.25, 0.2, 0.18), 2.0)
+	var ball := tip + Vector2(sway + shake, 0)
+	var lit := phase != Phase.GUIDE
 	if not lit:
 		return
 	var u := burn / BURN_TIME
@@ -183,26 +182,26 @@ func _draw_senko(hand: Vector2, hers: bool) -> void:
 		var ft := _t - fall_t
 		if ft < 0.6:
 			var p := ball + Vector2(0, ft * ft * 900.0)
-			draw_circle(p, 6.0 * (1.0 - ft / 0.6), P.SENKO_BALL)
+			draw_circle(p, 5.0 * k * (1.0 - ft / 0.6), P.SENKO_BALL)
 		return
 	if not hers and phase == Phase.OUTRO:
 		# 最後まで燃えきった火の玉は、しずかに暗くなって消える
-		var k := clampf(1.0 - _t / OUTRO_TIME, 0.0, 1.0)
-		draw_circle(ball, 7.0 * k, Color(P.SENKO_BALL, k))
+		var fade := clampf(1.0 - _t / OUTRO_TIME, 0.0, 1.0)
+		draw_circle(ball, 5.0 * k * fade, Color(P.SENKO_BALL, fade))
 		return
 	if hers and phase == Phase.OUTRO:
 		return
 	# 光のにじみ（顔のあたりまで）
 	var size_k: float = clampf(0.4 + u * 1.4, 0.4, 1.0) * (1.0 - smoothstep(0.9, 1.0, u) * 0.6)
-	for g in [[90.0, 0.25], [56.0, 0.35], [30.0, 0.5]]:
-		draw_circle(ball, g[0] * size_k, Color(P.SENKO_GLOW, P.SENKO_GLOW.a * g[1]))
-	draw_circle(ball, 9.0 * size_k + 3.0, P.SENKO_BALL)
-	draw_circle(ball + Vector2(-2, -2), 3.0, P.SENKO_CORE)
-	_sparks(ball, hers, u)
+	for g in [[60.0, 0.25], [38.0, 0.35], [20.0, 0.5]]:
+		draw_circle(ball, g[0] * size_k * k, Color(P.SENKO_GLOW, P.SENKO_GLOW.a * g[1]))
+	draw_circle(ball, (6.0 * size_k + 2.0) * k, P.SENKO_BALL)
+	draw_circle(ball + Vector2(-1, -1) * k, 2.0 * k, P.SENKO_CORE)
+	_sparks(ball, hers, u, k)
 
 
 ## 火花。段ごとに量と長さがかわる（ぼたん：少し、まつば：はげしく、やなぎ：長くたれる、ちりぎく：まばら）
-func _sparks(ball: Vector2, hers: bool, u: float) -> void:
+func _sparks(ball: Vector2, hers: bool, u: float, k: float) -> void:
 	var st := stage()
 	var n := 0
 	var reach := 0.0
@@ -224,14 +223,14 @@ func _sparks(ball: Vector2, hers: bool, u: float) -> void:
 	rng.seed = (0 if UiAnim.reduced() else int(_t * 14.0)) * 2 + (1 if hers else 0)
 	for i in n:
 		var a := rng.randf() * TAU
-		var r := reach * (0.5 + rng.randf() * 0.5)
+		var r := reach * 0.7 * k * (0.5 + rng.randf() * 0.5)
 		var dir := Vector2(cos(a), sin(a))
 		if st == &"yanagi":
 			dir = Vector2(cos(a) * 0.6, absf(sin(a)) + 0.4).normalized()
 		var tip := ball + dir * r
-		draw_line(ball + dir * 8.0, tip, Color(P.SENKO_SPARK, 0.85), 1.5)
+		draw_line(ball + dir * 6.0 * k, tip, Color(P.SENKO_SPARK, 0.85), 1.5)
 		if st == &"matsuba":
 			# 松葉のように先が分かれる
 			var side := dir.orthogonal() * 8.0
-			draw_line(tip, tip + dir * 8.0 + side, Color(P.SENKO_SPARK, 0.7), 1.2)
-			draw_line(tip, tip + dir * 8.0 - side, Color(P.SENKO_SPARK, 0.7), 1.2)
+			draw_line(tip, tip + dir * 6.0 * k + side, Color(P.SENKO_SPARK, 0.7), 1.2)
+			draw_line(tip, tip + dir * 6.0 * k - side, Color(P.SENKO_SPARK, 0.7), 1.2)

@@ -15,8 +15,16 @@ const END_TIME := 1.6
 const SLOTS := 3
 const CHOICE_SIZE := Vector2(128, 96)
 const P := preload("res://world/world_palette.gd")
-## 貝がらの種類：0 しろい・1 ちゃいろの巻き貝・2 さくら貝（小さくてうすい桃色）
-const SHELL_COLORS := [Color("#F4EFE4"), Color("#C9A27A"), Color("#F2C6CF")]
+## 背景の絵（お盆の昼の浜辺）と、切り取るとき残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/kaigara.jpg")
+const BG_FOCUS := Vector2(0.4, 0.5)
+## 貝がらの種類：0 しろい二枚貝・1 巻き貝・2 さくら貝（小さくてうすい桃色）。種類ごとの絵（Gemini の水彩）と、枠の中での大きさ
+const SHELL_ART := [
+	[preload("res://world/scenery/painted/shell_1.png"), preload("res://world/scenery/painted/shell_3.png")],
+	[preload("res://world/scenery/painted/shell_2.png"), preload("res://world/scenery/painted/shell_4.png")],
+	[preload("res://world/scenery/painted/shell_5.png")],
+]
+const SHELL_SIZE := [64.0, 60.0, 34.0]
 
 var phase := Phase.IN
 var round_i := 0
@@ -25,6 +33,8 @@ var picks := 0
 var rng := RandomNumberGenerator.new()
 ## いまの回の貝がら（種類の番号。-1 は拾ったあと）
 var shells: Array[int] = []
+## いまの回の貝がらの絵
+var _art: Array[Texture2D] = []
 var _sakura_round := 1
 var _t := 0.0
 var _picked_round := false
@@ -53,10 +63,14 @@ func _build() -> void:
 
 func _new_shells() -> void:
 	shells.clear()
+	_art.clear()
 	for i in SLOTS:
 		shells.append(rng.randi_range(0, 1))
 	if round_i == _sakura_round:
 		shells[rng.randi_range(0, SLOTS - 1)] = 2
+	for k in shells:
+		var arts: Array = SHELL_ART[k]
+		_art.append(arts[rng.randi_range(0, arts.size() - 1)])
 	_picked_round = false
 	_redraw_choices()
 
@@ -164,20 +178,10 @@ func _wave() -> float:
 
 func _draw() -> void:
 	var s := size
-	var sea_top := s.y * 0.18
-	var shore := s.y * 0.42
-	draw_rect(Rect2(0, 0, s.x, sea_top), P.SEA_FAR.lightened(0.3))
-	draw_rect(Rect2(0, sea_top, s.x, shore - sea_top), P.SEA)
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
+	# 寄せてくる波（白いふちのある、うすい水）が、手前の砂をおおう
+	var shore := s.y * 0.5
 	var c := clock()
-	for i in 4:
-		var y := sea_top + (shore - sea_top) * (0.2 + 0.2 * i)
-		var x := fposmod(c * 18.0 + i * 140.0, 260.0) - 260.0
-		while x < s.x:
-			draw_line(Vector2(x, y), Vector2(x + 70, y), Color(P.CLOUD, 0.5), 2.0)
-			x += 260.0
-	draw_rect(Rect2(0, shore, s.x, s.y - shore), P.SAND)
-	draw_rect(Rect2(0, shore, s.x, (s.y - shore) * 0.55), P.SAND_WET)
-	# 寄せてくる波（白いふちのある、うすい水）
 	var front := shore + (s.y - shore) * 0.9 * _wave()
 	if front > shore + 12.0:
 		var pts := PackedVector2Array([Vector2(0, shore)])
@@ -185,7 +189,7 @@ func _draw() -> void:
 			var t := i / 16.0
 			pts.append(Vector2(s.x * t, maxf(front + sin(t * TAU * 2.0 + c) * 8.0, shore + 1.0)))
 		pts.append(Vector2(s.x, shore))
-		draw_colored_polygon(pts, Color(P.SEA_NEAR, 0.85))
+		draw_colored_polygon(pts, Color(P.SEA_NEAR, 0.55))
 		var edge := pts.slice(1, pts.size() - 1)
 		draw_polyline(edge, Color(P.CLOUD, 0.9), 5.0)
 
@@ -195,26 +199,7 @@ func _draw_shell_choice(a: Control, i: int) -> void:
 		# 波の下か、拾ったあと：ぬれた砂だけ
 		a.draw_circle(a.size / 2.0, 6, Color(P.SAND_WET, 0.8))
 		return
-	var kind := shells[i]
-	var c := a.size / 2.0 + Vector2(0, 6)
-	var r := 16.0 if kind == 2 else 28.0
-	var col: Color = SHELL_COLORS[kind]
-	if kind == 1:
-		# 巻き貝
-		a.draw_colored_polygon(PackedVector2Array([c + Vector2(-r, r * 0.4), c + Vector2(r, r * 0.4), c + Vector2(r * 0.2, -r)]), col)
-		for k in 3:
-			a.draw_line(c + Vector2(-r * 0.6 + k * 10, r * 0.2), c + Vector2(r * 0.1 + k * 4, -r * 0.6), col.darkened(0.3), 2.0)
-		return
-	var pts := PackedVector2Array()
-	for k in 17:
-		var t := PI + PI * k / 16.0
-		pts.append(c + Vector2(cos(t) * r, sin(t) * r * 0.9))
-	pts.append(c + Vector2(0, r * 0.35))
-	a.draw_colored_polygon(pts, col)
-	# 紙の上でも見えるよう、ふちを描く
-	var edge := pts.duplicate()
-	edge.append(pts[0])
-	a.draw_polyline(edge, col.darkened(0.35), 2.0)
-	for k in 5:
-		var t := PI + PI * (k + 1) / 6.0
-		a.draw_line(c + Vector2(0, r * 0.3), c + Vector2(cos(t) * r * 0.9, sin(t) * r * 0.8), col.darkened(0.18), 1.5)
+	var tex := _art[i]
+	var k: float = SHELL_SIZE[shells[i]] / maxf(tex.get_width(), tex.get_height())
+	var sz := tex.get_size() * k
+	a.draw_texture_rect(tex, Rect2(a.size / 2.0 - sz / 2.0 + Vector2(0, 4), sz), false)

@@ -24,21 +24,6 @@ position = Vector2(1750, 604)
 script = ExtResource("prop")
 kind = 32
 
-[node name="Board" type="PanelContainer" parent="Props/SwimFlag"]
-offset_left = -90.0
-offset_top = -200
-offset_right = 90.0
-offset_bottom = -144
-mouse_filter = 2
-theme_type_variation = &"SignBoard"
-
-[node name="Label" type="Label" parent="Props/SwimFlag/Board"]
-layout_mode = 2
-theme_type_variation = &"WorldSignLabel"
-text = "ゆうえい きんし"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="Shells" type="Node2D" parent="Props"]
 position = Vector2(2350, 604)
 script = ExtResource("prop")

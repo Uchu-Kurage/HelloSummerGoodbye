@@ -18,6 +18,10 @@ const SCOOP_TIME := 0.5
 const READY_TIME := 1.2
 const BROKEN_TIME := 1.8
 const P := preload("res://world/world_palette.gd")
+## 背景の絵（水槽を真上から）と、切り取るとき残したいところ、絵の中の水のところ（0〜1）
+const BG: Texture2D = preload("res://ui/minigame_bg/kingyo.jpg")
+const BG_FOCUS := Vector2(0.5, 0.5)
+const WATER := Rect2(0.22, 0.2, 0.56, 0.58)
 
 var phase := Phase.READY
 var caught := 0
@@ -137,23 +141,11 @@ func _broke() -> void:
 
 func _draw() -> void:
 	var s := size
-	# 夜店の台の上（暗い木）と、提灯の明かりのにじみ
-	draw_rect(Rect2(Vector2.ZERO, s), P.SHOP_DARK)
-	for i in 4:
-		draw_circle(Vector2(s.x * (0.12 + 0.25 * i), 0), 120, Color(P.LANTERN_GLOW, 0.2))
-	var top := UiTokens.SCREEN_MARGIN + 64.0
-	var bot := s.y - UiTokens.SCREEN_MARGIN - 56.0
-	var h := bot - top
-	var w := minf(h * 1.7, s.x - UiTokens.SCREEN_MARGIN * 2)
-	_tub = Rect2((s.x - w) / 2.0, top, w, h)
-	draw_rect(_tub.grow(10), P.KINGYO_TUB)
-	draw_rect(_tub, P.KINGYO_WATER)
-	# 水のゆらぎ
-	var c := clock()
-	for i in 6:
-		var y := _tub.position.y + _tub.size.y * (0.12 + 0.15 * i)
-		var x := _tub.position.x + fposmod(c * 20.0 + i * 90.0, _tub.size.x - 80.0)
-		draw_line(Vector2(x, y), Vector2(x + 60, y), Color(P.WATER_LIGHT, 0.5), 2.0)
+	# 夜店の水槽を真上から見た絵（Gemini の水彩）。金魚が泳ぐのは、その水のところ
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
+	var a := _img(Vector2(WATER.position.x, WATER.position.y), s)
+	var b := _img(WATER.end, s)
+	_tub = Rect2(a, b - a)
 	for f in fish:
 		if not f.gone:
 			_draw_fish(_at(f), f.a + (PI / 2.0 if f.w > 0 else -PI / 2.0), f.black)
@@ -166,6 +158,14 @@ func _draw() -> void:
 	var chip := Rect2(_tub.end.x - tw - 40, _tub.end.y - 56, tw + 24, 44)
 	draw_rect(chip, UiTokens.PAPER)
 	draw_string(font, chip.position + Vector2(12, 32), n, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTokens.INK)
+
+
+## 絵の中の点（0〜1）が、画面のどこに来るか（MinigameBg.draw_cover と同じ切り取りかた）
+func _img(f: Vector2, s: Vector2) -> Vector2:
+	var ts := BG.get_size()
+	var k := maxf(s.x / ts.x, s.y / ts.y)
+	var src_pos := (ts - s / k) * BG_FOCUS
+	return (f * ts - src_pos) * k
 
 
 func _draw_fish(p: Vector2, dir: float, black: bool) -> void:

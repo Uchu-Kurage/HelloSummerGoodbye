@@ -20,6 +20,8 @@ STRIPS = {
 	'paddies': [(0, 300), 260],
 	'river': [(0, None), 220],
 	'road': [(0, None), 200],
+	# 初恋ルート：6日目の砂浜の道（ふだんの道のかわりに敷く）
+	'sand': [(0, None), 200],
 }
 ## 切り抜く前に、元の絵のこの範囲だけを使う：[左, 上, 右, 下]（None は端まで）
 ## 同じ絵から2つ取り出すときは、名前を変えて2回わたす（例: prop_diverock=岩.jpg dive_pool=岩.jpg）
@@ -30,6 +32,11 @@ CROPS = {
 	'prop_slope': [40, None, 1000, 535],
 	# 飛び込み岩の絵から、岩だけ（淵は川の帯を暗くして描く）
 	'prop_diverock': [None, None, 472, None],
+	# なつみのポーズ（地面がつながっているので、縦に切って1つずつ）
+	'natsumi_mg1_1': [None, None, 267, None],
+	'natsumi_mg1_2': [267, None, 515, None],
+	'natsumi_mg1_3': [515, None, 776, None],
+	'natsumi_mg1_4': [776, None, None, None],
 }
 ## 1枚に横に並んだものを切り分けるときの、書き出す名前
 SPLITS = {
@@ -44,6 +51,9 @@ SPLITS = {
 	'player_mg2': 'player_mg2',
 	'takeru_mg1': 'takeru_mg1',
 	'takeru_mg2': 'takeru_mg2',
+	# 初恋ルート（なつみ）
+	'radio_kids': 'radio_kid',
+	'shells': 'shell',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {
