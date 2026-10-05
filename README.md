@@ -97,7 +97,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - **好感度**：`GameState.natsumi_heart`（最大 `HEART_MAX` = 13）。会話の好みの選択肢（`@heart`、全9か所）と、ミニゲームの高得点（`GameState.set_natsumi_game`、全4種）で +1。エンディングの差分だけに使い、ルートからは外れない
 - **エンディングの段階**：好感度が `HEART_MID`（5）以上でフラグ `natsumi_heart_mid`、`HEART_HIGH`（10）以上で `natsumi_heart_high` が立つ。10日目の場面（`day_10_natsumi_high.tscn`／`day_10_natsumi.tscn`）とエンディング（`data/endings/natsumi_high.tres`・`natsumi_mid.tres`・`natsumi.tres`）はこのフラグで選ぶ。しきい値は遊んでみて `GameState` で調整する
 - **10日目**：`world/natsumi_bus.gd`（親友ルートのバス `bus_departure.gd` を継承）。高：乗る直前になつみが走ってきて絵をくれ、走り出してから広げる（`@game drawing`）。中：窓の外の田んぼ道で、絵を描くなつみが小さく手をふる。低：田んぼ道に誰もいない
-- **場所の小物**：`world/scenery_prop.gd` に、公民館（`KOMINKAN`・夜の明かり `KOMINKAN_GLOW`）・ラジオ体操（`RADIO_KIDS`）・画板（`GAKUBAN`）・社（`SHRINE`）・水たまり（`PUDDLES`）・海（`SEA`・`SAND`・`SWIM_FLAG`・`SHELLS`）・バケツ（`BUCKET`）。水たまりと砂浜だけは図形、ほかは Gemini の水彩の絵（プロンプトは `tools/art/prompts_natsumi.md`）
+- **場所の小物**：`world/scenery_prop.gd` に、公民館（`KOMINKAN`・夜の明かり `KOMINKAN_GLOW`）・ラジオ体操（`RADIO_KIDS`）・画板（`GAKUBAN`）・社（`SHRINE`）・水たまり（`PUDDLES`）・海（`SEA`・`SAND`・`SWIM_FLAG`・`SHELLS`）・バケツ（`BUCKET`）。水たまりだけは図形、ほかは Gemini の水彩の絵（プロンプトは `tools/art/prompts_natsumi.md`）
 - **ミニゲーム**：どれも `ui/natsumi_screen.gd`（NatsumiScreen）を継承。上になつみのひとこと、下に案内の小札。失敗で止まらない
   - スケッチ（3日目、`ui/sketch_game.gd`）：そら・やま・かわ・いし を3つから選んで描く。見本と `GOOD_MATCHES`（3）か所以上同じなら高得点
   - 金魚すくい（5日目、`ui/kingyo_game.gd`）：金魚がポイの上に来たらタップ。すくうたびに紙が弱り（`WEAR_SCOOP`・`WEAR_FISH`）、破れたらおしまい。`GOOD_COUNT`（3）匹以上で高得点

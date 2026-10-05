@@ -77,7 +77,6 @@ const KOMINKAN_LIGHT := Color(1.0, 0.86, 0.58, 0.32)
 const SCREEN_LIGHT := Color(0.78, 0.86, 1.0, 1.0)
 const SKY_REFLECT := Color("#C9DCE6")
 const SEA_NEAR := Color("#86B8C8")
-const SAND := Color("#E3D2A8")
 const SAND_WET := Color("#C9B585")
 ## 線香花火（9日目）：火の玉・火花・光のにじみ
 const SENKO_BALL := Color("#F2783A")

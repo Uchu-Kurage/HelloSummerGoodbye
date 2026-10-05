@@ -91,6 +91,14 @@ func _ready() -> void:
 		mat.set_shader_parameter("width", width)
 		mat.set_shader_parameter("top_y", -RIVER_H + 4.0)
 		material = mat
+	# 砂浜の道は、両はしをふだんの道にぼかしてつなぐ
+	if kind == Kind.SAND:
+		var sand_mat := ShaderMaterial.new()
+		sand_mat.shader = EDGE_FADE
+		sand_mat.set_shader_parameter("width", width)
+		sand_mat.set_shader_parameter("fade_x", 220.0)
+		sand_mat.set_shader_parameter("top_y", -1000.0)
+		material = sand_mat
 	# 海も左右の端をぼかす（海辺の道から、だんだん海が見えてくる）
 	if kind == Kind.SEA:
 		var sea_mat := ShaderMaterial.new()
@@ -385,7 +393,7 @@ func _soil_mound() -> void:
 
 
 # --- 初恋ルート（なつみ）の場所 ---------------------------------------------------
-# 公民館・ラジオ体操・画板・社・海・旗・貝がら・バケツは Gemini の絵。水たまりと砂浜は図形で描く
+# 公民館・ラジオ体操・画板・社・海・砂浜・旗・貝がら・バケツは Gemini の絵。水たまりだけ図形で描く
 
 ## 公民館の絵の高さと、窓・入口のガラスの場所（絵の幅・高さに対する割合：[左, 上, 右, 下]）。夜の明かり（KOMINKAN_GLOW）も同じ場所に描く
 const KOMINKAN_H := 230.0
@@ -397,6 +405,9 @@ const RADIO_KID_H := [98.0, 92.0, 96.0, 76.0]
 const RADIO_KIDS := 4
 ## 海の帯の高さ（下のふちは波打ちぎわ）
 const SEA_H := 230.0
+## 砂浜の道の絵の中で、乾いた砂の行（px）と、それを重ねる道の上下（足もとからの距離。DayBase の ROAD_TOP〜ROAD_BOTTOM）
+const SAND_DRY := Vector2(60, 180)
+const SAND_ROAD := Vector2(-12, 72)
 
 
 ## 絵の中の割合の四角（[左, 上, 右, 下]）を、足もとが原点の座標に
@@ -469,13 +480,16 @@ func _sea() -> void:
 
 
 func _sand() -> void:
-	# 道の上に砂を重ねる（両はしは、ななめにぼかす）
-	_poly([Vector2(-60, 76), Vector2(0, -14), Vector2(width, -14), Vector2(width + 60, 76)], P.SAND)
-	_poly([Vector2(0, -14), Vector2(width, -14), Vector2(width, -4), Vector2(0, -4)], P.SAND_WET)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 5
-	for i in int(width / 14):
-		draw_circle(Vector2(rng.randf() * width, rng.randf() * 80 - 6), 1.5, Color(P.WOOD_DARK, 0.25))
+	# 砂浜の道（Gemini の水彩の帯）。乾いた砂の行（SAND_DRY）を道（ROAD_TOP〜ROAD_BOTTOM）にそろえ、width いっぱいに並べる。
+	# 上はぬれた砂と波打ちぎわ、下は浜の草。両はしは EDGE_FADE で、ふだんの道にぼかしてつなぐ
+	var tex := _tex("sand")
+	var k := (SAND_ROAD.y - SAND_ROAD.x) / (SAND_DRY.y - SAND_DRY.x)
+	var h := tex.get_height() * k
+	var top := SAND_ROAD.x - SAND_DRY.x * k
+	var n := maxi(1, roundi(width / (tex.get_width() * k)))
+	var tile := width / n
+	for i in n:
+		draw_texture_rect(tex, Rect2(i * tile - 1.0, top, tile + 2.0, h), false)
 
 
 func _swim_flag() -> void:
