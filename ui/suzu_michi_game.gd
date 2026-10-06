@@ -15,9 +15,11 @@ const WALK_TIME := 0.9
 const END_TIME := 1.6
 const CHOICE_SIZE := Vector2(200, 96)
 const P := preload("res://world/world_palette.gd")
+## 歩くときの暗さ
 const DARK := Color("#0F1420")
-const PATH := Color("#2E3444")
-const TRUNK := Color("#1A1E28")
+## 背景の絵（夜の森の分かれ道）と、切り取るとき残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/suzu_michi.jpg")
+const BG_FOCUS := Vector2(0.5, 0.5)
 
 var phase := Phase.LISTEN
 var fork := 0
@@ -137,41 +139,24 @@ func _draw() -> void:
 	# 並べ終わる前（大きさ 0）は描かない
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	draw_rect(Rect2(Vector2.ZERO, s), DARK)
+	# 夜の森の分かれ道（水彩の絵）
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
 	var c := clock()
-	# 歩いているあいだは、木が手前へ流れる
-	var walk := 0.0
-	if phase == Phase.WALK:
-		walk = _t / WALK_TIME
-	# 分かれ道（Y の字）
-	var base := Vector2(s.x / 2.0, s.y)
-	var fork_at := Vector2(s.x / 2.0, s.y * 0.52)
-	draw_colored_polygon(PackedVector2Array([base + Vector2(-220, 0), base + Vector2(220, 0), fork_at + Vector2(40, 0), fork_at + Vector2(-40, 0)]), PATH)
-	for dir in [-1, 1]:
-		var end := Vector2(s.x / 2.0 + dir * s.x * 0.34, s.y * 0.32)
-		draw_colored_polygon(PackedVector2Array([fork_at + Vector2(-34, 0), fork_at + Vector2(34, 0), end + Vector2(dir * 10 + 16, 0), end + Vector2(dir * 10 - 16, 0)]), PATH)
-	# 木のかげ（左右）
-	var rng2 := RandomNumberGenerator.new()
-	rng2.seed = 17 + fork
-	for i in 14:
-		var x := rng2.randf_range(0, s.x)
-		if absf(x - s.x / 2.0) < 140.0:
-			continue
-		var w := rng2.randf_range(18, 46) * (1.0 + walk * 0.3)
-		draw_rect(Rect2(x - w / 2.0, 0, w, s.y * rng2.randf_range(0.55, 0.9)), TRUNK)
-	# 鈴の鳴ったほうで、小さな光がゆれる（音が出せないときの印）
+	# 鈴の鳴ったほうで、小さな光がゆれる（音が出せないときの印）。分かれた道の先のあたり
 	if _glow > 0.0:
 		var k := _glow / GLOW_TIME
 		var sway := sin(c * 9.0) * 10.0 if not UiAnim.reduced() else 0.0
-		var p := Vector2(s.x / 2.0 + (side * 2 - 1) * s.x * 0.3 + sway, s.y * 0.3)
-		draw_circle(p, 40, Color(1.0, 0.95, 0.72, 0.12 * k))
-		draw_circle(p, 14, Color(1.0, 0.95, 0.72, 0.5 * k))
-		draw_circle(p, 5, Color(1.0, 1.0, 0.9, 0.9 * k))
+		var p := Vector2(s.x / 2.0 + (side * 2 - 1) * s.x * 0.3 + sway, s.y * 0.4)
+		draw_circle(p, 44, Color(1.0, 0.95, 0.72, 0.16 * k))
+		draw_circle(p, 16, Color(1.0, 0.95, 0.72, 0.6 * k))
+		draw_circle(p, 6, Color(1.0, 1.0, 0.9, 0.95 * k))
+	# 歩いているあいだは、少し暗くなって次の分かれ道へ
+	if phase == Phase.WALK:
+		draw_rect(Rect2(Vector2.ZERO, s), Color(DARK, 0.6 * sin(clampf(_t / WALK_TIME, 0.0, 1.0) * PI)))
 	# 分かれ道をいくつ来たか（小さな足あとの印）
 	for i in FORKS:
-		var col := Color(1, 1, 1, 0.55) if i < fork else Color(1, 1, 1, 0.15)
-		draw_circle(Vector2(s.x / 2.0 - (FORKS - 1) * 12 + i * 24, s.y * 0.44), 5, col)
-
+		var col := Color(1, 1, 1, 0.7) if i < fork else Color(1, 1, 1, 0.25)
+		draw_circle(Vector2(s.x / 2.0 - (FORKS - 1) * 12 + i * 24, s.y * 0.58), 5, col)
 
 func _draw_arrow(a: Control, i: int) -> void:
 	var c := Vector2(a.size.x / 2.0 + (i * 2 - 1) * 70, a.size.y / 2.0)

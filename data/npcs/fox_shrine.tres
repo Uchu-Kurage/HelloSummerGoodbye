@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="NpcData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
-[ext_resource type="Texture2D" path="res://world/scenery/kamikakushi/fox_child.svg" id="sprite"]
-[ext_resource type="Texture2D" path="res://world/scenery/kamikakushi/fox_child_face.svg" id="alt"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/fox_mg1_4.png" id="sprite"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_fox_child_face.png" id="alt"]
 
 [resource]
 script = ExtResource("1")

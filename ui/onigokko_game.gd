@@ -20,14 +20,15 @@ const CHASER := 0.32
 const FLEE_SLOW := 0.6
 const SWAP_TIME := 1.4
 const END_TIME := 1.8
-const FOX_TEX: Texture2D = preload("res://world/scenery/kamikakushi/fox_child.svg")
+## 走るお面の子（水彩の絵。右向き）
+const FOX_TEX: Texture2D = preload("res://world/scenery/painted/fox_mg1_1.png")
+## 背景の絵（村の通り）。走ると横に流れる（左右を交互に反転してつなぐ）。色はシェーダーで抜く
+const BG: Texture2D = preload("res://ui/minigame_bg/onigokko.jpg")
+const DESATURATE := preload("res://world/shaders/desaturate.gdshader")
+## 地面（足もと）の高さ（画面の高さに対する割合）
+const FOOT_Y := 0.88
 const P := preload("res://world/world_palette.gd")
-## 色のない村（灰色の家なみ・道）
-const SKY := Color("#C9CBCC")
-const HOUSE := Color("#9A9B9C")
-const HOUSE_DARK := Color("#7E7F80")
-const ROAD := Color("#B1B0AC")
-const GRASS := Color("#8F918E")
+
 
 var phase := Phase.CHASE
 var gap := START_GAP
@@ -37,11 +38,25 @@ var _dash_in := 1.6
 var _dash_left := 0.0
 var _scroll := 0.0
 var _hold: HoldInput
+## 主人公を描く層（色のまま。この画面そのものは色を抜くので、子の層に分ける）
+var _me_layer: Control
 
 
 func _build() -> void:
 	rng.randomize()
 	set_ambient(WorldPalette.OTHERWORLD_AMBIENT)
+	# 色の抜けた村：この画面の絵（背景とお面の子）だけ色を抜く。子の部品（小札・主人公）は色のまま
+	var mat := ShaderMaterial.new()
+	mat.shader = DESATURATE
+	mat.set_shader_parameter("amount", 1.0)
+	material = mat
+	_me_layer = Control.new()
+	_me_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_me_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_me_layer.draw.connect(_draw_me_layer)
+	add_child(_me_layer)
+	# 小札より奥に描く
+	move_child(_me_layer, 0)
 	_hold = HoldInput.new()
 	add_child(_hold)
 	_hold.enabled = true
@@ -100,6 +115,7 @@ func _process(delta: float) -> void:
 			if _t >= END_TIME and not done:
 				finish()
 	queue_redraw()
+	_me_layer.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
@@ -118,40 +134,47 @@ func _draw() -> void:
 	# 並べ終わる前（大きさ 0）は描かない
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	var ground := s.y * 0.72
-	draw_rect(Rect2(Vector2.ZERO, s), SKY)
-	# 家なみ（走るとうしろへ流れる。動きを減らす設定でも、位置だけはかわる）
-	var w := 260.0
-	var off := fposmod(_scroll * 0.5, w)
-	var i := 0
+	# 村の通り（走るとうしろへ流れる。動きを減らす設定でも、位置だけはかわる）
+	var k := s.y / BG.get_height()
+	var tw := BG.get_width() * k
+	var off := fposmod(_scroll * 0.5, tw * 2.0)
 	var x := -off
-	while x < s.x + w:
-		var h := 150.0 + float((i * 37) % 60)
-		draw_rect(Rect2(x + 20, ground - h, w - 60, h), HOUSE)
-		draw_colored_polygon(PackedVector2Array([Vector2(x + 6, ground - h), Vector2(x + w - 26, ground - h), Vector2(x + w - 60, ground - h - 50), Vector2(x + 40, ground - h - 50)]), HOUSE_DARK)
-		draw_rect(Rect2(x + 60, ground - 70, 40, 70), HOUSE_DARK)
-		x += w
+	var i := 0
+	while x < s.x:
+		# となりの絵は左右を反転して、つなぎ目を目立たせない
+		if i % 2 == 0:
+			draw_texture_rect(BG, Rect2(x, 0, tw, s.y), false)
+		else:
+			draw_set_transform(Vector2(x + tw, 0), 0.0, Vector2(-1, 1))
+			draw_texture_rect(BG, Rect2(0, 0, tw, s.y), false)
+			draw_set_transform(Vector2.ZERO)
+		x += tw
 		i += 1
-	draw_rect(Rect2(0, ground, s.x, s.y - ground), GRASS)
-	draw_rect(Rect2(0, ground + 10, s.x, 60), ROAD)
-	# ぼく（色のまま）と、お面の子。gap が小さいほど近い。どちらも右へ走る（鬼のときは ぼくがうしろ）
-	var me_x := s.x * (0.36 if phase in [Phase.CHASE, Phase.SWAP] else 0.62)
-	var dir := 1.0 if phase in [Phase.CHASE, Phase.SWAP] else -1.0
-	var fox_x := me_x + dir * (90.0 + gap * s.x * 0.32)
-	var foot_y := ground + 54
-	_draw_me(Vector2(me_x, foot_y), phase in [Phase.CHASE, Phase.FLEE] and _hold.is_down)
-	var fh := 150.0
+	# お面の子（村といっしょに色が抜ける）。gap が小さいほど近い。どちらも右へ走る（鬼のときは ぼくがうしろ）
+	var fox_x := _me_x() + _dir() * (90.0 + gap * s.x * 0.32)
+	var fh := 160.0
 	var fw := FOX_TEX.get_width() * fh / FOX_TEX.get_height()
 	var bob := absf(sin(clock() * 12.0)) * 5.0 if phase != Phase.END else 0.0
-	draw_set_transform(Vector2(fox_x, foot_y - bob))
-	draw_texture_rect(FOX_TEX, Rect2(-fw / 2.0, -fh, fw, fh), false, Color(0.86, 0.86, 0.86))
-	draw_set_transform(Vector2.ZERO)
+	draw_texture_rect(FOX_TEX, Rect2(fox_x - fw / 2.0, s.y * FOOT_Y - fh - bob, fw, fh), false)
 
 
-func _draw_me(foot: Vector2, running: bool) -> void:
+func _me_x() -> float:
+	return size.x * (0.36 if phase in [Phase.CHASE, Phase.SWAP] else 0.62)
+
+
+func _dir() -> float:
+	return 1.0 if phase in [Phase.CHASE, Phase.SWAP] else -1.0
+
+
+## ぼく（色のまま）
+func _draw_me_layer() -> void:
+	if size.x < 1.0:
+		return
+	var foot := Vector2(_me_x(), size.y * FOOT_Y)
+	var running := phase in [Phase.CHASE, Phase.FLEE] and _hold.is_down
 	var frames := Player.FRAMES
 	var f := 1 + int(clock() * 10.0) % 4 if running and not UiAnim.reduced() else 0
 	var tex: Texture2D = frames[f]
 	var h := Player.BODY_HEIGHT
 	var w := tex.get_width() * h / tex.get_height()
-	draw_texture_rect(tex, Rect2(foot.x - w / 2.0, foot.y - h, w, h), false)
+	_me_layer.draw_texture_rect(tex, Rect2(foot.x - w / 2.0, foot.y - h, w, h), false)

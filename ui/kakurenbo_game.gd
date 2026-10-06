@@ -12,13 +12,12 @@ const END_TIME := 1.6
 const CHOICE_SIZE := Vector2(176, 168)
 const P := preload("res://world/world_palette.gd")
 const K := preload("res://world/kamikakushi_prop.gd")
-const FOX_TEX: Texture2D = preload("res://world/scenery/kamikakushi/fox_child.svg")
-## 雨の夕方の境内
-const SKY_TOP := Color("#5E6878")
-const SKY_LOW := Color("#9AA2A8")
-const GROUND := Color("#6E6A60")
-const GRAVEL := Color("#8A857A")
-const STREAKS := 90
+const FOX_TEX: Texture2D = preload("res://world/scenery/painted/npc_fox_child.png")
+## 背景の絵（夕立の境内）と、切り取るとき残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/kakurenbo.jpg")
+const BG_FOCUS := Vector2(0.5, 0.4)
+## 絵の上に重ねる、動く雨のすじの数
+const STREAKS := 50
 
 var phase := Phase.SEEK
 var hiding := 0
@@ -123,27 +122,15 @@ func _draw() -> void:
 	# 並べ終わる前（大きさ 0）は描かない
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	# 夕立の空と、ぬれた境内
-	var horizon := s.y * 0.55
-	draw_rect(Rect2(0, 0, s.x, horizon), SKY_TOP)
-	draw_rect(Rect2(0, horizon * 0.6, s.x, horizon * 0.4), Color(SKY_LOW, 0.6))
-	draw_rect(Rect2(0, horizon, s.x, s.y - horizon), GROUND)
-	draw_rect(Rect2(0, horizon, s.x, 10), GRAVEL)
-	# 奥の拝殿（かげ）
-	var cx := s.x * 0.5
-	draw_colored_polygon(PackedVector2Array([Vector2(cx - 260, horizon - 120), Vector2(cx + 260, horizon - 120), Vector2(cx + 180, horizon - 200), Vector2(cx - 180, horizon - 200)]), Color("#4A4440"))
-	draw_rect(Rect2(cx - 200, horizon - 120, 400, 120), Color("#5A524A"))
-	draw_rect(Rect2(cx - 60, horizon - 90, 120, 90), Color("#3A3430"))
-	# 雨のすじ（動きを減らす設定では止まったすじ）
+	# 夕立の境内（水彩の絵）。雨は絵にも描いてあるので、動く雨のすじは少しだけ重ねる
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
 	var c := clock()
 	for i in STREAKS:
 		var fx := fposmod(i * 0.6180339, 1.0)
 		var fy := fposmod(i * 0.4142135 + c * 1.3, 1.0)
 		var p := Vector2(fx * s.x, fy * s.y)
-		draw_line(p, p + Vector2(-5, 22), P.RAIN_STREAK, 2.0)
+		draw_line(p, p + Vector2(-5, 22), Color(P.RAIN_STREAK, 0.35), 2.0)
 
-
-## 調べるところの絵。見つけたら、うしろからお面の子がのぞく。鈴のヒントのときは、隠れているところがかすかに光る
 func _draw_spot(a: Control, i: int) -> void:
 	var foot := Vector2(a.size.x / 2.0, a.size.y - 34)
 	if _hint_t >= 0.0 and i == hiding and phase == Phase.SEEK:
@@ -158,16 +145,7 @@ func _draw_spot(a: Control, i: int) -> void:
 		0: K.draw_stone_lantern(a, foot, 110.0)
 		1: K.draw_big_tree(a, foot, 130.0)
 		2: K.draw_komainu(a, foot, 92.0)
-		3: _draw_saisen(a, foot)
+		3: K.draw_saisen(a, foot, 96.0)
 	if _checked[i] and i != hiding:
 		# 調べたところは、うすく暗くする（色だけにたよらず、「いない」の小札でも伝える）
 		a.draw_rect(Rect2(Vector2.ZERO, a.size), Color(UiTokens.INK_SOFT, 0.3))
-
-
-func _draw_saisen(a: Control, foot: Vector2) -> void:
-	# さいせん箱（木の箱に、すのこのふた）
-	a.draw_rect(Rect2(foot + Vector2(-48, -56), Vector2(96, 56)), P.WOOD)
-	a.draw_rect(Rect2(foot + Vector2(-52, -64), Vector2(104, 10)), P.WOOD_DARK)
-	for x in range(-40, 44, 12):
-		a.draw_line(foot + Vector2(x, -62), foot + Vector2(x + 6, -56), P.WOOD_DARK, 3.0)
-	a.draw_rect(Rect2(foot + Vector2(-48, -40), Vector2(96, 4)), P.WOOD_DARK)

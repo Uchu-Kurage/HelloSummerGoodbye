@@ -12,8 +12,9 @@ extends Node2D
 ## くぐったあと、日付の札に出すタイトル
 @export var title := ""
 
-const PUFFS := 26
-const SMOKE := Color(0.86, 0.86, 0.84, 1.0)
+## 煙の絵（水彩）を、いくつもずらして重ねる
+const SMOKE_TEX: Texture2D = preload("res://world/scenery/painted/okuribi_smoke.png")
+const PUFFS := 9
 
 var crossed := false
 var _thick := 0.35
@@ -47,7 +48,7 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# 下から上へ、ゆっくりのぼって横に流れる煙のかたまり
+	# 下から上へ、ゆっくりのぼって横に流れる煙
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
 	for i in PUFFS:
@@ -55,7 +56,8 @@ func _draw() -> void:
 		var speed := rng.randf_range(14.0, 28.0)
 		var ph := rng.randf()
 		var k := fposmod(ph + _t * speed / 420.0, 1.0)
-		var p := Vector2(bx + sin(_t * 0.4 + i) * 30.0 + k * 60.0, -k * 420.0)
-		var r := rng.randf_range(40, 80) * (0.6 + k)
-		var a := 0.22 * _thick * sin(k * PI)
-		draw_circle(p, r, Color(SMOKE, a))
+		var h := rng.randf_range(260, 380) * (0.7 + k * 0.6)
+		var w := SMOKE_TEX.get_width() * h / SMOKE_TEX.get_height()
+		var p := Vector2(bx + sin(_t * 0.4 + i) * 30.0 + k * 60.0, -k * 260.0 + 10.0)
+		var a := 0.55 * _thick * sin(k * PI)
+		draw_texture_rect(SMOKE_TEX, Rect2(p.x - w / 2.0, p.y - h, w, h), false, Color(1, 1, 1, a))

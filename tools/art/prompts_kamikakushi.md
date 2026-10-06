@@ -1,17 +1,19 @@
 # 神隠しルート（お面の子）の絵のプロンプト
 
-いま図形や SVG で描いている仮の絵を、ほかの場面と同じ水彩の絵（Google Gemini）に差し替えるためのプロンプト。
+神隠しルートの絵を、ほかの場面と同じ水彩の絵（Google Gemini）で描くためのプロンプト。
 コードの枠（```text）の中を、そのままコピーして Gemini に貼る（共通の約束は付けてある）。
 できた絵は `tools/art/process_painted.py` で切り抜いて `world/scenery/painted/<名前>.png` に置く（ミニゲームの背景は `ui/minigame_bg/<名前>.jpg`）。
 
-仮の絵がどこにあるか：
+いまの状態：
 
-| 仮の絵 | 場所 | 差し替えるところ |
+| 絵 | 状態 | 使っているところ |
 | --- | --- | --- |
-| お面の子（お面あり・なし） | `world/scenery/kamikakushi/fox_child.svg`・`fox_child_face.svg` | `data/npcs/fox_*.tres` の `sprite`（お面なしは `fox_shrine.tres` の `alt_sprite`）、`world/fox_far.gd`・`ui/kakurenbo_game.gd`・`ui/onigokko_game.gd` の `FOX_TEX` |
-| 祠・灯籠・狛犬・大木・夜市の屋台・店の人・青い提灯・ひまわり | `world/kamikakushi_prop.gd`（図形で描いている） | 種類ごとの描く関数を、`scenery_prop.gd` の `_art()` と同じように絵を描くものにかえる |
-| ミニゲームの背景 | 各画面の `_draw()`（図形で描いている） | `MinigameBg.draw_cover()` で絵を敷く（`ui/kaigara_game.gd` と同じ） |
-| アイテム6つ | `data/items/icons/*.svg` | `data/items/<名前>.tres` の `icon` |
+| お面の子（お面あり・なし・遠くの田んぼ・ポーズ4つ） | 水彩の絵にした | `data/npcs/fox_*.tres` の `sprite`（5・7日目は手まねき `fox_mg1_3`、9日目は鈴を持つ `fox_mg1_4`、お面なしは `fox_shrine.tres` の `alt_sprite`）、`world/fox_far.gd`、`ui/kakurenbo_game.gd`・`ui/onigokko_game.gd` の `FOX_TEX` |
+| 祠・灯籠・狛犬・大木・さい銭箱・夜市の屋台・店の人・青い提灯・ひまわり | 水彩の絵にした | `world/kamikakushi_prop.gd`（かくれんぼ・夜市の物々交換の画面でも使う） |
+| 送り火の煙 | 水彩の絵にした | `world/smoke_gate.gd` |
+| ミニゲームの背景5枚 | 水彩の絵にした | 各画面の `_draw()`（`MinigameBg.draw_cover()`。鬼ごっこは左右を反転してつなぎ、色をシェーダーで抜く） |
+| 知らない村の明かり | 図形のまま（切り抜くと小さな明かりが暗くにごるため） | `world/kamikakushi_prop.gd` の `_village_lights()` |
+| アイテム6つ | SVG の仮の絵のまま | `data/items/<名前>.tres` の `icon` |
 
 ## 共通の約束（どのプロンプトにも、最後に付ける）
 

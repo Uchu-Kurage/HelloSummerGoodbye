@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dik5wqokgh7kt"
-path="res://.godot/imported/fox_child.svg-2b919a98c01b193d1dabbe36976adee3.ctex"
+uid="uid://bilnqab2ea4nc"
+path="res://.godot/imported/sunflower_4.png-9bf3693b03a8ce68d29d18d8f6e3affc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://world/scenery/kamikakushi/fox_child.svg"
-dest_files=["res://.godot/imported/fox_child.svg-2b919a98c01b193d1dabbe36976adee3.ctex"]
+source_file="res://world/scenery/painted/sunflower_4.png"
+dest_files=["res://.godot/imported/sunflower_4.png-9bf3693b03a8ce68d29d18d8f6e3affc.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxxh40o5fdem7"
-path="res://.godot/imported/fox_child_face.svg-162cae2c3e0b7443a9221b6d3e572888.ctex"
+uid="uid://ceckiuee7v8ft"
+path="res://.godot/imported/prop_yomise_stall.png-3cbb51696fb4d439331514dfbe221158.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://world/scenery/kamikakushi/fox_child_face.svg"
-dest_files=["res://.godot/imported/fox_child_face.svg-162cae2c3e0b7443a9221b6d3e572888.ctex"]
+source_file="res://world/scenery/painted/prop_yomise_stall.png"
+dest_files=["res://.godot/imported/prop_yomise_stall.png-3cbb51696fb4d439331514dfbe221158.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
