@@ -6,15 +6,27 @@
   <rect x="62" y="380" width="34" height="9" rx="4" fill="#8A6A4A"/>
   <rect x="104" y="380" width="36" height="9" rx="4" fill="#8A6A4A"/>
   <path d="M74 380 L80 372 M118 380 L122 372" stroke="#B5563A" stroke-width="3"/>
-  <!-- 半ズボン（色あせた紺） -->
-  <path d="M62 236 L138 236 L140 304 L102 304 L98 278 L94 304 L58 304 Z" fill="#4A5A72" stroke="#3A4558" stroke-width="2" stroke-linejoin="round"/>
-  <!-- 古いランニングシャツ（生成り、すこし黄ばんでいる） -->
-  <path d="M66 150 C70 142, 80 140, 84 146 C90 156, 110 156, 116 146 C120 140, 130 142, 134 150 L138 244 L62 244 Z"
-        fill="#EFE8D2" stroke="#BDB296" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M70 200 C90 204, 110 204, 130 198" fill="none" stroke="#D8CDB0" stroke-width="2"/>
-  <!-- 腕 -->
-  <path d="M66 156 C56 186, 56 210, 60 236" fill="none" stroke="#E2B894" stroke-width="15" stroke-linecap="round"/>
-  <path d="M134 156 C146 184, 146 208, 140 232" fill="none" stroke="#E2B894" stroke-width="15" stroke-linecap="round"/>
+  <!-- 甚平の半ズボン（色あせた藍、ひざ丈） -->
+  <path d="M62 232 L138 232 L142 300 L102 300 L99 272 L96 300 L58 300 Z" fill="#4A5C80" stroke="#36445E" stroke-width="2" stroke-linejoin="round"/>
+  <!-- 甚平の上着（色あせた藍、白い細かいかすり。前を脇のひもで結ぶ） -->
+  <path d="M64 150 C70 142, 84 140, 92 146 L100 156 L108 146 C116 140, 130 142, 136 150 L140 246 L60 246 Z"
+        fill="#4A5C80" stroke="#36445E" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- 半そで（ゆったりした袖） -->
+  <path d="M66 152 L46 190 L66 200 L74 176 Z" fill="#4A5C80" stroke="#36445E" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M134 152 L154 190 L134 200 L126 176 Z" fill="#4A5C80" stroke="#36445E" stroke-width="2" stroke-linejoin="round"/>
+  <!-- えり（打ち合わせ）と、脇のひも -->
+  <path d="M92 146 L100 156 L124 226" fill="none" stroke="#D9D2BE" stroke-width="5" stroke-linecap="round"/>
+  <path d="M108 146 L100 156" fill="none" stroke="#D9D2BE" stroke-width="5" stroke-linecap="round"/>
+  <path d="M124 222 L136 218 M124 226 L134 232" stroke="#D9D2BE" stroke-width="3" stroke-linecap="round"/>
+  <g fill="#E8E2D2" opacity="0.7">
+    <rect x="72" y="170" width="4" height="2"/><rect x="86" y="196" width="4" height="2"/><rect x="76" y="222" width="4" height="2"/>
+    <rect x="112" y="178" width="4" height="2"/><rect x="128" y="200" width="4" height="2"/><rect x="104" y="236" width="4" height="2"/>
+    <rect x="70" y="262" width="4" height="2"/><rect x="118" y="270" width="4" height="2"/><rect x="84" y="286" width="4" height="2"/>
+    <rect x="128" y="288" width="4" height="2"/><rect x="56" y="180" width="4" height="2"/><rect x="144" y="182" width="4" height="2"/>
+  </g>
+  <!-- 腕（袖から出た手） -->
+  <path d="M54 194 C54 212, 56 226, 60 238" fill="none" stroke="#E2B894" stroke-width="14" stroke-linecap="round"/>
+  <path d="M146 194 C146 212, 144 224, 140 236" fill="none" stroke="#E2B894" stroke-width="14" stroke-linecap="round"/>
   <!-- 首 -->
   <rect x="91" y="128" width="18" height="22" fill="#E2B894"/>
 
