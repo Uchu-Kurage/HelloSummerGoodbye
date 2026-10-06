@@ -14,6 +14,12 @@ var _last_ambient := ""
 var rain := 0.0
 ## 雨の間の環境音。秘密基地の屋根をふさぐと「屋根をたたく雨」にかわる（set_rain_ambient）
 var rain_ambient := WorldPalette.RAIN_AMBIENT
+## 異界の強さ（0.0〜1.0）。OtherworldZone が set_otherworld で入れる。色が抜けて、環境音がかわる
+var otherworld := 0.0
+var _ow_ambient := ""
+var _ow_source: Node
+## 異界の場所がさいごに知らせてきたフレーム（知らせが止まったら、もとにもどす）
+var _ow_frame := -1
 ## 昼の光の強さ（0.0〜1.0）。夕方から夜にかけて、また雨で弱まる。SummerAir（光の粒・光の筋）が読む
 var daylight := 1.0
 
@@ -30,6 +36,21 @@ func set_rain(amount: float) -> void:
 
 func set_rain_ambient(ambient_name: String) -> void:
 	rain_ambient = ambient_name if ambient_name != "" else WorldPalette.RAIN_AMBIENT
+
+
+func set_otherworld(amount: float, ambient: String, source: Node) -> void:
+	otherworld = clampf(amount, 0.0, 1.0)
+	_ow_ambient = ambient
+	_ow_source = source
+	_ow_frame = Engine.get_process_frames()
+
+
+## 異界の場所がなくなったら（日が解放されたら）もとにもどす。ほかの日の場所が入れていたら、そのまま
+func clear_otherworld(source: Node) -> void:
+	if source == _ow_source:
+		otherworld = 0.0
+		_ow_ambient = ""
+		_ow_source = null
 
 
 func _process(_delta: float) -> void:
@@ -49,15 +70,33 @@ func apply(progress: float, season: float, tint: Color = Color.WHITE) -> void:
 	if rain > 0.0:
 		light = light.lerp(light * WorldPalette.RAIN_LIGHT, rain)
 		sky = sky.lerp(WorldPalette.RAIN_SKY, rain)
+	# 異界の日を出たら（どの場所も知らせてこなくなったら）、もとの色と音にもどす
+	if otherworld > 0.0 and Engine.get_process_frames() - _ow_frame > 1:
+		otherworld = 0.0
+		_ow_ambient = ""
+		_ow_source = null
+	if otherworld > 0.0:
+		light = light.lerp(_gray(light) * WorldPalette.OTHERWORLD_LIGHT, otherworld)
+		sky = sky.lerp(_gray(sky) * WorldPalette.OTHERWORLD_SKY, otherworld)
 	daylight = (1.0 - smoothstep(WorldPalette.DAYLIGHT_FADE.x, WorldPalette.DAYLIGHT_FADE.y, progress)) * (1.0 - rain)
 	if canvas_modulate:
 		canvas_modulate.color = light
 	if background:
 		background.set_sky_color(sky)
-	var amb := rain_ambient if rain > 0.5 else ambient_for(season)
+		background.set_desaturate(otherworld)
+	var amb := ambient_for(season)
+	if rain > 0.5:
+		amb = rain_ambient
+	elif otherworld > 0.5 and _ow_ambient != "":
+		amb = _ow_ambient
 	if amb != _last_ambient:
 		_last_ambient = amb
 		SfxPlayer.set_ambient(amb)
+
+
+static func _gray(c: Color) -> Color:
+	var l := c.r * 0.299 + c.g * 0.587 + c.b * 0.114
+	return Color(l, l, l, c.a)
 
 
 static func _sample(progress: float, column: int) -> Color:

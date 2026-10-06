@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/kamikakushi/fox_child.svg" id="sprite"]
+[ext_resource type="Texture2D" path="res://world/scenery/kamikakushi/fox_child_face.svg" id="alt"]
+
+[resource]
+script = ExtResource("1")
+id = &"fox_shrine"
+display_name = "おめんの子"
+lines = Array[String](["……きてくれたんだ。", "@event unmask", "ずっと まってたんだ。", "ともだちが、むかえに くるの。", "……ここに、のこる？", "@choice のこる:stay | かえる:go", "#stay", "……ほんと？", "……うれしい。", "それだけで、いいや。", "でも、だめ。", "きみには まってる人が いる。", "@goto gift", "#go", "……うん。", "そうだよね。", "ちょっと、さみしいけど。", "#gift", "これ、あげる。", "もう かくさなくて いいから。", "@give fox_mask", "すず、ならしたら おもいだして。", "……あいつにも、よろしく。", "@event send_home", "@leave"])
+auto_talk = true
+sprite = ExtResource("sprite")
+alt_sprite = ExtResource("alt")
+alt_sprite_event = "unmask"
+placeholder_color = Color(0.851, 0.439, 0.353, 1)
+height = 150.0
+skin_color = Color(0.886, 0.722, 0.58, 1)
+hair_color = Color(0.165, 0.137, 0.125, 1)
+shirt_color = Color(0.937, 0.91, 0.824, 1)
+pants_color = Color(0.29, 0.353, 0.447, 1)
+hair_full = true

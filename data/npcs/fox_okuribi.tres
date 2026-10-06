@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/kamikakushi/fox_child.svg" id="sprite"]
+
+[resource]
+script = ExtResource("1")
+id = &"fox_okuribi"
+display_name = "おめんの子"
+lines = Array[String](["きょうで、かえらなきゃ いけないんだ。", "……ひとりは、もう いやだ。", "いっしょに いこう。", "ぼく：……うん", "@event smoke", "@leave"])
+auto_talk = true
+sprite = ExtResource("sprite")
+placeholder_color = Color(0.851, 0.439, 0.353, 1)
+height = 150.0
+skin_color = Color(0.886, 0.722, 0.58, 1)
+hair_color = Color(0.165, 0.137, 0.125, 1)
+shirt_color = Color(0.937, 0.91, 0.824, 1)
+pants_color = Color(0.29, 0.353, 0.447, 1)
+hair_full = true

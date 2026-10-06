@@ -22,8 +22,8 @@ const PAUSE_TITLE_SCREEN := "タイトルへ"
 const BOX_TITLE := "たからばこ"
 const BOX_EMPTY_NAME := "？？？"
 const BOX_EMPTY_DESC := "まだ からっぽ。"
-const BOX_PICKED_ON := "%dがつ%dにち に ひろった"
-const BOX_RECEIVED_ON := "%dがつ%dにち に もらった"
+const BOX_PICKED_ON := "%sがつ%sにち に ひろった"
+const BOX_RECEIVED_ON := "%sがつ%sにち に もらった"
 ## 会話の @bury で宝箱から選ぶとき
 const BURY_TITLE := "なにを いれる？"
 const BURY_HINT := "かんに いれる ものを えらんでね"
@@ -47,9 +47,11 @@ const PUT_IN_FORMAT := "%s を かんに いれた"
 const WALK_HINT_KEY := "→ / D で あるく"
 const WALK_HINT_TOUCH := "がめんの みぎを おしつづけると あるく"
 
-const DATE_MONTH := "%dがつ"
-const DATE_DAY := "%d"
-const DATE_FULL := "%dがつ %dにち"
+## 日付は文字で入れる（異界の日は DATE_UNKNOWN。GameState.day_date）
+const DATE_MONTH := "%sがつ"
+const DATE_DAY := "%s"
+const DATE_FULL := "%sがつ %sにち"
+const DATE_UNKNOWN := "？？"
 
 const ENDING_TITLE := "なつやすみ おしまい"
 const ENDING_COUNT := "たからもの %d / %d"
@@ -184,6 +186,51 @@ const DRAWING_TITLE := "なつやすみの おもいで"
 const DRAWING_NAME := "なつみ"
 const DRAWING_HINT_TOUCH := "タップで とじる"
 const DRAWING_HINT_KEY := "Space で とじる"
+
+## --- 神隠しルート（お面の子）の画面 ---
+## かくれんぼ（4日目）：雨の境内で、隠れたお面の子を探す
+const KAKURENBO_SPOTS := ["とうろう", "おおきな き", "こまいぬ", "さいせんばこ"]
+const KAKURENBO_HINT_TOUCH := "かくれていそうな ところを タップ"
+const KAKURENBO_HINT_KEY := "やじるしで えらんで けってい"
+const KAKURENBO_READY := "……もう いいよ。"
+const KAKURENBO_MISS := "（……いない）"
+## なんどか外すと、隠れているところで鈴がかすかに鳴る
+const KAKURENBO_BELL := "（どこかで、すずが ちりんと なった）"
+const KAKURENBO_FOUND := "（いた！）"
+## 夜市の物々交換（5日目）：持っている物を、店の品物と交換していく
+const YOMISE_GOODS := ["どんぐり", "かざぐるま", "あおい りんごあめ", "あおい あめだま"]
+const YOMISE_HINT_TOUCH := "とりかえっこ する みせを タップ"
+const YOMISE_HINT_KEY := "やじるしで みせを えらんで けってい"
+const YOMISE_HAND := "てもと：%s"
+const YOMISE_START := "ほしい ものと、とりかえて くれるよ。"
+const YOMISE_TRADED := "（……とりかえっこ した）"
+const YOMISE_NO := "（みせの ひとは、くびを よこに ふった）"
+const YOMISE_FOOD := "それ、たべちゃ だめだよ。"
+const YOMISE_DONE := "……きれい。"
+## 鈴の音で道探し（6日目）：暗い森の分かれ道で、鈴の鳴るほうへ
+const SUZU_MICHI_SIDES := ["ひだり", "みぎ"]
+const SUZU_MICHI_HINT_TOUCH := "すずの なる ほうを タップ（ひかりも ゆれるよ）"
+const SUZU_MICHI_HINT_KEY := "すずの なる ほうを やじるしで えらんで けってい"
+const SUZU_MICHI_START := "こっちだよ。"
+const SUZU_MICHI_RIGHT := "……こっち。"
+const SUZU_MICHI_WRONG := "（……ちがう みち みたい。もどろう）"
+const SUZU_MICHI_OUT := "（もりを ぬけた）"
+## 鬼ごっこ（8日目）：色の抜けた村で、お面の子を追いかける
+const ONI_HINT_TOUCH := "がめんを おしつづけて はしる"
+const ONI_HINT_KEY := "Space を おしつづけて はしる"
+const ONI_FLEE_TOUCH := "おしつづけて にげる"
+const ONI_FLEE_KEY := "Space を おしつづけて にげる"
+const ONI_START := "きみが おに。こっち こっち。"
+const ONI_TOUCHED := "あはは、つかまった。"
+const ONI_SWAP := "こんどは ぼくが おに。"
+const ONI_CAUGHT := "……つかまえた。"
+## 鈴を振る（10日目のバス）：一度だけ鳴る
+const SUZU_FURU_HINT_TOUCH := "タップで すずを ふる"
+const SUZU_FURU_HINT_KEY := "Space で すずを ふる"
+const SUZU_FURU_RING := "（ちりん――）"
+const SUZU_FURU_SILENT := "（……）"
+const SUZU_FURU_CLOSE_TOUCH := "タップで とじる"
+const SUZU_FURU_CLOSE_KEY := "Space で とじる"
 
 const ROTATE_NOTICE := "よこむきにしてね"
 const ROTATE_SUB := "スマホを よこに すると あそべるよ"

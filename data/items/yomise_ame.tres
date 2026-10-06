@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/yomise_ame.svg" id="icon"]
+
+
+[resource]
+script = ExtResource("1")
+id = &"yomise_ame"
+display_name = "夜市のあめ玉"
+description = "あおくて つめたい。たべちゃ だめって いわれた。"
+icon = ExtResource("icon")
+day_number = 5
+placeholder_color = Color(0.56, 0.75, 0.92, 1)
+on_ground = false
+

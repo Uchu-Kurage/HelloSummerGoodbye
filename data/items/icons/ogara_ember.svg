@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <ellipse cx="64" cy="110" rx="40" ry="6" fill="#7A6A55" opacity="0.18"/>
+  <!-- おがら（麻の茎）。先がこげて黒い -->
+  <g stroke-linecap="round">
+    <path d="M22 96 L96 52" stroke="#E2D4AE" stroke-width="10"/>
+    <path d="M86 58 L104 47" stroke="#3A2E26" stroke-width="10"/>
+    <path d="M30 104 L92 70" stroke="#D6C59A" stroke-width="9"/>
+    <path d="M84 74 L100 65" stroke="#3A2E26" stroke-width="9"/>
+    <path d="M40 106 L84 86" stroke="#E2D4AE" stroke-width="8"/>
+    <path d="M78 89 L92 83" stroke="#3A2E26" stroke-width="8"/>
+  </g>
+  <!-- まだ少しあたたかい、赤い火の残り -->
+  <circle cx="102" cy="48" r="5" fill="#E2703A" opacity="0.9"/>
+  <circle cx="98" cy="66" r="3.5" fill="#F09A4A" opacity="0.8"/>
+  <circle cx="102" cy="48" r="11" fill="#F0A060" opacity="0.25"/>
+  <!-- けむり -->
+  <path d="M104 40 C98 32, 110 26, 104 16" fill="none" stroke="#B8B2A8" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+</svg>

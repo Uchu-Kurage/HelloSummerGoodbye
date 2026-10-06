@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/kamikakushi/fox_child.svg" id="sprite"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+
+[sub_resource type="Resource" id="appear"]
+script = ExtResource("2")
+require_all = Array[StringName]([&"kk_d6_bell"])
+
+[resource]
+script = ExtResource("1")
+id = &"fox_mukaebi"
+display_name = "おめんの子"
+lines = Array[String](["むかえびって、だれを むかえるか しってる？", "かえって くる人。", "……ぼくは、かえれない けど。", "もりの なか、くらいから。", "すずの おと、きいてて。", "@game suzu_michi", "……ついた。", "@leave"])
+appear_if = SubResource("appear")
+auto_talk = true
+sprite = ExtResource("sprite")
+placeholder_color = Color(0.851, 0.439, 0.353, 1)
+height = 150.0
+skin_color = Color(0.886, 0.722, 0.58, 1)
+hair_color = Color(0.165, 0.137, 0.125, 1)
+shirt_color = Color(0.937, 0.91, 0.824, 1)
+pants_color = Color(0.29, 0.353, 0.447, 1)
+hair_full = true

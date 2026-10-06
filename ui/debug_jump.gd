@@ -64,6 +64,14 @@ const ROUTES := [
 		"received": NATSUMI_RECEIVED,
 		"given": {2: {&"blue_pencil": "なつみに かえした"}},
 	},
+	# 神隠しルート：1日目に鈴を拾い（rusty_bell_found は拾うと立つ）、4日目に神社でお面の子と遊ぶ。
+	# kk_d5_bell / kk_d6_bell は、その日に鈴が鳴った（お面の子が現れる）しるし
+	{
+		"name": "かみかくし",
+		"flags": {4: [&"bell_rang", &"route_kamikakushi"], 5: [&"kk_d5_bell"], 6: [&"kk_d6_bell"]},
+		"received": [&"yomise_ame", &"fox_mask"],
+		"given": {},
+	},
 ]
 
 var is_open := false

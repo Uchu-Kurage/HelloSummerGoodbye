@@ -84,6 +84,42 @@ func play_day_change(date_text: String, title: String, on_dark: Callable, on_rev
 	finished.emit()
 
 
+## 日付がぱらぱらとめくれる（神隠しルートの10日目：送り火の夜から 8/31 まで時間が飛ぶ）。
+## 暗転 → 大きな日付が dates の順に1枚ずつめくれる → 明ける。on_dark は真っ暗な間、on_reveal は明ける前に呼ぶ。
+## 決定キーやタップで早送りできる。動きを減らす設定でも、文字の入れかえだけなので同じ
+func play_date_riffle(dates: Array, title: String, on_dark: Callable, on_reveal: Callable) -> void:
+	if dates.is_empty():
+		return
+	_busy = true
+	_block(true)
+	_date_label.text = dates[0]
+	_title_label.text = ""
+	var total := UiTokens.TIME_DAY_CHANGE
+	_tween = create_tween().set_trans(UiTokens.TRANS)
+	_tween.tween_property(_fade, "modulate:a", 1.0, total * 0.3).set_ease(Tween.EASE_IN)
+	_tween.tween_callback(on_dark)
+	_tween.tween_property(_date_box, "modulate:a", 1.0, total * 0.15).set_ease(Tween.EASE_OUT)
+	_tween.tween_interval(total * 0.15)
+	for i in range(1, dates.size()):
+		_tween.tween_callback(func():
+			_date_label.text = dates[i]
+			SfxPlayer.play("text_tick"))
+		# はじめはゆっくり、だんだん速く、最後の数枚でまたゆっくり
+		var k := 1.0 + 0.8 * absf(float(i) / dates.size() - 0.5)
+		_tween.tween_interval(UiTokens.TIME_DATE_RIFFLE * k)
+	_tween.tween_callback(func(): _title_label.text = title)
+	_tween.tween_interval(total * 0.3)
+	_tween.tween_property(_date_box, "modulate:a", 0.0, total * 0.1).set_ease(Tween.EASE_IN)
+	_tween.tween_callback(on_reveal)
+	_tween.tween_property(_fade, "modulate:a", 0.0, total * 0.3).set_ease(Tween.EASE_OUT)
+	SfxPlayer.play("day_change")
+	await _tween.finished
+	_tween = null
+	_block(false)
+	_busy = false
+	finished.emit()
+
+
 func _fade_to(a: float, duration: float, e: Tween.EaseType) -> void:
 	_tween = create_tween().set_trans(UiTokens.TRANS).set_ease(e)
 	_tween.tween_property(_fade, "modulate:a", a, duration)

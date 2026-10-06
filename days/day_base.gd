@@ -19,7 +19,7 @@ var preview := false
 func _ready() -> void:
 	if day_data == null:
 		return
-	_sign_label.text = Strings.DATE_FULL % [day_data.month, day_data.day] + "\n" + GameState.day_title(day_data)
+	_sign_label.text = GameState.day_date_text(day_data) + "\n" + GameState.day_title(day_data)
 	if preview:
 		# タイトルの背景では景色だけを見せる
 		$Sign.hide()

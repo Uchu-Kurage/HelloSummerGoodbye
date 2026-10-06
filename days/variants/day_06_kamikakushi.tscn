@@ -1,0 +1,91 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_06.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r1"]
+[ext_resource type="Script" path="res://world/talk_cue.gd" id="r2"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r3"]
+[ext_resource type="Resource" path="res://data/npcs/fox_mukaebi.tres" id="r4"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="r5"]
+[ext_resource type="Resource" path="res://data/npcs/fox_hilltop.tres" id="r6"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="r7"]
+
+[node name="Day06_kamikakushi" instance=ExtResource("base")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(1640, 604)
+
+[node name="Mukaebi1" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(480, 604)
+kind = 17
+
+[node name="Mukaebi2" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(900, 604)
+kind = 17
+
+[node name="Mukaebi3" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(1320, 604)
+kind = 17
+
+[node name="BellRings" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(1380, 604)
+lines = Array[String](["@show rusty_bell", "（ちりん……）", "ぼく：……むこうで、なった", "@flag kk_d6_bell"])
+sfx = "suzu_far"
+require_item = &"rusty_bell"
+
+[node name="Fox" parent="Props" instance=ExtResource("r3")]
+position = Vector2(1820, 604)
+npc_data = ExtResource("r4")
+
+[node name="Woods" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(1950, 604)
+modulate = Color(0.55, 0.6, 0.72, 1)
+kind = 6
+width = 1200.0
+
+[node name="Hilltop" type="Node2D" parent="Props"]
+script = ExtResource("r5")
+position = Vector2(3200, 604)
+kind = 10
+width = 640
+
+[node name="FoxTop" parent="Props" instance=ExtResource("r3")]
+position = Vector2(3420, 604)
+npc_data = ExtResource("r6")
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("r7")
+
+[node name="Mukaebi1Glow" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r1")
+position = Vector2(480, 604)
+kind = 18
+
+[node name="Mukaebi2Glow" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r1")
+position = Vector2(900, 604)
+kind = 18
+
+[node name="Mukaebi3Glow" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r1")
+position = Vector2(1320, 604)
+kind = 18
+
+[node name="VillageLights" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r5")
+position = Vector2(3150, 604)
+kind = 9
+width = 700
+
+[node name="Stars" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r1")
+position = Vector2(3000, 604)
+kind = 22
+width = 840

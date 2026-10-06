@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/blue_hozuki.svg" id="icon"]
+
+
+[resource]
+script = ExtResource("1")
+id = &"blue_hozuki"
+display_name = "あおいほおずき"
+description = "なかで、ぼんやり ひかってる。"
+icon = ExtResource("icon")
+day_number = 7
+placeholder_color = Color(0.61, 0.78, 0.93, 1)
+
+

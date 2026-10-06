@@ -35,6 +35,9 @@ extends Resource
 @export var auto_talk := false
 ## 本番の絵。空のときは下の色で仮の姿を描く
 @export var sprite: Texture2D
+## 会話の @event で alt_sprite_event が来たら、絵を alt_sprite にかえる（お面の子がお面を外す、など）
+@export var alt_sprite: Texture2D
+@export var alt_sprite_event := ""
 @export_group("仮の見た目")
 ## 一言パネルの左に出す色（アイコンのかわり）
 @export var placeholder_color: Color = Color("#B8A58C")

@@ -29,13 +29,14 @@ func _ready() -> void:
 	Engine.time_scale = 8.0
 	Engine.physics_ticks_per_second = 60
 	await _run()
-	print("\n".join(_log))
 	print("SMOKE ", "FAILED" if _fail else "OK")
 	get_tree().quit(1 if _fail else 0)
 
 
 func check(cond: bool, msg: String) -> void:
 	_log.append(("ok   " if cond else "FAIL ") + msg)
+	# 途中で止まったときも、どこまで進んだかわかるように、その場でも出す
+	print(_log[-1])
 	if not cond:
 		_fail = true
 
@@ -195,7 +196,8 @@ func _run() -> void:
 	check(not cam_back, "camera never moved left")
 	# 1日目になつみが落とす色えんぴつは、宝箱の枠に数えない（2日目に話しかけなければ、持ったまま）
 	var counted := GameState.collected.keys().filter(func(id): return not GameState.is_extra(GameState.find_item(id)))
-	check(counted.size() == GameState.day_count() - 1, "collected %d items %s" % [counted.size(), str(GameState.collected.keys())])
+	var slots := GameState.all_items().filter(func(it): return not GameState.is_extra(it)).size()
+	check(counted.size() == slots - 1, "collected %d items %s" % [counted.size(), str(GameState.collected.keys())])
 	check(GameState.holds(&"blue_pencil") and not GameState.has_flag(&"route_natsumi"), "day 1: natsumi drops the blue pencil (kept without returning it)")
 	var skipped := GameState.day_items(GameState.get_day(skip_day))[0]
 	check(not GameState.is_collected(skipped.id), "skipped item remains empty (%s)" % skipped.id)
@@ -370,6 +372,7 @@ func _run() -> void:
 	check(c1.s < c0.s, "sky fades late summer")
 	await _wait(6.0)
 	await _natsumi_route()
+	await _kamikakushi_route()
 	await _check_debug_jump()
 
 
@@ -379,7 +382,7 @@ func _check_debug_jump() -> void:
 	check(GameState.has_flag(&"route_takeru") and GameState.has_flag(&"takeru_d7_jump"), "debug: takeru flags up to day 7")
 	check(not GameState.holds(&"marble") and GameState.gone_note(&"marble") != "", "debug: marble given to takeru")
 	check(GameState.was_received(&"ramune_bottle") and GameState.dive_result == &"perfect", "debug: dive done before day 8")
-	check(GameState.is_collected(&"takeru_letter") == false and GameState.collected.size() == 7, "debug: items of days 1-7 (%d)" % GameState.collected.size())
+	check(GameState.is_collected(&"takeru_letter") == false and GameState.collected.size() == 8, "debug: items of days 1-7 with the bell (%d)" % GameState.collected.size())
 	DebugJump.apply(2, 4)
 	check(GameState.has_flag(&"route_natsumi") and not GameState.has_flag(&"route_takeru"), "debug: natsumi flags")
 	check(GameState.gone_note(&"blue_pencil") != "" and GameState.natsumi_heart == 4 + 1, "debug: natsumi pencil returned, hearts up to day 4 (%d)" % GameState.natsumi_heart)
@@ -390,7 +393,11 @@ func _check_debug_jump() -> void:
 	DebugJump.apply(4, 9)
 	check(GameState.current_ending().id == &"natsumi" and GameState.find_item(&"senko_ash").text().begins_with("ぼくのが"), "debug: natsumi low")
 	DebugJump.apply(0, 9)
-	check(GameState.flags.is_empty() and GameState.collected.size() == 9, "debug: default route keeps flags empty")
+	check(GameState.flags.keys() == [&"rusty_bell_found"] and GameState.collected.size() == 10, "debug: default route only has the bell flag %s" % str(GameState.flags.keys()))
+	DebugJump.apply(5, 9)
+	check(GameState.has_flag(&"route_kamikakushi") and GameState.was_received(&"fox_mask") and GameState.current_ending().id == &"kamikakushi",
+		"debug: kamikakushi up to day 9")
+	check(GameState.day_scene_path(GameState.get_day(9)).ends_with("day_10_kamikakushi.tscn"), "debug: kamikakushi day 10 scene")
 	# 画面から：タイトルの「デバッグ」で、タケルの8日目を選ぶ
 	get_tree().change_scene_to_file("res://ui/title.tscn")
 	await _wait(0.5)
@@ -765,7 +772,9 @@ func _natsumi_route() -> void:
 		check(GameState.current_ending().id == &"natsumi_high" and end_box.header_caption.text == GameState.current_ending().title, "natsumi high ending shown")
 		check(end_box._slots[-1].item.id == &"natsumi_drawing" and end_box._slots[-1].collected, "natsumi: the drawing appears last")
 		check(not end_box._slots.any(func(sl): return sl.item.id == &"blue_pencil"), "natsumi: returned pencil is not in the box")
-		check(end_box._found == [GameState.day_count(), GameState.day_count()], "natsumi: every treasure found %s" % str(end_box._found))
+		# 1日目の鈴の枠も入れて、全部見つけた（返した色えんぴつは数えない）
+		var slots := GameState.all_items().filter(func(it): return not GameState.is_extra(it)).size()
+		check(end_box._found == [slots, slots] and slots == GameState.day_count() + 1, "natsumi: every treasure found %s" % str(end_box._found))
 	# 線香花火：とちゅうで離すと、ぼくのが先に落ちる（線香花火の画面だけで確かめる）
 	var keep := GameState.flags.duplicate()
 	var keep_heart := GameState.natsumi_heart
@@ -830,6 +839,61 @@ func _play_natsumi(game: NatsumiScreen) -> void:
 			if n > 20000:
 				break
 		sg._hold.release()
+	elif game is KakurenboGame:
+		# かくれんぼ：はしから順に調べる（隠れているのは いちばん右。2回はずすと鈴のヒント）
+		var kk := game as KakurenboGame
+		kk.hiding = Strings.KAKURENBO_SPOTS.size() - 1
+		for i in Strings.KAKURENBO_SPOTS.size():
+			kk.check_spot(i)
+			if kk.tries == KakurenboGame.MISS_HINT:
+				_kk["hint"] = kk._hint_t >= 0.0
+			await _wait(0.2)
+		_kk["kakurenbo_tries"] = kk.tries
+	elif game is YomiseGame:
+		# 物々交換：まずわざとちがう店を選んで断られ、そのあと順に交換する
+		var yg := game as YomiseGame
+		yg.trade((yg.good_slot() + 1) % yg.order.size())
+		while yg.phase == YomiseGame.Phase.TRADE and n < 100:
+			yg.trade(yg.good_slot())
+			await _wait(0.1)
+			n += 1
+		_kk["yomise"] = [yg.held, yg.trades, yg.refusals]
+	elif game is SuzuMichiGame:
+		# 鈴の音で道探し：光がゆれたほうへ。1か所目だけ、わざと反対へ行ってもどされる
+		var sm := game as SuzuMichiGame
+		var missed := false
+		while sm.phase != SuzuMichiGame.Phase.END and n < 20000:
+			if sm.phase == SuzuMichiGame.Phase.LISTEN and sm.heard_side() >= 0:
+				if not missed:
+					missed = true
+					sm.choose(1 - sm.heard_side())
+				else:
+					sm.choose(sm.heard_side())
+			await get_tree().process_frame
+			n += 1
+		_kk["suzu_michi"] = [sm.fork, sm.wrong]
+	elif game is OnigokkoGame:
+		# 鬼ごっこ：押しつづけて追いつき、そのあとは押しつづけて逃げる（最後はつかまる）
+		var og := game as OnigokkoGame
+		while og.phase != OnigokkoGame.Phase.END and n < 20000:
+			if og.phase in [OnigokkoGame.Phase.CHASE, OnigokkoGame.Phase.FLEE] and not og.hold().is_down:
+				og.hold().press()
+			if og.phase == OnigokkoGame.Phase.FLEE:
+				_kk["oni_swapped"] = true
+			await get_tree().process_frame
+			n += 1
+		_kk["oni_end"] = og.phase == OnigokkoGame.Phase.END
+	elif game is SuzuFuru:
+		# 鈴を振る：いちどめだけ鳴る。2回目は鳴らない。とじられるまで待って、とじる
+		var sf := game as SuzuFuru
+		sf.shake()
+		await get_tree().process_frame
+		sf.shake()
+		_kk["bell"] = [sf.rang, sf.shakes]
+		while not sf.can_close() and n < 2000:
+			await get_tree().process_frame
+			n += 1
+		sf.shake()
 	elif game is DrawingReveal:
 		var dr := game as DrawingReveal
 		while not dr.is_open() and n < 2000:
@@ -847,3 +911,131 @@ func _play_natsumi(game: NatsumiScreen) -> void:
 	while is_instance_valid(game) and game.is_inside_tree() and n < 6000:
 		await get_tree().process_frame
 		n += 1
+
+
+# --- 神隠しルート（お面の子） -----------------------------------------------------
+
+## ミニゲームなどの記録（_play_natsumi が入れる）
+var _kk := {}
+
+
+## 1日目から歩いて、祠のわきの鈴を拾い、4日目に神社でお面の子と遊ぶ（なつみ・タケルには話しかけない）。
+## 7日目に送り火の煙をくぐると日付が「？？」になり、8・9日目は「？？」のまま色が抜ける。
+## 10日目は送り火の夜の神社で目覚め、日付が 8/31 までめくれて、バスで鈴が一度だけ鳴る
+func _kamikakushi_route() -> void:
+	GameState.reset()
+	_kk.clear()
+	get_tree().change_scene_to_file("res://world/main.tscn")
+	await _wait(0.5)
+	var main := get_tree().current_scene
+	var hud: Hud = main.get_node("HUD")
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	var streamer: DayStreamer = main.get_node("DayStreamer")
+	var tod: TimeOfDay = main.get_node("TimeOfDay")
+	var player: Player = main.get_node("Player")
+	var paths := {}
+	var cards := {}
+	var max_ow := {}
+	var bell_text_d1 := ""
+	var d10_start_time := -1.0
+	var d10_after_time := -1.0
+	var d7_card_before := ""
+	Input.action_press("move_right")
+	var t := 0.0
+	while t < 600.0 and get_tree().current_scene == main:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		if not is_instance_valid(main) or not main.is_inside_tree():
+			break
+		var day := GameState.current_day_index
+		var loaded: Dictionary = streamer._loaded
+		if loaded.has(day) and not paths.has(day):
+			paths[day] = (loaded[day] as Node).scene_file_path
+		# 日の切り替わりが終わって、札がめくれたあとの日付
+		if paths.has(day) and not cards.has(day) and not Transition.is_busy():
+			cards[day] = hud.card_text()
+		if not Transition.is_busy():
+			max_ow[day] = maxf(max_ow.get(day, 0.0), tod.otherworld)
+		if day == 0 and GameState.is_collected(&"rusty_bell") and bell_text_d1 == "":
+			bell_text_d1 = GameState.find_item(&"rusty_bell").text()
+		if day == 6 and d7_card_before == "" and not Transition.is_busy():
+			d7_card_before = hud.card_text()
+		if day == 6:
+			cards["d7_end"] = hud.card_text()
+		if day == 9:
+			var L := GameState.DAY_LENGTH_PX
+			var p := (player.global_position.x - 9 * L) / L
+			if d10_start_time < 0.0 and p > 0.1:
+				d10_start_time = GameState.day_time(GameState.get_day(9), p)
+			if p > 0.5:
+				d10_after_time = GameState.day_time(GameState.get_day(9), p)
+				cards["d10_after"] = hud.card_text()
+		if hud.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		var target := hud.current_target()
+		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk \
+				and not (target as Npc).npc_data.id in [&"natsumi", &"takeru_river"]:
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.2)
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		if target is ItemPickup:
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.3)
+			TouchControls.fire_action(&"interact")
+			TouchControls.fire_action(&"interact")
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	await _wait(1.5)
+	check(bell_text_d1 == "ふっても ならない。", "kamikakushi: the bell does not ring on day 1 (%s)" % bell_text_d1)
+	check(GameState.has_flag(&"route_kamikakushi") and not GameState.has_flag(&"route_takeru") and not GameState.has_flag(&"route_natsumi"),
+		"kamikakushi: route flag %s" % str(GameState.flags.keys()))
+	check(GameState.find_item(&"rusty_bell").text() == "ときどき、かってに なる。", "kamikakushi: the bell text changes after day 4")
+	check(GameState.has_talked(&"grandpa_bell"), "kamikakushi: grandpa notices the bell on day 3")
+	for i in range(3, 10):
+		check(str(paths.get(i, "")).ends_with("day_%02d_kamikakushi.tscn" % (i + 1)), "kamikakushi day %d swapped: %s" % [i + 1, paths.get(i, "")])
+	for id in [&"fox_rain", &"fox_festival", &"fox_market", &"fox_market_bye", &"fox_mukaebi", &"fox_hilltop", &"fox_okuribi", &"fox_gray", &"fox_shrine", &"grandpa_farewell_kk"]:
+		check(GameState.has_talked(id), "kamikakushi talks: %s" % id)
+	for id in [&"yomise_ame", &"fox_mask"]:
+		check(GameState.was_received(id), "kamikakushi: received %s" % id)
+	for id in [&"ogara_ember", &"blue_hozuki", &"gray_sunflower", &"onigiri_wrap"]:
+		check(GameState.is_collected(id), "kamikakushi: picked %s" % id)
+	check(_kk.get("hint", false) and _kk.get("kakurenbo_tries", 0) >= 1, "kakurenbo: found him (bell hint after misses) %s" % str(_kk))
+	check(_kk.get("yomise", []) == [YomiseGame.GOAL, 3, 1], "yomise: refused once, 3 trades to the candy %s" % str(_kk.get("yomise")))
+	check(_kk.get("suzu_michi", []) == [SuzuMichiGame.FORKS, 1], "suzu michi: through the forest, sent back once %s" % str(_kk.get("suzu_michi")))
+	check(_kk.get("oni_swapped", false) and _kk.get("oni_end", false), "onigokko: caught him, then got caught")
+	check(_kk.get("bell", []) == [true, 2], "bus: the bell rings only once %s" % str(_kk.get("bell")))
+	var unknown := Strings.DATE_MONTH % Strings.DATE_UNKNOWN + " " + Strings.DATE_DAY % Strings.DATE_UNKNOWN
+	check(not d7_card_before.contains(Strings.DATE_UNKNOWN) and cards.get("d7_end", "") == unknown,
+		"day 7: the date turns to ？？ beyond the smoke (%s -> %s)" % [d7_card_before, cards.get("d7_end", "")])
+	check(cards.get(7, "") == unknown and cards.get(8, "") == unknown, "days 8-9: date stays ？？ (%s / %s)" % [cards.get(7, ""), cards.get(8, "")])
+	check(max_ow.get(7, 0.0) > 0.9 and max_ow.get(8, 0.0) > 0.9 and max_ow.get(3, 0.0) == 0.0, "otherworld: colors fade on days 8-9 only %s" % str(max_ow))
+	check(max_ow.get(4, 0.0) > 0.3 and max_ow.get(4, 0.0) < 0.9, "day 5: the night market is faintly otherworldly (%.2f)" % max_ow.get(4, 0.0))
+	check(cards.get(9, "").ends_with("16") and cards.get("d10_after", "").ends_with("31"), "day 10: wakes on 8/16, flips to 8/31 (%s -> %s)" % [cards.get(9, ""), cards.get("d10_after", "")])
+	check(d10_start_time > 0.9 and d10_after_time >= 0.0 and d10_after_time < 0.3, "day 10: night at the shrine, then morning (%.2f -> %.2f)" % [d10_start_time, d10_after_time])
+	check(TimeSkip.dates_between(Vector2i(8, 16), Vector2i(8, 31)).size() == 16, "time skip riffles 8/16..8/31")
+	var scene := get_tree().current_scene
+	check(scene and scene.name == "Ending", "kamikakushi: ending reached")
+	if scene and scene.name == "Ending":
+		var end_box: TreasureBox = scene.get_node("TreasureBox")
+		check(GameState.current_ending().id == &"kamikakushi" and end_box.header_caption.text == GameState.current_ending().title, "kamikakushi ending shown")
+		var ids := end_box._slots.map(func(sl): return sl.item.id)
+		check(ids.has(&"fox_mask") and ids.has(&"gray_sunflower") and ids.has(&"rusty_bell"), "kamikakushi: otherworld items stay in the box")
+		check(GameState.item_date(GameState.get_day(7)) == [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN] and GameState.item_date(GameState.get_day(9))[1] == "31",
+			"box: days 8-9 slots are dated ？？")
+	# 4日目に「かえる」を選ぶと、ルートは立たない（データの上で）。親友・初恋ルートでは神社の場面にならない
+	var keep := GameState.flags.duplicate()
+	GameState.flags.clear()
+	GameState.set_flag(&"rusty_bell_found")
+	check(GameState.day_scene_path(GameState.get_day(3)).ends_with("day_04_kamikakushi.tscn") and GameState.day_scene_path(GameState.get_day(4)) == GameState.get_day(4).scene_path,
+		"with the bell and no route: shrine on day 4, normal day 5")
+	check(GameState.current_ending().id == &"default", "bell but went home -> default ending")
+	GameState.set_flag(&"route_takeru")
+	check(GameState.day_scene_path(GameState.get_day(3)).ends_with("day_04_takeru.tscn"), "takeru route wins over the bell")
+	GameState.flags = keep

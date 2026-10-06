@@ -1,0 +1,40 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_08.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r1"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="r2"]
+[ext_resource type="PackedScene" path="res://world/house.tscn" id="r3"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r4"]
+[ext_resource type="Resource" path="res://data/npcs/fox_gray.tres" id="r5"]
+[ext_resource type="Script" path="res://world/otherworld_zone.gd" id="r6"]
+
+[node name="Day08_kamikakushi" instance=ExtResource("base")]
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(1640, 604)
+
+[node name="Shop" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(900, 604)
+kind = 0
+
+[node name="Sunflowers" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(1300, 604)
+kind = 8
+width = 620
+
+[node name="House" parent="Props" instance=ExtResource("r3")]
+position = Vector2(2620, 604)
+
+[node name="Fox" parent="Props" instance=ExtResource("r4")]
+position = Vector2(2980, 604)
+npc_data = ExtResource("r5")
+
+[node name="Otherworld" type="Node2D" parent="Props"]
+script = ExtResource("r6")
+from_x = -400
+to_x = 4400
+ramp = 0.0
+strength = 1.0
+ambient = "autumn_insects"

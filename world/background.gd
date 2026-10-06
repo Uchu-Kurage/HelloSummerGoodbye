@@ -5,6 +5,7 @@ extends Node2D
 ## どれだけ海辺か（0〜1）は SeasideZone が set_seaside で入れる（だんだん入れかわる）
 
 const SKY_SHADER := preload("res://world/shaders/sky_gradient.gdshader")
+const DESATURATE := preload("res://world/shaders/desaturate.gdshader")
 ## 海辺の太陽と灯台が、画面の中をどれだけゆっくり動くか（遠くほど小さい）。x は海辺に入ってから歩いた距離に対して
 const SUN_SCROLL := 0.06
 const LIGHT_SCROLL := 0.35
@@ -20,6 +21,9 @@ var seaside := 0.0
 
 @onready var _sky: ColorRect = $Sky/SkyRect
 var _sky_mat: ShaderMaterial
+## 異界（神隠しルート）で層の絵の色を抜くシェーダー。はじめて使うときにかける
+var _desat_mat: ShaderMaterial
+var _desat := 0.0
 
 
 func _ready() -> void:
@@ -45,6 +49,30 @@ func set_seaside(amount: float, walked: float) -> void:
 	var vw := get_viewport_rect().size.x
 	$SeaSun/Sun.position.x = vw * SUN_START - walked * SUN_SCROLL
 	$SeaLight/Lighthouse.position.x = vw * LIGHT_START - walked * LIGHT_SCROLL
+
+
+## 異界でどれだけ色を抜くか（0〜1）。空は TimeOfDay が空の色ごと褪せさせるので、ほかの層の絵にかける
+func set_desaturate(amount: float) -> void:
+	if is_equal_approx(amount, _desat):
+		return
+	_desat = amount
+	if _desat_mat == null:
+		if amount <= 0.0:
+			return
+		_desat_mat = ShaderMaterial.new()
+		_desat_mat.shader = DESATURATE
+		_apply_desat(self)
+		# 手前の木の枝など、背景の外にある景色の層も
+		for n in get_tree().get_nodes_in_group("desaturate_with_world"):
+			_apply_desat(n)
+	_desat_mat.set_shader_parameter("amount", amount)
+
+
+func _apply_desat(n: Node) -> void:
+	if n is CanvasItem and n != _sky and (n as CanvasItem).material == null:
+		(n as CanvasItem).material = _desat_mat
+	for c in n.get_children():
+		_apply_desat(c)
 
 
 ## 空の色（時間帯・季節）。上は濃く、地平線は白くかすむグラデーションにする（sky_gradient.gdshader）

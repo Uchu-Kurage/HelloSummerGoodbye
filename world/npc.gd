@@ -15,6 +15,8 @@ var _present := true
 ## @leave で立ち去ったあと（フラグが変わっても戻ってこない）
 var _left := false
 var _player: Node2D
+## alt_sprite にかえたあと
+var _alt := false
 @onready var _visual: Node2D = $Visual
 
 
@@ -98,6 +100,25 @@ func _on_flags_changed() -> void:
 		UiAnim.fade(self, 0.0, UiTokens.TIME_FADE * 2)
 
 
+## いまの絵（会話のパネルの顔にも使う）
+func current_sprite() -> Texture2D:
+	if npc_data == null:
+		return null
+	return npc_data.alt_sprite if _alt and npc_data.alt_sprite else npc_data.sprite
+
+
+## 会話の @event（DayBase.on_talk_event から）。alt_sprite_event なら、そっと絵をかえる
+func on_talk_event(event_name: String) -> void:
+	if npc_data == null or _alt or npc_data.alt_sprite_event == "" or event_name != npc_data.alt_sprite_event:
+		return
+	var tw := create_tween().set_trans(UiTokens.TRANS)
+	tw.tween_property(_visual, "modulate:a", 0.0, UiTokens.TIME_FADE).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func():
+		_alt = true
+		_visual.queue_redraw())
+	tw.tween_property(_visual, "modulate:a", 1.0, UiTokens.TIME_FADE).set_ease(Tween.EASE_OUT)
+
+
 func bubble_text(touch: bool) -> String:
 	return Strings.TALK_TOUCH if touch else Strings.TALK_KEY
 
@@ -118,8 +139,8 @@ func interact(hud: Node) -> void:
 func _draw_body() -> void:
 	if npc_data == null:
 		return
-	if npc_data.sprite:
-		var tex := npc_data.sprite
+	var tex := current_sprite()
+	if tex:
 		var k := npc_data.height / tex.get_height()
 		_visual.draw_texture_rect(tex, Rect2(-tex.get_width() * k / 2.0, -npc_data.height, tex.get_width() * k, npc_data.height), false)
 		return

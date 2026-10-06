@@ -131,6 +131,16 @@ const DIVE_AMBIENT_UNDER := "underwater"
 ## 雨の間の環境音（雨がやむと季節の蝉の声にもどる）
 const RAIN_AMBIENT := "rain"
 
+# --- 異界（神隠しルート。OtherworldZone） ---
+## 色を抜いたあとに、画面全体と空へかける色（少し青白く）
+const OTHERWORLD_LIGHT := Color(0.94, 0.96, 1.0)
+const OTHERWORLD_SKY := Color(0.92, 0.95, 1.02)
+## 異界の灯り（青い提灯・あおいほおずき）
+const BLUE_LANTERN := Color("#7FA8D8")
+const BLUE_LANTERN_GLOW := Color(0.55, 0.75, 1.0, 0.2)
+## 異界の環境音（蝉が鳴かず、遠い虫の声だけ）
+const OTHERWORLD_AMBIENT := "autumn_insects"
+
 # --- 季節（summer_progress 0.0〜1.0） ---
 ## 夏の終わりに向けて空を褪せさせる量（彩度を何割落とすか）
 const SKY_FADE_AMOUNT := 0.45
