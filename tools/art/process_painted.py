@@ -34,6 +34,10 @@ CROPS = {
 	'prop_slope': [40, None, 1000, 535],
 	# 飛び込み岩の絵から、岩だけ（淵は川の帯を暗くして描く）
 	'prop_diverock': [None, None, 472, None],
+	# 神隠しルート：祠の絵の左のバス停の札は落とす（バス停は別の絵がある）
+	'prop_hokora': [222, None, None, None],
+	# 送り火の煙：足もとの地面の線は落とす
+	'okuribi_smoke': [None, None, None, 940],
 }
 ## 1枚に横に並んだものを切り分けるときの、書き出す名前
 SPLITS = {
@@ -53,6 +57,9 @@ SPLITS = {
 	'shells': 'shell',
 	'natsumi_mg1': 'natsumi_mg1',
 	'puddles': 'puddle',
+	# 神隠しルート（お面の子）
+	'sunflowers': 'sunflower',
+	'fox_mg1': 'fox_mg1',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {

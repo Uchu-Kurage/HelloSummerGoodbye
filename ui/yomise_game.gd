@@ -15,8 +15,9 @@ const END_TIME := 1.8
 const CHOICE_SIZE := Vector2(208, 150)
 const P := preload("res://world/world_palette.gd")
 const K := preload("res://world/kamikakushi_prop.gd")
-const NIGHT := Color("#1E2638")
-const NIGHT_LOW := Color("#2E3A52")
+## 背景の絵（青い提灯の夜市）と、切り取るとき残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/yomise.jpg")
+const BG_FOCUS := Vector2(0.5, 0.3)
 
 var phase := Phase.TRADE
 ## てもとの品物（Strings.YOMISE_GOODS の番号）
@@ -137,24 +138,9 @@ func _draw() -> void:
 	# 並べ終わる前（大きさ 0）は描かない
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	draw_rect(Rect2(Vector2.ZERO, s), NIGHT)
-	draw_rect(Rect2(0, s.y * 0.55, s.x, s.y * 0.45), NIGHT_LOW)
-	# 上に青い提灯の列（ゆっくりゆれる）
-	var c := clock()
-	var n := 9
-	for i in n:
-		var x := s.x * (i + 0.5) / n
-		var y := 96.0 + 24.0 * sin(float(i) / (n - 1) * PI) + sin(c * 1.2 + i) * 3.0
-		draw_circle(Vector2(x, y), 46, P.BLUE_LANTERN_GLOW)
-		draw_rect(Rect2(x - 14, y - 20, 28, 40), P.BLUE_LANTERN)
-		draw_rect(Rect2(x - 15, y - 22, 30, 4), Color("#2E2620"))
-		draw_rect(Rect2(x - 15, y + 18, 30, 4), Color("#2E2620"))
-	# 店の人たちのかげ
-	for i in 5:
-		K.draw_vendor(self, Vector2(s.x * (0.1 + i * 0.2), s.y * 0.62), 120.0)
+	# 青い提灯の夜市（水彩の絵）
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
 
-
-## 店の札：上に店の人（顔は見えない）、左に「ほしいもの」、右に「くれるもの」
 func _draw_stall(a: Control, slot: int) -> void:
 	var stall := order[slot]
 	var mid := a.size / 2.0 + Vector2(0, 14)

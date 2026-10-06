@@ -7,12 +7,11 @@ extends NatsumiScreen
 const SHAKE_TIME := 0.5
 const CLOSE_AFTER := 1.2
 const RING_TIME := 1.6
-const BELL: Texture2D = preload("res://data/items/icons/rusty_bell.svg")
+const BELL: Texture2D = preload("res://data/items/icons/rusty_bell.png")
 const P := preload("res://world/world_palette.gd")
-## 車内と、窓の外の朝の光
-const INSIDE := Color("#3E3630")
-const WINDOW := Color("#CFE2EC")
-const HILLS := Color("#9DB59A")
+## 背景の絵（朝のバスの車内）と、切り取るとき残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/suzu_furu.jpg")
+const BG_FOCUS := Vector2(0.5, 0.6)
 
 var shakes := 0
 var rang := false
@@ -71,24 +70,14 @@ func _draw() -> void:
 	# 並べ終わる前（大きさ 0）は描かない
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	draw_rect(Rect2(Vector2.ZERO, s), INSIDE)
-	# 窓（外は朝。遠くに山）
-	var win := Rect2(s.x * 0.1, s.y * 0.12, s.x * 0.8, s.y * 0.36)
-	draw_rect(win, WINDOW)
-	var pts := PackedVector2Array([Vector2(win.position.x, win.end.y)])
-	for i in 9:
-		var t := i / 8.0
-		pts.append(Vector2(win.position.x + win.size.x * t, win.end.y - 50 - 30 * sin(t * PI * 1.6 + 0.4)))
-	pts.append(win.end)
-	draw_colored_polygon(pts, HILLS)
-	draw_rect(win, P.BUS_STRIPE, false, 8.0)
-	# 手のひらの鈴（振ると左右にゆれる）
-	var c := Vector2(s.x / 2.0, s.y * 0.66)
+	# 朝のバスの車内（水彩の絵）
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
+	# ひざの上で振る鈴（振ると左右にゆれる）
+	var c := Vector2(s.x / 2.0, s.y * 0.6)
 	var rot := 0.0
 	if _shake_t > 0.0 and not UiAnim.reduced():
 		rot = sin(_shake_t * 40.0) * 0.35 * (_shake_t / SHAKE_TIME)
-	var sz := 180.0
-	draw_circle(c + Vector2(0, 70), 120, Color(P.PLAYER_SKIN, 0.9))
+	var sz := 170.0
 	draw_set_transform(c, rot)
 	draw_texture_rect(BELL, Rect2(-sz / 2.0, -sz / 2.0, sz, sz), false)
 	draw_set_transform(Vector2.ZERO)
@@ -97,4 +86,4 @@ func _draw() -> void:
 		var k := _since_ring / RING_TIME
 		for j in 3:
 			var r := 100.0 + (k + j * 0.2) * 160.0
-			draw_arc(c, r, -PI * 0.9, -PI * 0.1, 24, Color(1, 1, 0.92, 0.5 * (1.0 - k)), 3.0)
+			draw_arc(c, r, -PI * 0.9, -PI * 0.1, 24, Color(1, 1, 0.92, 0.6 * (1.0 - k)), 3.0)
