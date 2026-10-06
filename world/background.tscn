@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://world/background.gd" id="1"]
 [ext_resource type="Script" path="res://world/scenery_strip.gd" id="2"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/sun.png" id="sun"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/lighthouse.png" id="lighthouse"]
 
 [node name="Background" type="Node2D"]
 script = ExtResource("1")
@@ -16,6 +18,15 @@ offset_right = 4400.0
 offset_bottom = 2400.0
 mouse_filter = 2
 color = Color(0.556863, 0.772549, 0.878431, 1)
+
+[node name="SeaSun" type="Parallax2D" parent="."]
+visible = false
+scroll_scale = Vector2(0, 1)
+
+[node name="Sun" type="Sprite2D" parent="SeaSun"]
+position = Vector2(900, 150)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("sun")
 
 [node name="Clouds" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.06, 1)
@@ -41,6 +52,19 @@ base_y = 610.0
 height = 281.0
 color = Color(0.36, 0.5, 0.3, 1)
 
+[node name="SeaSky" type="Parallax2D" parent="."]
+visible = false
+scroll_scale = Vector2(0.2, 1)
+repeat_size = Vector2(2766, 0)
+repeat_times = 3
+
+[node name="Strip" type="Node2D" parent="SeaSky"]
+script = ExtResource("2")
+kind = 5
+width = 2766.0
+base_y = 436.0
+height = 300.0
+
 [node name="Fields" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.35, 1)
 repeat_size = Vector2(1833.6, 0)
@@ -53,6 +77,30 @@ width = 1833.6
 base_y = 512.0
 height = 128.8
 color = Color(0.29, 0.5, 0.2, 1)
+
+[node name="SeaMid" type="Parallax2D" parent="."]
+visible = false
+scroll_scale = Vector2(0.35, 1)
+repeat_size = Vector2(2004, 0)
+repeat_times = 3
+
+[node name="Strip" type="Node2D" parent="SeaMid"]
+script = ExtResource("2")
+kind = 6
+width = 2004.0
+base_y = 432.0
+height = 180.0
+color = Color(0.33, 0.6, 0.66, 1)
+
+[node name="SeaLight" type="Parallax2D" parent="."]
+visible = false
+scroll_scale = Vector2(0, 1)
+
+[node name="Lighthouse" type="Sprite2D" parent="SeaLight"]
+position = Vector2(1100, 462)
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("lighthouse")
+offset = Vector2(0, -213)
 
 [node name="Wires" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.45, 1)
