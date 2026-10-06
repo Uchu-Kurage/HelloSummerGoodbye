@@ -19,10 +19,12 @@ const NATSUMI_GAMES := ["sketch_", "kingyo_", "kaigara_", "senko_"]
 ## （GameState.set_dive_result／set_katanuki_result／set_kabuto_result／set_capsule_spot／set_ishikiri_best）。
 ## received はルートの中で人から「もらった」アイテム、given は手ばなしたアイテム（id -> 宝箱に出すひとこと）
 const ROUTES := [
+	# ノーマルルート：祖父母と過ごす。mask_ で始まるものは5日目に選んだお面（GameState.set_mask）。
+	# sentaku_ / shoryouma_ / kakurenbo_ / seiza_ で始まるものはミニゲームの結果（GameState.set_game_result）
 	{
 		"name": "ふつう",
-		"flags": {},
-		"received": [],
+		"flags": {4: [&"sentaku_good"], 5: [&"mask_kitsune"], 6: [&"shoryouma_good"], 8: [&"jiji_play", &"kakurenbo_good"], 9: [&"seiza_good"]},
+		"received": [&"festival_mask", &"senko_hanabi", &"straw_hat", &"onigiri_wrap"],
 		"given": {},
 	},
 	{
@@ -119,6 +121,8 @@ static func apply(route: int, day_index: int) -> void:
 				GameState.set_capsule_spot(int(s.trim_prefix("capsule_")))
 			elif s.begins_with("kabuto_"):
 				GameState.set_kabuto_result(0 if s == "kabuto_clean" else 1)
+			elif s.begins_with("mask_"):
+				GameState.set_mask(StringName(s.trim_prefix("mask_")))
 			elif s.begins_with("katanuki_"):
 				GameState.set_katanuki_result(StringName(s.trim_prefix("katanuki_")))
 			elif NATSUMI_GAMES.any(func(g): return s.begins_with(g)):

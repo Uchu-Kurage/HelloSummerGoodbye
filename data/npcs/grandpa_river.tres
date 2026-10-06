@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_grandpa.png" id="sprite"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+
+[sub_resource type="Resource" id="appear"]
+script = ExtResource("2")
+forbid_any = Array[StringName]([&"route_natsumi"])
+
+[resource]
+script = ExtResource("1")
+id = &"grandpa_river"
+display_name = "おじいちゃん"
+lines = Array[String](["みずは つめたいぞ。", "むかしは ここで、ともだちと よく あそんだ。", "……ささぶね、つくれるか。", "ほを たてると、とおくまで いくんだ。", "@event sasabune", "（ふたりで ささぶねを ながした）"])
+repeat_lines = Array[String](["……よく ながれるな。"])
+appear_if = SubResource("appear")
+auto_talk = true
+sprite = ExtResource("sprite")
+placeholder_color = Color(0.722, 0.651, 0.549, 1)
+height = 176.0
+skin_color = Color(0.886, 0.722, 0.58, 1)
+hair_color = Color(0.847, 0.831, 0.8, 1)
+shirt_color = Color(0.949, 0.941, 0.918, 1)
+pants_color = Color(0.788, 0.718, 0.604, 1)
+stoop = 6.0

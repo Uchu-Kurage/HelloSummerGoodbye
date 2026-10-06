@@ -1,0 +1,98 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_04.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="kprop"]
+[ext_resource type="Script" path="res://world/normal_prop.gd" id="nprop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Script" path="res://world/rain_zone.gd" id="rain"]
+[ext_resource type="Script" path="res://world/talk_cue.gd" id="cue"]
+[ext_resource type="Resource" path="res://data/npcs/grandma_laundry.tres" id="grandma_laundry"]
+
+[node name="Day04_normal" instance=ExtResource("base")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="House" parent="Props" index="1"]
+position = Vector2(1250, 604)
+
+[node name="Sign" parent="." index="2"]
+position = Vector2(300, 604)
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(3480, 604)
+
+[node name="Laundry" type="Node2D" parent="Props"]
+position = Vector2(650, 604)
+script = ExtResource("nprop")
+kind = 2
+hide_on_event = "sentaku_done"
+
+[node name="Grandma" parent="Props" instance=ExtResource("npc")]
+position = Vector2(820, 604)
+npc_data = ExtResource("grandma_laundry")
+
+[node name="Engawa" type="Node2D" parent="Props"]
+position = Vector2(1610, 604)
+script = ExtResource("prop")
+kind = 19
+
+[node name="RainEngawa" type="Node2D" parent="Props"]
+position = Vector2(0, 0)
+script = ExtResource("rain")
+from_x = 1450.0
+to_x = 2150.0
+
+[node name="CueEngawa" type="Node2D" parent="Props"]
+position = Vector2(1980, 604)
+script = ExtResource("cue")
+lines = Array[String](["（えんがわで、あめの おとを きいていた）", "ぼく：……すこし、よわく なってきた"])
+
+[node name="CueAgain" type="Node2D" parent="Props"]
+position = Vector2(2480, 604)
+script = ExtResource("cue")
+lines = Array[String](["ぼく：……また ふってきた"])
+
+[node name="Torii" type="Node2D" parent="Props"]
+position = Vector2(2600, 604)
+script = ExtResource("prop")
+kind = 7
+
+[node name="Komainu1" type="Node2D" parent="Props"]
+position = Vector2(2760, 604)
+script = ExtResource("kprop")
+kind = 2
+
+[node name="Lantern1" type="Node2D" parent="Props"]
+position = Vector2(2880, 604)
+script = ExtResource("kprop")
+kind = 1
+
+[node name="CueEaves" type="Node2D" parent="Props"]
+position = Vector2(3080, 604)
+script = ExtResource("cue")
+lines = Array[String](["（じんじゃの のきしたで、あまやどり）"])
+
+[node name="Shrine" type="Node2D" parent="Props"]
+position = Vector2(3150, 604)
+script = ExtResource("prop")
+kind = 28
+
+[node name="BigTree" type="Node2D" parent="Props"]
+position = Vector2(3560, 604)
+script = ExtResource("kprop")
+kind = 3
+
+[node name="Komainu2" type="Node2D" parent="Props"]
+position = Vector2(3760, 604)
+script = ExtResource("kprop")
+kind = 2
+flip = true
+
+[node name="Rain" type="Node2D" parent="Props"]
+position = Vector2(0, 0)
+script = ExtResource("rain")
+from_x = 2350.0
+to_x = 3330.0
+stop_on_event = "rain_stop"

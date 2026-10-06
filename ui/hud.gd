@@ -42,6 +42,12 @@ const MINIGAMES := {
 	"suzu_michi": preload("res://ui/suzu_michi_game.gd"),
 	"onigokko": preload("res://ui/onigokko_game.gd"),
 	"suzu_furu": preload("res://ui/suzu_furu.gd"),
+	# ノーマルルート（祖父母）
+	"sentaku": preload("res://ui/sentaku_game.gd"),
+	"shoryouma": preload("res://ui/shoryouma_game.gd"),
+	"kakurenbo_jiji": preload("res://ui/kakurenbo_game.gd"),
+	"seiza": preload("res://ui/seiza_game.gd"),
+	"bus_window": preload("res://ui/bus_window.gd"),
 }
 
 var player: Player
@@ -436,6 +442,8 @@ func _run_command(e: String) -> _Step:
 			GameState.set_flag(StringName(a))
 		"heart":
 			GameState.add_heart()
+		"mask":
+			GameState.set_mask(StringName(a))
 		"drop":
 			var it := GameState.find_item(StringName(a))
 			var day := _talk_day()

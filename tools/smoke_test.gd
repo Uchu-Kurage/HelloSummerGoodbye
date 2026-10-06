@@ -17,6 +17,8 @@ var _capsule_stars_seen := false
 var _hat_shouts := 0
 var _hat_last_line := ""
 var _hat_missed_tap_ignored := false
+## 会話で出たせりふ（_finish_talk が入れる）
+var _seen_lines: Array[String] = []
 
 
 func _ready() -> void:
@@ -88,6 +90,33 @@ func _run() -> void:
 	await _wait(0.5)
 	check(not get_tree().paused, "pause closes with ui_cancel")
 
+	# バス停で待っている祖父母が、向こうから声をかけてくる（全ルート共通）。聞きおえて、祠のわきの鈴を拾ってから走る
+	var hud0: Hud = main.get_node("HUD")
+	var box0: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	Input.action_press("move_right")
+	var guard0 := 0
+	while not (GameState.has_talked(&"grandma_arrive") and GameState.has_talked(&"grandpa") and GameState.is_collected(&"rusty_bell")) and guard0 < 900:
+		await get_tree().physics_frame
+		guard0 += 1
+		if hud0.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud0, box0)
+			Input.action_press("move_right")
+		elif hud0.current_target() is ItemPickup:
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.3)
+			TouchControls.fire_action(&"interact")
+			TouchControls.fire_action(&"interact")
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	guard0 = 0
+	while hud0.is_message_open() and guard0 < 30:
+		TouchControls.fire_action(&"interact")
+		await _wait(0.2)
+		guard0 += 1
+	await _wait(1.5)
+	check(GameState.has_talked(&"grandma_arrive") and GameState.has_talked(&"grandpa"), "day 1: grandparents wait at the bus stop")
 	# 押しつづけると走りだし、離すと歩きにもどる（ふつうの速さにして、物理フレームで数える）
 	var keep_scale := Engine.time_scale
 	Engine.time_scale = 1.0
@@ -361,7 +390,8 @@ func _run() -> void:
 	check(GameState.current_ending().id == &"default", "flags cleared -> default ending")
 	check(GameState.day_scene_path(GameState.get_day(4)) == GameState.get_day(4).scene_path, "no route -> original day 5")
 	check(GameState.find_item(&"river_stone").text() == "つめたくて、すべすべ。", "no route -> normal river stone text")
-	check(GameState.day_time(GameState.get_day(8), 0.0) == 0.0, "no route -> normal time of day")
+	check(GameState.day_time(GameState.get_day(8), 0.0) >= 0.85, "no route -> normal day 9 is at night (the last night with grandpa)")
+	check(GameState.day_time(GameState.get_day(3), 0.0) == GameState.get_day(3).time_from, "no route -> day 4 time range from DayData")
 	GameState.set_flag(&"route_takeru")
 	check(GameState.day_time(GameState.get_day(8), 0.0) >= 0.8, "takeru day 9 is at night")
 	check(GameState.day_tint(GameState.get_day(5), 0.0).b > GameState.day_tint(GameState.get_day(5), 0.0).r, "takeru day 6 dawn is blue")
@@ -373,6 +403,7 @@ func _run() -> void:
 	await _wait(6.0)
 	await _natsumi_route()
 	await _kamikakushi_route()
+	await _normal_route()
 	await _check_debug_jump()
 
 
@@ -393,7 +424,9 @@ func _check_debug_jump() -> void:
 	DebugJump.apply(4, 9)
 	check(GameState.current_ending().id == &"natsumi" and GameState.find_item(&"senko_ash").text().begins_with("ぼくのが"), "debug: natsumi low")
 	DebugJump.apply(0, 9)
-	check(GameState.flags.keys() == [&"rusty_bell_found"] and GameState.collected.size() == 10, "debug: default route only has the bell flag %s" % str(GameState.flags.keys()))
+	check(not [&"route_takeru", &"route_natsumi", &"route_kamikakushi"].any(func(f): return GameState.has_flag(f)) and GameState.collected.size() == 10,
+		"debug: default route has no route flag %s" % str(GameState.flags.keys()))
+	check(GameState.mask_kind == &"kitsune" and GameState.was_received(&"festival_mask") and GameState.has_flag(&"jiji_play"), "debug: default route up to day 9 (fox mask, hide and seek)")
 	DebugJump.apply(5, 9)
 	check(GameState.has_flag(&"route_kamikakushi") and GameState.was_received(&"fox_mask") and GameState.current_ending().id == &"kamikakushi",
 		"debug: kamikakushi up to day 9")
@@ -669,6 +702,8 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 	var guard := 0
 	while hud.is_talking() and guard < 300:
 		guard += 1
+		if hud.is_message_open():
+			_seen_lines.append(hud._msg_text.text)
 		if hud.minigame() is DiveGame:
 			await _play_dive(hud.minigame(), true)
 		elif hud.minigame() is HatGame:
@@ -840,15 +875,52 @@ func _play_natsumi(game: NatsumiScreen) -> void:
 				break
 		sg._hold.release()
 	elif game is KakurenboGame:
-		# かくれんぼ：はしから順に調べる（隠れているのは いちばん右。2回はずすと鈴のヒント）
+		# かくれんぼ：はしから順に調べる（隠れているのは、お面の子もおじいちゃんも こまいぬ。2回はずすとヒント）
 		var kk := game as KakurenboGame
-		kk.hiding = Strings.KAKURENBO_SPOTS.size() - 1
+		var key := "jiji_" if kk.jiji else ""
+		_kk[key + "hiding"] = kk.hiding
 		for i in Strings.KAKURENBO_SPOTS.size():
 			kk.check_spot(i)
+			_kk[key + "kakurenbo_tries"] = kk.tries
 			if kk.tries == KakurenboGame.MISS_HINT:
-				_kk["hint"] = kk._hint_t >= 0.0
+				_kk[key + "hint"] = kk._hint_t >= 0.0
+			if kk.phase != KakurenboGame.Phase.SEEK:
+				break
 			await _wait(0.2)
-		_kk["kakurenbo_tries"] = kk.tries
+	elif game is SentakuGame:
+		# 洗濯物の取り込み：左から順に、ぜんぶ取り込む
+		var st := game as SentakuGame
+		for i in Strings.SENTAKU_CLOTHES.size():
+			st.take(i)
+			await _wait(0.1)
+		_kk["sentaku"] = st.taken_count()
+	elif game is ShoryoumaGame:
+		# 精霊馬づくり：割りばしが ● の上に来たら さす（8本）
+		var sy := game as ShoryoumaGame
+		while sy.phase != ShoryoumaGame.Phase.END and n < 40000:
+			if sy.phase == ShoryoumaGame.Phase.PLACE and absf(sy.sweep() - sy.target()) < ShoryoumaGame.GOOD_TOL * 0.5:
+				sy.stick()
+			await get_tree().process_frame
+			n += 1
+		_kk["shoryouma"] = [sy.good, (sy.legs[0] as Array).size() + (sy.legs[1] as Array).size()]
+	elif game is SeizaGame:
+		# 星座さがし：まず わざと ちがう星を選び、そのあと大三角の3つをつなぐ
+		var sz := game as SeizaGame
+		sz.pick(3)
+		for i in SeizaGame.triangle():
+			await _wait(0.2)
+			sz.pick(i)
+		_kk["seiza"] = [sz.linked.size(), sz.misses]
+	elif game is BusWindow:
+		# バスの窓：2回 手をふりかえし、見えなくなったら まえを向く
+		var bw := game as BusWindow
+		bw.wave()
+		bw.wave()
+		while not bw.can_close() and n < 20000:
+			await get_tree().process_frame
+			n += 1
+		_kk["buswin"] = bw.waves
+		bw.close_view()
 	elif game is YomiseGame:
 		# 物々交換：まずわざとちがう店を選んで断られ、そのあと順に交換する
 		var yg := game as YomiseGame
@@ -1006,7 +1078,9 @@ func _kamikakushi_route() -> void:
 		check(GameState.was_received(id), "kamikakushi: received %s" % id)
 	for id in [&"ogara_ember", &"blue_hozuki", &"gray_sunflower", &"onigiri_wrap"]:
 		check(GameState.is_collected(id), "kamikakushi: picked %s" % id)
-	check(_kk.get("hint", false) and _kk.get("kakurenbo_tries", 0) >= 1, "kakurenbo: found him (bell hint after misses) %s" % str(_kk))
+	check(_kk.get("hint", false) and _kk.get("kakurenbo_tries", 0) == KakurenboGame.HIDING + 1 and _kk.get("hiding", -1) == KakurenboGame.HIDING,
+		"kakurenbo: found him behind the komainu (bell hint after misses) %s" % str(_kk))
+	check(_kk.get("sentaku", 0) == Strings.SENTAKU_CLOTHES.size(), "kamikakushi day 4: the laundry with grandma comes first (shared day 4)")
 	check(_kk.get("yomise", []) == [YomiseGame.GOAL, 3, 1], "yomise: refused once, 3 trades to the candy %s" % str(_kk.get("yomise")))
 	check(_kk.get("suzu_michi", []) == [SuzuMichiGame.FORKS, 1], "suzu michi: through the forest, sent back once %s" % str(_kk.get("suzu_michi")))
 	check(_kk.get("oni_swapped", false) and _kk.get("oni_end", false), "onigokko: caught him, then got caught")
@@ -1029,6 +1103,7 @@ func _kamikakushi_route() -> void:
 		check(ids.has(&"fox_mask") and ids.has(&"gray_sunflower") and ids.has(&"rusty_bell"), "kamikakushi: otherworld items stay in the box")
 		check(GameState.item_date(GameState.get_day(7)) == [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN] and GameState.item_date(GameState.get_day(9))[1] == "31",
 			"box: days 8-9 slots are dated ？？")
+	check(GameState.has_talked(&"grandma_laundry"), "kamikakushi day 4 shares the laundry scene")
 	# 4日目に「かえる」を選ぶと、ルートは立たない（データの上で）。親友・初恋ルートでは神社の場面にならない
 	var keep := GameState.flags.duplicate()
 	GameState.flags.clear()
@@ -1039,3 +1114,127 @@ func _kamikakushi_route() -> void:
 	GameState.set_flag(&"route_takeru")
 	check(GameState.day_scene_path(GameState.get_day(3)).ends_with("day_04_takeru.tscn"), "takeru route wins over the bell")
 	GameState.flags = keep
+
+
+# --- ノーマルルート（祖父母） -----------------------------------------------------
+
+## 1日目から歩いて、誰のフラグも立てずに（なつみ・タケルの川・鈴を避ける）、祖父母と10日目のバスまで。
+## 会話は最初の選択肢（お面は きつね）、ミニゲームは ぜんぶ遊ぶ
+func _normal_route() -> void:
+	GameState.reset()
+	_kk.clear()
+	get_tree().change_scene_to_file("res://world/main.tscn")
+	await _wait(0.5)
+	var main := get_tree().current_scene
+	var hud: Hud = main.get_node("HUD")
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	var streamer: DayStreamer = main.get_node("DayStreamer")
+	var tod: TimeOfDay = main.get_node("TimeOfDay")
+	var paths := {}
+	var sasabune_seen := false
+	var cars_gone := false
+	var max_rain := 0.0
+	var rain_end := -1.0
+	_seen_lines.clear()
+	Input.action_press("move_right")
+	var t := 0.0
+	while t < 600.0 and get_tree().current_scene == main:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		if not is_instance_valid(main) or not main.is_inside_tree():
+			break
+		var day := GameState.current_day_index
+		var loaded: Dictionary = streamer._loaded
+		if loaded.has(day) and not paths.has(day):
+			paths[day] = (loaded[day] as Node).scene_file_path
+		if loaded.has(day):
+			var scene_node := loaded[day] as Node
+			var sb := scene_node.get_node_or_null("Props/Sasabune") as CanvasItem
+			sasabune_seen = sasabune_seen or (sb != null and sb.visible)
+			var car := scene_node.get_node_or_null("Props/Car1") as CanvasItem
+			cars_gone = cars_gone or (car != null and not car.visible)
+		if day == 3:
+			max_rain = maxf(max_rain, tod.rain)
+			var x := player_x(main) - 3 * GameState.DAY_LENGTH_PX
+			if x > 3500.0:
+				rain_end = tod.rain
+		if hud.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		var target := hud.current_target()
+		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk \
+				and not (target as Npc).npc_data.id in [&"natsumi", &"takeru_river"]:
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.2)
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		if target is ItemPickup and (target as ItemPickup).item.id != &"rusty_bell":
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.3)
+			# 置き手紙は、先に中身を読む
+			while hud.is_talking():
+				_seen_lines.append(hud._msg_text.text)
+				TouchControls.fire_action(&"interact")
+				await _wait(0.1)
+			TouchControls.fire_action(&"interact")
+			TouchControls.fire_action(&"interact")
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	await _wait(1.5)
+	check([&"route_takeru", &"route_natsumi", &"route_kamikakushi", &"rusty_bell_found"].all(func(f): return not GameState.has_flag(f)),
+		"normal: no route flag %s" % str(GameState.flags.keys()))
+	for i in range(3, 10):
+		check(str(paths.get(i, "")).ends_with("day_%02d_normal.tscn" % (i + 1)), "normal day %d: %s" % [i + 1, paths.get(i, "")])
+	for id in [&"grandma_arrive", &"grandpa", &"grandma_walk", &"grandpa_river", &"grandma_laundry", &"grandma_festival", &"grandpa_mask",
+			&"aunt", &"grandma_bon", &"cousin", &"aunt_bye", &"grandma_quiet", &"grandma_letter", &"grandpa_play", &"grandpa_hide",
+			&"grandpa_stars", &"grandpa_farewell_normal", &"grandma_farewell_normal"]:
+		check(GameState.has_talked(id), "normal talks: %s" % id)
+	check(sasabune_seen, "normal day 3: the sasabune with the sail floats down the river")
+	check(_kk.get("sentaku", 0) == Strings.SENTAKU_CLOTHES.size() and GameState.has_flag(&"sentaku_good"), "sentaku: all the laundry in before the rain")
+	check(max_rain > 0.9 and rain_end == 0.0, "normal day 4: rain on the engawa and the shrine, then it clears (max %.2f, after %.2f)" % [max_rain, rain_end])
+	check(GameState.mask_kind == &"kitsune" and GameState.has_flag(&"mask_kitsune") and GameState.find_item(&"festival_mask").icon.resource_path.ends_with("mask_kitsune.svg"),
+		"festival: the fox mask (icon %s)" % GameState.find_item(&"festival_mask").icon.resource_path)
+	check(_seen_lines.has("……きつね、か。"), "festival: grandpa reacts to the fox mask")
+	check(_seen_lines.has("……なんだったかな。") and _seen_lines.has(Strings.WHISTLE_NOTE + "　～　" + Strings.WHISTLE_NOTE), "normal day 9: the whistle and \"……なんだったかな。\"")
+	check(_seen_lines.has("またらいねん　タケル"), "normal day 8: the letter reads またらいねん")
+	check(_kk.get("shoryouma", [0, 0]) == [8, 8] and GameState.has_flag(&"shoryouma_good"), "shoryouma: 8 straight legs %s" % str(_kk.get("shoryouma")))
+	check(cars_gone, "normal day 7: the relatives' cars drive away")
+	check(_kk.get("jiji_hiding", -1) == KakurenboGame.HIDING and _kk.get("jiji_hint", false), "kakurenbo with grandpa: behind the komainu, cough hint %s" % str(_kk))
+	check(_kk.get("seiza", []) == [3, 1] and GameState.has_flag(&"seiza_miss"), "seiza: summer triangle after one wrong star %s" % str(_kk.get("seiza")))
+	var wh := NormalProp.new()
+	wh.kind = NormalProp.Kind.WHISTLE
+	wh.show_on_event = "whistle"
+	get_tree().root.add_child(wh)
+	var hidden_first := not wh.visible
+	wh.on_talk_event("whistle")
+	check(hidden_first and wh.visible, "normal day 9: the ♪ appears when grandpa whistles")
+	wh.queue_free()
+	check(_kk.get("buswin", 0) == 2, "bus window: waved back twice")
+	for id in [&"festival_mask", &"senko_hanabi", &"straw_hat", &"onigiri_wrap"]:
+		check(GameState.was_received(id), "normal: received %s" % id)
+	for id in [&"bus_ticket", &"marble", &"river_stone", &"cicada_shell", &"hozuki", &"friend_letter"]:
+		check(GameState.is_collected(id) and not GameState.was_received(id), "normal: picked %s" % id)
+	var scene := get_tree().current_scene
+	check(scene and scene.name == "Ending", "normal: ending reached")
+	if scene and scene.name == "Ending":
+		var end_box: TreasureBox = scene.get_node("TreasureBox")
+		check(GameState.current_ending().id == &"default" and end_box.header_caption.text == Strings.ENDING_TITLE, "normal ending shown: %s" % end_box.header_caption.text)
+		check(end_box._slots[-1].item.id == &"onigiri_wrap" and end_box._slots[-1].collected, "normal: the onigiri wrap appears last")
+		# 1日目の鈴だけ拾わなかった
+		check(end_box._found[0] == end_box._found[1] - 1, "normal: every treasure but the bell %s" % str(end_box._found))
+	# 4日目に「かえる」を選ぶと、5日目からはノーマル（データの上で）
+	var keep := GameState.flags.duplicate()
+	GameState.flags.clear()
+	GameState.set_flag(&"rusty_bell_found")
+	GameState.set_flag(&"bell_rang")
+	check(GameState.day_scene_path(GameState.get_day(4)).ends_with("day_05_normal.tscn") and GameState.current_ending().id == &"default", "bell, went home -> normal from day 5")
+	GameState.flags = keep
+
+
+func player_x(main: Node) -> float:
+	return (main.get_node("Player") as Node2D).global_position.x

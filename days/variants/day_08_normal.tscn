@@ -1,0 +1,66 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_08.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="kprop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="PackedScene" path="res://world/house.tscn" id="house"]
+[ext_resource type="Resource" path="res://data/npcs/grandma_letter.tres" id="grandma_letter"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa_play.tres" id="grandpa_play"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa_hide.tres" id="grandpa_hide"]
+
+[node name="Day08_normal" instance=ExtResource("base")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+position = Vector2(300, 604)
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(1250, 604)
+
+[node name="House" parent="Props" instance=ExtResource("house")]
+position = Vector2(900, 604)
+
+[node name="Engawa" type="Node2D" parent="Props"]
+position = Vector2(1260, 604)
+script = ExtResource("prop")
+kind = 19
+
+[node name="Grandma" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1500, 604)
+npc_data = ExtResource("grandma_letter")
+
+[node name="Grandpa" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1780, 604)
+npc_data = ExtResource("grandpa_play")
+
+[node name="Torii" type="Node2D" parent="Props"]
+position = Vector2(2350, 604)
+script = ExtResource("prop")
+kind = 7
+
+[node name="Lantern" type="Node2D" parent="Props"]
+position = Vector2(2560, 604)
+script = ExtResource("kprop")
+kind = 1
+
+[node name="BigTree" type="Node2D" parent="Props"]
+position = Vector2(2760, 604)
+script = ExtResource("kprop")
+kind = 3
+
+[node name="Komainu" type="Node2D" parent="Props"]
+position = Vector2(3020, 604)
+script = ExtResource("kprop")
+kind = 2
+
+[node name="GrandpaHide" parent="Props" instance=ExtResource("npc")]
+position = Vector2(3110, 604)
+npc_data = ExtResource("grandpa_hide")
+
+[node name="Shrine" type="Node2D" parent="Props"]
+position = Vector2(3400, 604)
+script = ExtResource("prop")
+kind = 28
