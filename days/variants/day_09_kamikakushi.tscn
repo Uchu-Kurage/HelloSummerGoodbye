@@ -1,0 +1,113 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_09.tscn" id="base"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="r1"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r2"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r3"]
+[ext_resource type="Resource" path="res://data/npcs/fox_shrine.tres" id="r4"]
+[ext_resource type="Script" path="res://world/otherworld_zone.gd" id="r5"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="r6"]
+
+[node name="Day09_kamikakushi" instance=ExtResource("base")]
+
+[node name="House" parent="Props" index="1"]
+visible = false
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="BlueLanterns" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(150, 604)
+kind = 6
+width = 1900
+
+[node name="Stall1" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(640, 604)
+kind = 4
+
+[node name="Vendor1" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(660, 604)
+kind = 5
+flip = true
+
+[node name="Vendor2" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(1000, 604)
+kind = 5
+
+[node name="Stall2" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(1340, 604)
+kind = 4
+
+[node name="Vendor3" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(1360, 604)
+kind = 5
+flip = true
+
+[node name="Vendor4" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(1780, 604)
+kind = 5
+
+[node name="Torii" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(2200, 604)
+kind = 7
+
+[node name="Lantern1" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(2420, 604)
+kind = 1
+
+[node name="Komainu1" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(2520, 604)
+kind = 2
+
+[node name="Shrine" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(2900, 604)
+kind = 28
+
+[node name="Fox" parent="Props" instance=ExtResource("r3")]
+position = Vector2(3020, 604)
+npc_data = ExtResource("r4")
+
+[node name="Komainu2" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(3320, 604)
+kind = 2
+flip = true
+
+[node name="Lantern2" type="Node2D" parent="Props"]
+script = ExtResource("r1")
+position = Vector2(3440, 604)
+kind = 1
+
+[node name="Otherworld" type="Node2D" parent="Props"]
+script = ExtResource("r5")
+from_x = -400
+to_x = 4400
+ramp = 0.0
+strength = 1.0
+ambient = "autumn_insects"
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("r6")
+
+[node name="BlueGlow" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r1")
+position = Vector2(150, 604)
+kind = 7
+width = 1900
+
+[node name="Stars" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r2")
+position = Vector2(0, 604)
+kind = 22
+width = 3840.0

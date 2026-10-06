@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/gray_sunflower.svg" id="icon"]
+
+
+[resource]
+script = ExtResource("1")
+id = &"gray_sunflower"
+display_name = "いろのないひまわり"
+description = "いろが ない。でも、さいてる。"
+icon = ExtResource("icon")
+day_number = 8
+placeholder_color = Color(0.72, 0.72, 0.70, 1)
+
+

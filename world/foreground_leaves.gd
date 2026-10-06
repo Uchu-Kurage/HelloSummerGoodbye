@@ -20,6 +20,8 @@ var _t := 0.0
 
 
 func _ready() -> void:
+	# 異界（神隠しルート）では、手前の枝の色も抜く（Background.set_desaturate）
+	add_to_group("desaturate_with_world")
 	z_index = 10
 
 

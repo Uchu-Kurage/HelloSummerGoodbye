@@ -289,7 +289,7 @@ func _show_detail(s: ItemSlot) -> void:
 		var d := GameState.day_for_item(s.item)
 		var fmt := Strings.BOX_RECEIVED_ON if GameState.was_received(s.item.id) else Strings.BOX_PICKED_ON
 		_detail_name.text = s.item.display_name
-		_detail_date.text = s.note if s.note != "" else (fmt % [d.month, d.day] if d else "")
+		_detail_date.text = s.note if s.note != "" else (fmt % GameState.item_date(d) if d else "")
 		_detail_text.text = s.item.text()
 	else:
 		_detail_name.text = Strings.BOX_EMPTY_NAME

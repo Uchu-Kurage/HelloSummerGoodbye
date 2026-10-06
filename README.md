@@ -18,7 +18,7 @@
 | 決定 / もどる | Enter・Space / Esc | 項目をタップ / 「もどる」 |
 
 開発用（デバッグ実行のときだけ）：F3 で FPS と読み込み中の日を表示、F4 で日の終わりの手前へ移動。
-タイトルとひとやすみに出る「デバッグ」（Web 版でも URL の最後に `?debug` をつけると出る。例：`http://localhost:8000/?debug`）で、ルート（ふつう／タケル／なつみ高・中・低）と日を選び、その日のはじめへとべる。前の日までのフラグ・アイテム・手ばなしたものは、そのルートを通ってきた状態に整える（中身は `ui/debug_jump.gd` の `ROUTES`。ルートやフラグを足したらここも直す）。
+タイトルとひとやすみに出る「デバッグ」（Web 版でも URL の最後に `?debug` をつけると出る。例：`http://localhost:8000/?debug`）で、ルート（ふつう／タケル／なつみ高・中・低／かみかくし）と日を選び、その日のはじめへとべる。前の日までのフラグ・アイテム・手ばなしたものは、そのルートを通ってきた状態に整える（中身は `ui/debug_jump.gd` の `ROUTES`。ルートやフラグを足したらここも直す）。
 
 ## フォルダ
 
@@ -106,6 +106,27 @@ tools/      テーマ・データの生成ツール、自動の動作確認
   - 線香花火（9日目、`ui/senko_game.gd`）：始める前に押しつづけの案内を出し、押すと火がつく。離すと手がぶれて `GRACE` 秒で落ちる。最後まで落とさなければ高得点（なつみのが先に落ちる）
   - 映画会（7日目、`ui/movie_scene.gd`）は暗転と音（`Strings.MOVIE_SOUNDS`）だけ、絵を広げる場面（10日目・高、`ui/drawing_reveal.gd`）は見るだけ
 
+### 神隠しルート（お面の子）
+
+シナリオは「神隠しルート シナリオ（確定版）」に従う。1日目、バス停の脇の祠で「さびた鈴」を拾う（どのルートでも拾える。拾うとフラグ `rusty_bell_found`。ItemData の `collect_flag`）。
+親友・初恋のどちらのフラグもなく、鈴を持っていると、4日目が `days/variants/day_04_kamikakushi.tscn`（夕立の神社）になる。鈴が鳴り（`bell_rang`）、きつねのお面の子と「あそぶ」を選ぶと `route_kamikakushi` が立ち、5〜10日目が `day_XX_kamikakushi.tscn` に差し替わる。「かえる」なら何も立たず、ふつうのルートへ。
+ルートの優先順位は 初恋（2日目）→ 親友（3日目）→ 神隠し（4日目）。お面の子の会話は `data/npcs/fox_*.tres`（どれも `auto_talk`）。
+
+- **遠くのお面の子**（1〜3日目、どのルートでも）：`world/fox_far.gd`。田んぼの奥に小さく立ち、近づくと消える
+- **伏線**：駄菓子屋のおばちゃん（2日目）、祖父（3日目の夕方の家の前、`grandpa_bell.tres`。鈴を持っているときだけ）、10日目の祖父（`grandpa_farewell_kk.tres`）
+- **鈴がひとりでに鳴る**：`world/talk_cue.gd`（TalkCue）。決まった場所で音を鳴らし、ひとりごとを読ませる（4・5・6日目の鈴、10日目の目覚め）。音は `audio/sfx/suzu.ogg`・`suzu_far.ogg`
+- **日付の「？？」**：DayVariant の `date_hidden`（8・9日目）。日付の札・日の切り替わり・看板・宝箱の枠が「？？がつ ？？にち」になる（`GameState.day_date` / `item_date`）。7日目は送り火の煙（`world/smoke_gate.gd`）をくぐったところで札が「？？」にめくれる
+- **異界の色**：`world/otherworld_zone.gd`（OtherworldZone）。その日の小物と背景の層に、色を抜く軽いシェーダー（`world/shaders/desaturate.gdshader`）をかけ、時間帯の色と空も褪せさせる（`TimeOfDay.set_otherworld`）。主人公・夜の灯り（GlowLayer）・道のアイテムは色のまま。`strength` で強さ（5日目の夜市は 0.55、7日目の煙のむこうと 8・9日目は 1）
+- **10日目**：DayVariant の `shown_date`（8/16）で送り火の夜の神社に目覚め、`world/time_skip.gd`（TimeSkip）で暗転して日付が 8/31 までぱらぱらめくれる（`Transition.play_date_riffle`）。時間帯は `skip_at`・`skip_time_from/to` で夜から朝へ飛ぶ。バスは `world/kamikakushi_bus.gd`（走り出してから、鈴を振る）
+- **お面を外す**：NpcData の `alt_sprite` / `alt_sprite_event`（会話の `@event unmask` で絵がかわる）
+- **場所の小物**：`world/kamikakushi_prop.gd`（祠・灯籠・狛犬・大木・夜市の屋台・顔の見えない店の人・青い提灯・ひまわり・知らない村の明かり）。いまは図形の仮の絵。お面の子は SVG の仮の絵（`world/scenery/kamikakushi/`）。水彩の絵のプロンプトは `tools/art/prompts_kamikakushi.md`
+- **画面**：どれも `NatsumiScreen` を継承（上にひとことの小札、下に案内の小札）。失敗で止まらない
+  - かくれんぼ（4日目、`ui/kakurenbo_game.gd`）：灯籠・おおきな き・こまいぬ・さいせんばこ から探す。`MISS_HINT`（2）回はずすと、隠れているところで鈴が鳴って光る
+  - 夜市の物々交換（5日目、`ui/yomise_game.gd`）：どんぐり → かざぐるま → あおい りんごあめ → あおい あめだま。ちがう店は首を横にふる。終わると `@give yomise_ame`
+  - 鈴の音で道探し（6日目、`ui/suzu_michi_game.gd`）：分かれ道（`FORKS` = 4）で、鈴の鳴ったほうへ。音が出せなくても、鳴ったほうで小さな光がゆれる
+  - 鬼ごっこ（8日目、`ui/onigokko_game.gd`）：押しつづけて走って追いつく → こんどはお面の子が鬼（最後はつかまる）
+  - 鈴を振る（10日目のバス、`ui/suzu_furu.gd`）：いちどめだけ鳴る
+
 ### 親友ルート（タケル）
 
 3日目に川でタケルにビー玉をわたすと `route_takeru` が立ち、4〜10日目が `days/variants/day_XX_takeru.tscn` に差し替わります。
@@ -182,7 +203,7 @@ godot --headless --import                       # 初回だけ
 godot --headless res://tools/smoke_test.tscn    # 最後に "SMOKE OK" と出れば成功
 ```
 
-タイトル → 本編を自動で右へ歩き（親友ルートと、初恋ルートの好感度 高を1回ずつ）、10日分の日付の進み・読み込まれている日数（3以下）・アイテム取得・拾わなかった枠・宝箱と一時停止の開閉・エンディングまでを確かめます。GitHub Actions でも公開の前に実行します。
+タイトル → 本編を自動で右へ歩き（親友ルート、初恋ルートの好感度 高、神隠しルートを1回ずつ）、10日分の日付の進み・読み込まれている日数（3以下）・アイテム取得・拾わなかった枠・宝箱と一時停止の開閉・エンディングまでを確かめます。GitHub Actions でも公開の前に実行します。
 
 ## ローカルのブラウザで確認する
 

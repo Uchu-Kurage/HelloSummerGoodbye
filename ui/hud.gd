@@ -36,6 +36,12 @@ const MINIGAMES := {
 	"senko": preload("res://ui/senko_game.gd"),
 	"movie": preload("res://ui/movie_scene.gd"),
 	"drawing": preload("res://ui/drawing_reveal.gd"),
+	# 神隠しルート（お面の子）
+	"kakurenbo": preload("res://ui/kakurenbo_game.gd"),
+	"yomise": preload("res://ui/yomise_game.gd"),
+	"suzu_michi": preload("res://ui/suzu_michi_game.gd"),
+	"onigokko": preload("res://ui/onigokko_game.gd"),
+	"suzu_furu": preload("res://ui/suzu_furu.gd"),
 }
 
 var player: Player
@@ -140,21 +146,37 @@ func _build_card() -> void:
 
 
 func set_day(d: DayData) -> void:
-	_card_month.text = Strings.DATE_MONTH % d.month
-	_card_day.text = Strings.DATE_DAY % d.day
-	_card_title.text = GameState.day_title(d)
+	var p := GameState.day_date(d)
+	set_date(p[0], p[1], GameState.day_title(d))
+
+
+## 日付の札に、月・日・タイトルを文字で入れる（異界の日の「？？」、10日目の時間が飛ぶところなど）
+func set_date(month: String, day: String, title: String) -> void:
+	_card_month.text = Strings.DATE_MONTH % month
+	_card_day.text = Strings.DATE_DAY % day
+	_card_title.text = title
 
 
 ## 札がめくれるように切り替える
 func flip_to_day(d: DayData) -> void:
+	var p := GameState.day_date(d)
+	flip_to_date(p[0], p[1], GameState.day_title(d))
+
+
+func flip_to_date(month: String, day: String, title: String) -> void:
 	_card.pivot_offset = Vector2(_card.size.x / 2.0, 0)
 	var half := UiTokens.TIME_CARD_FLIP / 2.0
 	# 動きを減らす設定のときはめくらずに、文字を入れかえるだけ（フェード）
 	var prop := "modulate:a" if UiAnim.reduced() else "scale:y"
 	var tw := create_tween().set_trans(UiTokens.TRANS)
 	tw.tween_property(_card, prop, 0.0, half).set_ease(Tween.EASE_IN)
-	tw.tween_callback(set_day.bind(d))
+	tw.tween_callback(set_date.bind(month, day, title))
 	tw.tween_property(_card, prop, 1.0, half).set_ease(Tween.EASE_OUT)
+
+
+## いま札に出している日（自動の動作確認から使う）
+func card_text() -> String:
+	return _card_month.text + " " + _card_day.text
 
 
 # --- 拾う／はなす吹き出し ------------------------------------------------------
@@ -474,7 +496,7 @@ func _talk_day() -> DayBase:
 func _show_line(e: String) -> void:
 	var speaker := _talk_data.display_name
 	var color := _talk_data.placeholder_color
-	var icon: Texture2D = _face(_talk_data.sprite)
+	var icon: Texture2D = _face(_talk_npc.current_sprite() if _talk_npc and is_instance_valid(_talk_npc) else _talk_data.sprite)
 	var colon := e.find("：")
 	if colon > 0 and colon <= SPEAKER_MAX:
 		speaker = e.substr(0, colon)

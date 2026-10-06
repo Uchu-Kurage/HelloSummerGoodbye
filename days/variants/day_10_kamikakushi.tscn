@@ -1,0 +1,72 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_10.tscn" id="base"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa_farewell_kk.tres" id="r1"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r2"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="r3"]
+[ext_resource type="Script" path="res://world/talk_cue.gd" id="r4"]
+[ext_resource type="Script" path="res://world/time_skip.gd" id="r5"]
+[ext_resource type="Script" path="res://world/kamikakushi_bus.gd" id="r6"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="r7"]
+
+[node name="Day10_kamikakushi" instance=ExtResource("base")]
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(2120, 604)
+
+[node name="House" parent="Props" index="1"]
+position = Vector2(1880, 604)
+
+[node name="BusStop" parent="Props" index="2"]
+position = Vector2(2400, 604)
+
+[node name="Grandpa" parent="Props" index="3"]
+position = Vector2(2250, 604)
+npc_data = ExtResource("r1")
+
+[node name="Grandma" parent="Props" index="4"]
+position = Vector2(2620, 604)
+
+[node name="Shrine" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(330, 604)
+kind = 28
+
+[node name="Komainu" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(640, 604)
+kind = 2
+flip = true
+
+[node name="Okuribi1" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(1040, 604)
+kind = 17
+scale = Vector2(0.5, 0.5)
+
+[node name="Wake" type="Node2D" parent="Props"]
+script = ExtResource("r4")
+position = Vector2(240, 604)
+lines = Array[String](["ぼく：……", "ぼく：じんじゃ……？", "（とおくで、おくりびが もえている）", "@show rusty_bell", "ぼく：……"])
+
+[node name="TimeSkip" type="Node2D" parent="Props"]
+script = ExtResource("r5")
+position = Vector2(1300, 604)
+push = 220.0
+
+[node name="Bus" type="Node2D" parent="Props"]
+script = ExtResource("r6")
+position = Vector2(2400, 604)
+bus_offset = 560.0
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("r7")
+
+[node name="Okuribi1Glow" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r2")
+position = Vector2(1040, 604)
+kind = 18
+scale = Vector2(0.5, 0.5)

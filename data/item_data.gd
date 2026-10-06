@@ -15,6 +15,8 @@ extends Resource
 @export var on_ground := true
 ## 拾ったとき、一言の前に読ませる文（置き手紙の中身など）。空なら出さない
 @export_multiline var read_text: String
+## 空でなければ、手に入れたときにこのフラグを立てる（日の場面の差し替えの条件に使う。例：さびた鈴 → 4日目の神社）
+@export var collect_flag: StringName
 @export_group("ルートで一言を変える")
 ## この条件が合うときは description のかわりに alt_description を出す
 @export var alt_if: FlagCondition

@@ -7,7 +7,7 @@
 script = ExtResource("1")
 id = &"dagashi_obachan"
 display_name = "おばちゃん"
-lines = Array[String](["おや、〇〇さんちの おまごさん？", "タケルちゃんと あそんであげてね。", "あの子も、さみしくなるからねえ。"])
+lines = Array[String](["おや、〇〇さんちの おまごさん？", "タケルちゃんと あそんであげてね。", "あの子も、さみしくなるからねえ。", "それと、おぼんの ころは、やまに いっちゃ だめよ。", "むかし、かえって こなかった子が いてねえ。"])
 repeat_lines = Array[String](["タケルちゃんと あそんであげてね。"])
 sprite = ExtResource("sprite")
 placeholder_color = Color(0.780, 0.627, 0.706, 1)

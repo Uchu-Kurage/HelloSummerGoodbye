@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://data/items/icons/fox_mask.svg" id="icon"]
+
+
+[resource]
+script = ExtResource("1")
+id = &"fox_mask"
+display_name = "きつねのお面"
+description = "あの子が くれた。すこし あったかい。"
+icon = ExtResource("icon")
+day_number = 9
+placeholder_color = Color(0.97, 0.94, 0.89, 1)
+on_ground = false
+

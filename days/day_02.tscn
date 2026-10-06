@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_base.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://data/npcs/dagashi_obachan.tres" id="npc_dagashi_obachan"]
 [ext_resource type="Resource" path="res://data/npcs/takeru.tres" id="npc_takeru"]
 [ext_resource type="Resource" path="res://data/npcs/natsumi.tres" id="npc_natsumi"]
+[ext_resource type="Script" path="res://world/fox_far.gd" id="fox_far"]
 
 [node name="Day02" instance=ExtResource("base")]
 
@@ -77,3 +78,7 @@ npc_data = ExtResource("npc_dagashi_obachan")
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1900, 604)
 npc_data = ExtResource("npc_takeru")
+
+[node name="FoxFar" type="Node2D" parent="Props"]
+position = Vector2(3050, 604)
+script = ExtResource("fox_far")

@@ -66,6 +66,8 @@ const TIME_LID_OUT := 0.16
 const TIME_FADE := 0.4
 const TIME_DAY_CHANGE := 2.0
 const TIME_CARD_FLIP := 0.3
+## 日付がぱらぱらとめくれる（神隠しルートの10日目）：1枚ぶんの時間
+const TIME_DATE_RIFFLE := 0.1
 const TIME_CHAR := 0.04
 const TIME_ITEM_APPEAR := 0.3
 const TIME_ITEM_INTERVAL := 0.15

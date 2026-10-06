@@ -16,7 +16,8 @@ CC0 では出典の表示は義務ではありませんが、作者への感謝�
 | ミニゲームの背景（秘密基地づくり・飛び込み・型抜き・石切り・カブトムシとり・タイムカプセル・帽子）、秘密基地の材料（板・トタン・ブルーシート・すだれ・角材）、ミニゲームの主人公とタケルのポーズ | Google Gemini で生成 | ― | `ui/minigame_bg/`、`data/base_materials/` |
 | 初恋ルート（なつみ）の絵：浴衣のなつみ、なつみのポーズ（描く・手をふる・走る・絵を差し出す）、線香花火をするふたり、公民館、ラジオ体操の台と子どもたち、画板、社、遊泳禁止の旗、貝がら、バケツ、水たまり、海の帯、砂浜の道の帯、6日目の背景（水平線の空・太陽・灯台の手前の海・灯台） | Google Gemini で生成 | ― | `world/scenery/painted/`（`tools/art/process_painted.py` で切り抜き。海の帯は白い紙の上の絵なので、紙の部分を透明にしています） |
 | 初恋ルートのミニゲームの背景（スケッチ・金魚すくい・貝がら拾い・線香花火・映画会）、なつみの絵（10日目） | Google Gemini で生成 | ― | `ui/minigame_bg/`（紙のふちを切り落としています） |
-| アイテムの絵（ビー玉・ラムネのびん・ほおずき など16個） | このゲームのために SVG で描いたもの | ― | `data/items/icons/`（あとで差し替えるかもしれない仮の絵） |
+| アイテムの絵（ビー玉・ラムネのびん・ほおずき・さびた鈴・きつねのお面 など） | このゲームのために SVG で描いたもの | ― | `data/items/icons/`（あとで差し替えるかもしれない仮の絵） |
+| 神隠しルートの、きつねのお面の子（お面あり・なし） | このゲームのために SVG で描いたもの | ― | `world/scenery/kamikakushi/`（仮の絵。水彩の絵のプロンプトは `tools/art/prompts_kamikakushi.md`） |
 
 ### 音
 
@@ -48,6 +49,12 @@ CC0 では出典の表示は義務ではありませんが、作者への感謝�
 |---|---|
 | `title.ogg` | cynicmusic「Another August」 013_Another_August.mp3 |
 | `ending.ogg` | Yoiyami「First Light Particles – CC0 Atmospheric Piano/Ambient Track」 first_light_particles_1.mp3 |
+
+## 自分で作った音
+
+| ファイル | 作り方 |
+|---|---|
+| `audio/sfx/suzu.ogg`・`suzu_far.ogg`（神隠しルートの鈴） | ffmpeg の `aevalsrc` で、減衰する正弦波を重ねて合成したもの |
 
 ## 環境音（`audio/ambient/`）
 

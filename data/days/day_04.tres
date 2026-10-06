@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DayData" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="DayData" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="item_script"]
 [ext_resource type="Resource" path="res://data/items/cicada_shell.tres" id="item_base"]
@@ -28,6 +28,18 @@ condition = SubResource("cond_natsumi")
 scene_path = "res://days/variants/day_04_natsumi.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_n_handkerchief")])
 
+[sub_resource type="Resource" id="cond_kk"]
+script = ExtResource("c_script")
+require_all = Array[StringName]([&"rusty_bell_found"])
+forbid_any = Array[StringName]([&"route_takeru", &"route_natsumi"])
+
+[sub_resource type="Resource" id="var_kk"]
+script = ExtResource("v_script")
+condition = SubResource("cond_kk")
+scene_path = "res://days/variants/day_04_kamikakushi.tscn"
+time_from = 0.3
+time_to = 0.8
+
 [resource]
 script = ExtResource("day_script")
 day_number = 4
@@ -36,4 +48,4 @@ day = 1
 title = "夕立の日"
 scene_path = "res://days/day_04.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_base")])
-variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi")])
+variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi"), SubResource("var_kk")])

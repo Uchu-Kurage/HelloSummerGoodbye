@@ -118,6 +118,8 @@ func collect(item: ItemData, from_someone := false) -> void:
 	collected[item.id] = collected.size()
 	if from_someone:
 		received[item.id] = true
+	if item.collect_flag != &"":
+		set_flag(item.collect_flag)
 	item_collected.emit(item)
 
 
@@ -294,6 +296,28 @@ func day_scene_path(d: DayData) -> String:
 	return v.scene_path if v and v.scene_path != "" else d.scene_path
 
 
+## 日付の札・日の切り替わり・看板に出す [月, 日]（文字）。異界の日は「？？」、shown_date があればそちら
+func day_date(d: DayData) -> Array[String]:
+	var v := day_variant(d)
+	if v and v.date_hidden:
+		return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
+	if v and v.shown_date != Vector2i.ZERO:
+		return [str(v.shown_date.x), str(v.shown_date.y)]
+	return [str(d.month), str(d.day)]
+
+
+func day_date_text(d: DayData) -> String:
+	return Strings.DATE_FULL % day_date(d)
+
+
+## 宝箱の枠の日付 [月, 日]（本当の日付。異界の日だけ「？？」）
+func item_date(d: DayData) -> Array[String]:
+	var v := day_variant(d)
+	if v and v.date_hidden:
+		return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
+	return [str(d.month), str(d.day)]
+
+
 func day_title(d: DayData) -> String:
 	var v := day_variant(d)
 	return v.title if v and v.title != "" else d.title
@@ -310,6 +334,10 @@ func day_time(d: DayData, progress: float) -> float:
 	var v := day_variant(d)
 	if v == null:
 		return progress
+	if v.skip_at > 0.0:
+		if progress >= v.skip_at:
+			return lerpf(v.skip_time_from, v.skip_time_to, inverse_lerp(v.skip_at, 1.0, progress))
+		return lerpf(v.time_from, v.time_to, progress / v.skip_at)
 	return lerpf(v.time_from, v.time_to, progress)
 
 
