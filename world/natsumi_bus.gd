@@ -24,8 +24,8 @@ const GIVE_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_4.p
 const DRAW_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_1.png")
 const WAVE_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_2.png")
 const NATSUMI_H := 150.0
-## 座っている姿の高さ（足もとの草まで入れて）
-const SIT_H := 124.0
+## 座っている姿の高さ（立ち絵と頭の大きさをそろえる）
+const SIT_H := 135.0
 ## 田んぼ道のなつみは、少し小さく（遠く）見せる
 const PADDY_SCALE := 0.8
 const PADDY_Y := 46.0
