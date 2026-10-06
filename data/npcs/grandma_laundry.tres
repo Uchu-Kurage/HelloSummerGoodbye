@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_grandma.png" id="sprite"]
+
+[resource]
+script = ExtResource("1")
+id = &"grandma_laundry"
+display_name = "おばあちゃん"
+lines = Array[String](["たいへん！ せんたくもの！", "@game sentaku", "@event sentaku_done", "@if_flag sentaku_good dry", "すこし ぬれたけど、", "#dry", "まにあったねえ。ありがとね。"])
+repeat_lines = Array[String](["ゆうだちは、すぐ やむからね。"])
+auto_talk = true
+sprite = ExtResource("sprite")
+placeholder_color = Color(0.663, 0.722, 0.557, 1)
+height = 150.0
+skin_color = Color(0.902, 0.745, 0.612, 1)
+hair_color = Color(0.788, 0.769, 0.737, 1)
+shirt_color = Color(0.663, 0.722, 0.557, 1)
+pants_color = Color(0.490, 0.455, 0.408, 1)
+hair_full = true
+stoop = 5.0

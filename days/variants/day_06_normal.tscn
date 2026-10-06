@@ -1,0 +1,71 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_06.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/normal_prop.gd" id="nprop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+[ext_resource type="Resource" path="res://data/npcs/aunt.tres" id="aunt"]
+[ext_resource type="Resource" path="res://data/npcs/grandma_bon.tres" id="grandma_bon"]
+[ext_resource type="Resource" path="res://data/npcs/cousin.tres" id="cousin"]
+
+[node name="Day06_normal" instance=ExtResource("base")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+position = Vector2(220, 604)
+
+[node name="Zashiki" type="Node2D" parent="Props"]
+position = Vector2(760, 604)
+script = ExtResource("nprop")
+kind = 4
+
+[node name="Relatives" type="Node2D" parent="Props"]
+position = Vector2(760, 604)
+script = ExtResource("nprop")
+kind = 5
+width = 380.0
+
+[node name="Aunt" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1080, 604)
+npc_data = ExtResource("aunt")
+
+[node name="Grandma" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1260, 604)
+npc_data = ExtResource("grandma_bon")
+
+[node name="Mukaebi" type="Node2D" parent="Props"]
+position = Vector2(1800, 604)
+script = ExtResource("prop")
+kind = 17
+
+[node name="Shoryouma" type="Node2D" parent="Props"]
+position = Vector2(2010, 604)
+script = ExtResource("nprop")
+kind = 6
+show_on_event = "shoryouma"
+
+[node name="Bucket" type="Node2D" parent="Props"]
+position = Vector2(2760, 604)
+script = ExtResource("prop")
+kind = 34
+
+[node name="Cousin" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2620, 604)
+npc_data = ExtResource("cousin")
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("glow")
+
+[node name="MukaebiGlow" type="Node2D" parent="Props/Glow"]
+position = Vector2(1800, 604)
+script = ExtResource("prop")
+kind = 18
+
+[node name="Stars" type="Node2D" parent="Props/Glow"]
+position = Vector2(2100, 604)
+script = ExtResource("prop")
+kind = 22
+width = 1740.0

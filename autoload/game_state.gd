@@ -55,6 +55,13 @@ var katanuki_result := &""
 ## なつみの好感度（初恋ルート）。エンディングの差分だけに使う（ルートから外れる条件にはしない）
 var natsumi_heart := 0
 
+## 5日目に祖父に買ってもらったお面の種類（&"kitsune"／&"hyottoko"／&"okame"。ノーマルルート）。空ならまだ。
+## アイテムは1つ（festival_mask）で、見た目（icon）だけを種類でかえる
+var mask_kind := &""
+const MASK_KINDS := [&"kitsune", &"hyottoko", &"okame"]
+const MASK_ICON := "res://data/items/icons/mask_%s.svg"
+var _mask_default_icon: Texture2D
+
 ## 好感度の最大（会話の選択肢 9 か所＋ミニゲーム 4 種）と、エンディングの段階のしきい値（遊んでみて調整する）
 const HEART_MAX := 13
 const HEART_HIGH := 10
@@ -64,6 +71,8 @@ const HEART_MID := 5
 func _ready() -> void:
 	day_list = load(DAY_LIST_PATH)
 	_base_puzzle = load(BASE_PUZZLE_PATH)
+	var mask := find_item(&"festival_mask")
+	_mask_default_icon = mask.icon if mask else null
 
 
 func reset() -> void:
@@ -85,6 +94,10 @@ func reset() -> void:
 	if map:
 		map.icon = null
 	ishikiri_result = &""
+	mask_kind = &""
+	var mask := find_item(&"festival_mask")
+	if mask:
+		mask.icon = _mask_default_icon
 	current_day_index = 0
 	start_day_index = 0
 
@@ -275,6 +288,24 @@ func set_natsumi_game(game: StringName, good: bool) -> void:
 		add_heart()
 
 
+## ノーマルルートのミニゲーム（洗濯物の取り込み・精霊馬づくり・星座さがし・かくれんぼ）の結果。
+## 会話で分けられるよう、フラグ <name>_good（うまくいった）／ <name>_miss を立てる。どちらでも話は進む
+func set_game_result(game: StringName, good: bool) -> void:
+	set_flag(StringName(String(game) + ("_good" if good else "_miss")))
+
+
+## 5日目のお面の種類を記録し、お面のアイテムの絵をその種類にする。フラグ mask_<種類> も立てる（祖父の一言を分けるため）
+func set_mask(kind: StringName) -> void:
+	if not MASK_KINDS.has(kind):
+		push_warning("お面の種類がわからない: " + kind)
+		return
+	mask_kind = kind
+	set_flag(StringName("mask_" + kind))
+	var mask := find_item(&"festival_mask")
+	if mask:
+		mask.icon = load(MASK_ICON % kind)
+
+
 ## 屋根と壁のすき間が、ぜんぶふさがったか
 func base_done() -> bool:
 	for c in _base_puzzle.holes():
@@ -333,7 +364,7 @@ func day_items(d: DayData) -> Array[ItemData]:
 func day_time(d: DayData, progress: float) -> float:
 	var v := day_variant(d)
 	if v == null:
-		return progress
+		return lerpf(d.time_from, d.time_to, progress)
 	if v.skip_at > 0.0:
 		if progress >= v.skip_at:
 			return lerpf(v.skip_time_from, v.skip_time_to, inverse_lerp(v.skip_at, 1.0, progress))

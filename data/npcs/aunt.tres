@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"aunt"
+display_name = "おばさん"
+lines = Array[String](["あら、おおきく なったねえ。", "おかあさん、げんき？", "ぼく：うん"])
+repeat_lines = Array[String](["ゆっくり していきなさいね。"])
+placeholder_color = Color(0.722, 0.541, 0.478, 1)
+height = 160.0
+skin_color = Color(0.902, 0.745, 0.612, 1)
+hair_color = Color(0.231, 0.196, 0.176, 1)
+shirt_color = Color(0.722, 0.541, 0.478, 1)
+pants_color = Color(0.420, 0.447, 0.522, 1)
+hair_full = true

@@ -1,0 +1,64 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_07.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/normal_prop.gd" id="nprop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="PackedScene" path="res://world/house.tscn" id="house"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+[ext_resource type="Resource" path="res://data/npcs/aunt_bye.tres" id="aunt_bye"]
+[ext_resource type="Resource" path="res://data/npcs/grandma_quiet.tres" id="grandma_quiet"]
+
+[node name="Day07_normal" instance=ExtResource("base")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+position = Vector2(260, 604)
+
+[node name="Spot1" parent="ItemSpots" index="0"]
+position = Vector2(3080, 604)
+
+[node name="House" parent="Props" instance=ExtResource("house")]
+position = Vector2(880, 604)
+
+[node name="Okuribi" type="Node2D" parent="Props"]
+position = Vector2(1320, 604)
+script = ExtResource("prop")
+kind = 17
+
+[node name="Aunt" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1480, 604)
+npc_data = ExtResource("aunt_bye")
+
+[node name="Car1" type="Node2D" parent="Props"]
+position = Vector2(1700, 604)
+script = ExtResource("nprop")
+kind = 7
+drive_on_event = "cars_leave"
+tint = Color(0.79, 0.83, 0.84, 1)
+
+[node name="Car2" type="Node2D" parent="Props"]
+position = Vector2(2000, 604)
+script = ExtResource("nprop")
+kind = 7
+drive_on_event = "cars_leave"
+tint = Color(0.72, 0.56, 0.5, 1)
+
+[node name="Grandma" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2520, 604)
+npc_data = ExtResource("grandma_quiet")
+
+[node name="Hozuki" type="Node2D" parent="Props"]
+position = Vector2(3000, 604)
+script = ExtResource("nprop")
+kind = 8
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("glow")
+
+[node name="OkuribiGlow" type="Node2D" parent="Props/Glow"]
+position = Vector2(1320, 604)
+script = ExtResource("prop")
+kind = 18

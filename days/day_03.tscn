@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_base.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" path="res://world/house.tscn" id="house"]
 [ext_resource type="Resource" path="res://data/npcs/grandpa_bell.tres" id="npc_grandpa_bell"]
 [ext_resource type="Script" path="res://world/fox_far.gd" id="fox_far"]
+[ext_resource type="Script" path="res://world/normal_prop.gd" id="nprop"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa_river.tres" id="npc_grandpa_river"]
 
 [node name="Day03" instance=ExtResource("base")]
 
@@ -31,6 +33,20 @@ kind = 3
 position = Vector2(1850, 604)
 script = ExtResource("prop")
 kind = 4
+
+[node name="Sasa" type="Node2D" parent="Props"]
+position = Vector2(1010, 604)
+script = ExtResource("nprop")
+
+[node name="Sasabune" type="Node2D" parent="Props"]
+position = Vector2(1180, 604)
+script = ExtResource("nprop")
+kind = 1
+show_on_event = "sasabune"
+
+[node name="GrandpaRiver" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1120, 604)
+npc_data = ExtResource("npc_grandpa_river")
 
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1500, 516)

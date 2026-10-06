@@ -197,6 +197,10 @@ const KAKURENBO_MISS := "（……いない）"
 ## なんどか外すと、隠れているところで鈴がかすかに鳴る
 const KAKURENBO_BELL := "（どこかで、すずが ちりんと なった）"
 const KAKURENBO_FOUND := "（いた！）"
+## おじいちゃんとのかくれんぼ（8日目、ノーマルルート）
+const KAKURENBO_JIJI_READY := "……もう いいぞ。"
+## なんどか外すと、隠れているところで、せきばらい
+const KAKURENBO_JIJI_COUGH := "（どこかで、こほんと せきばらいが きこえた）"
 ## 夜市の物々交換（5日目）：持っている物を、店の品物と交換していく
 const YOMISE_GOODS := ["どんぐり", "かざぐるま", "あおい りんごあめ", "あおい あめだま"]
 const YOMISE_HINT_TOUCH := "とりかえっこ する みせを タップ"
@@ -231,6 +235,46 @@ const SUZU_FURU_RING := "（ちりん――）"
 const SUZU_FURU_SILENT := "（……）"
 const SUZU_FURU_CLOSE_TOUCH := "タップで とじる"
 const SUZU_FURU_CLOSE_KEY := "Space で とじる"
+
+## --- ノーマルルート（祖父母）の画面 ---
+## 洗濯物の取り込み（4日目）：夕立が来る前に、物干しの洗濯物を取り込む
+const SENTAKU_CLOTHES := ["シャツ", "タオル", "くつした", "てぬぐい", "ズボン", "まくらカバー"]
+const SENTAKU_HINT_TOUCH := "せんたくものを タップで とりこむ"
+const SENTAKU_HINT_KEY := "やじるしで えらんで けってい"
+const SENTAKU_START := "はやく はやく！"
+const SENTAKU_GOT := ["よいしょ。", "はい、つぎ。", "その ちょうし。", "あと すこし！"]
+const SENTAKU_RAIN := "（ぽつ、ぽつ……）"
+const SENTAKU_ALL := "ぜんぶ とりこんだ！"
+const SENTAKU_WET := "あらら、すこし ぬれちゃったね。"
+## 精霊馬づくり（6日目）：きゅうりとなすに、割りばしの足をさす
+const SHORYOUMA_HINT_TOUCH := "はしが ●の うえに きたら タップで さす"
+const SHORYOUMA_HINT_KEY := "はしが ●の うえに きたら Space で さす"
+## [どの野菜か, おばあちゃんの一言]
+const SHORYOUMA_VEG := [["きゅうり", "きゅうりは うま。はやく かえって こられるように。"], ["なす", "なすは うし。ゆっくり かえれるように。"]]
+const SHORYOUMA_GOOD := "うん、まっすぐ。"
+const SHORYOUMA_TILT := "ちょっと ななめ。それも いいねえ。"
+const SHORYOUMA_DONE_UMA := "はい、うまの できあがり。"
+const SHORYOUMA_DONE_USHI := "うしも できた。"
+## 星座さがし（9日目）：夏の大三角
+const SEIZA_HINT_TOUCH := "あかるい ほしを みっつ、タップで つなぐ"
+const SEIZA_HINT_KEY := "やじるしで ほしを えらんで けってい"
+const SEIZA_START := "いちばん あかるいのを、みっつ。"
+const SEIZA_RIGHT := ["そう、それだ。", "うん。もう ひとつ。"]
+const SEIZA_WRONG := "それは ちがうな。もっと あかるいのだ。"
+const SEIZA_HINT_GLOW := "（おじいちゃんが、そらを ゆびさした）"
+const SEIZA_DONE := "それが なつの さんかくだ。"
+## 三角の星の名前（見つけたあとに、そばへ出す）
+const SEIZA_NAMES := ["ベガ", "アルタイル", "デネブ"]
+## バスの窓（10日目）：手をふる祖父母が小さくなっていく
+const BUSWIN_CAPTION := "（おじいちゃんと おばあちゃんが、てを ふっている）"
+const BUSWIN_SMALL := "（……ちいさく なっていく）"
+const BUSWIN_GONE := "（みえなく なった）"
+const BUSWIN_WAVE_TOUCH := "タップで てを ふりかえす"
+const BUSWIN_WAVE_KEY := "Space で てを ふりかえす"
+const BUSWIN_CLOSE_TOUCH := "タップで まえを むく"
+const BUSWIN_CLOSE_KEY := "Space で まえを むく"
+## 口笛の音素材が入るまで、口笛は「♪」の吹き出しで表す
+const WHISTLE_NOTE := "♪"
 
 const ROTATE_NOTICE := "よこむきにしてね"
 const ROTATE_SUB := "スマホを よこに すると あそべるよ"

@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_base.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://world/house.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="3"]
 [ext_resource type="Resource" path="res://data/npcs/grandpa.tres" id="4"]
+[ext_resource type="Resource" path="res://data/npcs/grandma_arrive.tres" id="npc_grandma_arrive"]
 [ext_resource type="Resource" path="res://data/npcs/natsumi_paddy.tres" id="npc_natsumi_paddy"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
 [ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="kprop"]
@@ -36,8 +37,12 @@ script = ExtResource("fox_far")
 [node name="House" parent="Props" instance=ExtResource("2")]
 position = Vector2(1400, 604)
 
+[node name="Grandma" parent="Props" instance=ExtResource("3")]
+position = Vector2(400, 604)
+npc_data = ExtResource("npc_grandma_arrive")
+
 [node name="Grandpa" parent="Props" instance=ExtResource("3")]
-position = Vector2(1560, 604)
+position = Vector2(480, 604)
 npc_data = ExtResource("4")
 
 [node name="Natsumi" parent="Props" instance=ExtResource("3")]

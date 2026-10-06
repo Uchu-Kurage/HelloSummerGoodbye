@@ -11,3 +11,4 @@ description = "よみせで かってもらった。"
 icon = ExtResource("icon")
 day_number = 5
 placeholder_color = Color(0.878431, 0.647059, 0.627451, 1)
+on_ground = false

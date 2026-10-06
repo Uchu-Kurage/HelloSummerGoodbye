@@ -7,7 +7,8 @@
 script = ExtResource("1_4dn4s")
 id = &"friend_letter"
 display_name = "友達の置き手紙"
-description = "「また らいねん」って かいてあった。"
+description = "『またらいねん』って かいてあった。"
 icon = ExtResource("icon")
 day_number = 8
 placeholder_color = Color(0.913725, 0.882353, 0.788235, 1)
+read_text = "またらいねん　タケル"

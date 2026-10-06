@@ -1,0 +1,41 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_09.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/normal_prop.gd" id="nprop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa_stars.tres" id="grandpa_stars"]
+
+[node name="Day09_normal" instance=ExtResource("base")]
+
+[node name="Engawa" type="Node2D" parent="Props"]
+position = Vector2(1510, 604)
+script = ExtResource("prop")
+kind = 19
+
+[node name="Kayari" type="Node2D" parent="Props"]
+position = Vector2(1600, 604)
+script = ExtResource("nprop")
+kind = 9
+
+[node name="Grandpa" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1720, 604)
+npc_data = ExtResource("grandpa_stars")
+
+[node name="Whistle" type="Node2D" parent="Props"]
+position = Vector2(1720, 410)
+script = ExtResource("nprop")
+kind = 10
+show_on_event = "whistle"
+hide_on_event = "whistle_end"
+sfx = "kuchibue"
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("glow")
+
+[node name="Stars" type="Node2D" parent="Props/Glow"]
+position = Vector2(0, 604)
+script = ExtResource("prop")
+kind = 22
+width = 3840.0

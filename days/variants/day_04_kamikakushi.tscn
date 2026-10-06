@@ -1,59 +1,11 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=5 format=3]
 
-[ext_resource type="PackedScene" path="res://days/day_04.tscn" id="base"]
-[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r1"]
-[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="r2"]
+[ext_resource type="PackedScene" path="res://days/variants/day_04_normal.tscn" id="base"]
 [ext_resource type="Script" path="res://world/talk_cue.gd" id="r3"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="r4"]
 [ext_resource type="Resource" path="res://data/npcs/fox_rain.tres" id="r5"]
-[ext_resource type="Script" path="res://world/rain_zone.gd" id="r6"]
 
 [node name="Day04_kamikakushi" instance=ExtResource("base")]
-
-[node name="House" parent="Props" index="1"]
-position = Vector2(820, 604)
-
-[node name="Tree" parent="Props" index="0"]
-visible = false
-
-[node name="Spot1" parent="ItemSpots" index="0"]
-position = Vector2(1700, 604)
-
-[node name="Engawa" type="Node2D" parent="Props"]
-script = ExtResource("r1")
-position = Vector2(1180, 604)
-kind = 19
-
-[node name="Torii" type="Node2D" parent="Props"]
-script = ExtResource("r1")
-position = Vector2(2300, 604)
-kind = 7
-
-[node name="Komainu1" type="Node2D" parent="Props"]
-script = ExtResource("r2")
-position = Vector2(2480, 604)
-kind = 2
-
-[node name="Lantern1" type="Node2D" parent="Props"]
-script = ExtResource("r2")
-position = Vector2(2600, 604)
-kind = 1
-
-[node name="BigTree" type="Node2D" parent="Props"]
-script = ExtResource("r2")
-position = Vector2(2760, 604)
-kind = 3
-
-[node name="Shrine" type="Node2D" parent="Props"]
-script = ExtResource("r1")
-position = Vector2(3150, 604)
-kind = 28
-
-[node name="Komainu2" type="Node2D" parent="Props"]
-script = ExtResource("r2")
-position = Vector2(3560, 604)
-kind = 2
-flip = true
 
 [node name="BellRings" type="Node2D" parent="Props"]
 script = ExtResource("r3")
@@ -65,9 +17,3 @@ require_item = &"rusty_bell"
 [node name="Fox" parent="Props" instance=ExtResource("r4")]
 position = Vector2(3240, 604)
 npc_data = ExtResource("r5")
-
-[node name="Rain" type="Node2D" parent="Props"]
-script = ExtResource("r6")
-from_x = 1900.0
-to_x = 4100.0
-stop_on_event = "rain_stop"

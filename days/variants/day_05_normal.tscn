@@ -1,0 +1,59 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_05.tscn" id="base"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/normal_prop.gd" id="nprop"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+[ext_resource type="Resource" path="res://data/npcs/grandma_festival.tres" id="grandma_festival"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa_mask.tres" id="grandpa_mask"]
+
+[node name="Day05_normal" instance=ExtResource("base")]
+
+[node name="Torii" type="Node2D" parent="Props"]
+position = Vector2(380, 604)
+script = ExtResource("prop")
+kind = 7
+
+[node name="Lanterns" type="Node2D" parent="Props"]
+position = Vector2(480, 604)
+script = ExtResource("prop")
+kind = 8
+width = 3000.0
+
+[node name="Stall" type="Node2D" parent="Props"]
+position = Vector2(1050, 604)
+script = ExtResource("prop")
+kind = 10
+
+[node name="Grandma" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1320, 604)
+npc_data = ExtResource("grandma_festival")
+
+[node name="MaskStall" type="Node2D" parent="Props"]
+position = Vector2(1850, 604)
+script = ExtResource("nprop")
+kind = 3
+
+[node name="Grandpa" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2060, 604)
+npc_data = ExtResource("grandpa_mask")
+
+[node name="Stall2" type="Node2D" parent="Props"]
+position = Vector2(2650, 604)
+script = ExtResource("prop")
+kind = 10
+
+[node name="Shrine" type="Node2D" parent="Props"]
+position = Vector2(3350, 604)
+script = ExtResource("prop")
+kind = 28
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("glow")
+
+[node name="LanternsGlow" type="Node2D" parent="Props/Glow"]
+position = Vector2(480, 604)
+script = ExtResource("prop")
+kind = 9
+width = 3000.0

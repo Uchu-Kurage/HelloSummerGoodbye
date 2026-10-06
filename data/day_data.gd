@@ -13,3 +13,8 @@ extends Resource
 ## 宝箱の枠に数えないアイテム（道には置かず、会話の @drop で落ちる。人に返すものなど）。
 ## 持っているあいだだけ宝箱に出る（例：1日目になつみが落とす色えんぴつ）
 @export var extra_items: Array[ItemData] = []
+@export_group("時間帯")
+## ふつうの場面（差し替えがないとき）の時間帯の範囲。DayVariant の time_from / time_to と同じ（朝 0.00／昼 0.25／夕方 0.60／夜 0.85）。
+## 例：夕方〜夜だけの日は from 0.5、夜だけの日は from 0.86
+@export_range(0.0, 1.0) var time_from := 0.0
+@export_range(0.0, 1.0) var time_to := 1.0
