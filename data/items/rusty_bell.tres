@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
-[ext_resource type="Texture2D" path="res://data/items/icons/rusty_bell.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://data/items/icons/rusty_bell.png" id="icon"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="c"]
 
 [sub_resource type="Resource" id="alt"]

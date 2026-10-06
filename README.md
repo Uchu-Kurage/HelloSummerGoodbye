@@ -119,7 +119,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - **異界の色**：`world/otherworld_zone.gd`（OtherworldZone）。その日の小物と背景の層に、色を抜く軽いシェーダー（`world/shaders/desaturate.gdshader`）をかけ、時間帯の色と空も褪せさせる（`TimeOfDay.set_otherworld`）。主人公・夜の灯り（GlowLayer）・道のアイテムは色のまま。`strength` で強さ（5日目の夜市は 0.55、7日目の煙のむこうと 8・9日目は 1）
 - **10日目**：DayVariant の `shown_date`（8/16）で送り火の夜の神社に目覚め、`world/time_skip.gd`（TimeSkip）で暗転して日付が 8/31 までぱらぱらめくれる（`Transition.play_date_riffle`）。時間帯は `skip_at`・`skip_time_from/to` で夜から朝へ飛ぶ。バスは `world/kamikakushi_bus.gd`（走り出してから、鈴を振る）
 - **お面を外す**：NpcData の `alt_sprite` / `alt_sprite_event`（会話の `@event unmask` で絵がかわる）
-- **場所の小物**：`world/kamikakushi_prop.gd`（祠・灯籠・狛犬・大木・夜市の屋台・顔の見えない店の人・青い提灯・ひまわり・知らない村の明かり）。お面の子・小物・ミニゲームの背景は Gemini の水彩の絵（`world/scenery/painted/`・`ui/minigame_bg/`。プロンプトは `tools/art/prompts_kamikakushi.md`）。知らない村の明かりと山の上の草だけ図形で描く。アイテムはまだ SVG の仮の絵
+- **場所の小物**：`world/kamikakushi_prop.gd`（祠・灯籠・狛犬・大木・夜市の屋台・顔の見えない店の人・青い提灯・ひまわり・知らない村の明かり）。お面の子・小物・ミニゲームの背景は Gemini の水彩の絵（`world/scenery/painted/`・`ui/minigame_bg/`。プロンプトは `tools/art/prompts_kamikakushi.md`）。アイテム6つも Gemini の絵（`data/items/icons/*.png`）。知らない村の明かりと山の上の草だけ図形で描く
 - **画面**：どれも `NatsumiScreen` を継承（上にひとことの小札、下に案内の小札）。失敗で止まらない
   - かくれんぼ（4日目、`ui/kakurenbo_game.gd`）：灯籠・おおきな き・こまいぬ・さいせんばこ から探す。`MISS_HINT`（2）回はずすと、隠れているところで鈴が鳴って光る
   - 夜市の物々交換（5日目、`ui/yomise_game.gd`）：どんぐり → かざぐるま → あおい りんごあめ → あおい あめだま。ちがう店は首を横にふる。終わると `@give yomise_ame`

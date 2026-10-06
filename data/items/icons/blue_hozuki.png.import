@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cc8o4o8txtwyj"
-path="res://.godot/imported/rusty_bell.svg-5da3b6ce3c40a033ff7d0faa826187c8.ctex"
+uid="uid://cghrq7cvts5m7"
+path="res://.godot/imported/blue_hozuki.png-be928831d0b994c547af489a17e1b090.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/rusty_bell.svg"
-dest_files=["res://.godot/imported/rusty_bell.svg-5da3b6ce3c40a033ff7d0faa826187c8.ctex"]
+source_file="res://data/items/icons/blue_hozuki.png"
+dest_files=["res://.godot/imported/blue_hozuki.png-be928831d0b994c547af489a17e1b090.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

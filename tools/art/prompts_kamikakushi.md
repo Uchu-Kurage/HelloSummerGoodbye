@@ -13,7 +13,7 @@
 | 送り火の煙 | 水彩の絵にした | `world/smoke_gate.gd` |
 | ミニゲームの背景5枚 | 水彩の絵にした | 各画面の `_draw()`（`MinigameBg.draw_cover()`。鬼ごっこは左右を反転してつなぎ、色をシェーダーで抜く） |
 | 知らない村の明かり | 図形のまま（切り抜くと小さな明かりが暗くにごるため） | `world/kamikakushi_prop.gd` の `_village_lights()` |
-| アイテム6つ | SVG の仮の絵のまま | `data/items/<名前>.tres` の `icon` |
+| アイテム6つ | 水彩の絵にした（正方形・256px の PNG） | `data/items/<名前>.tres` の `icon`、鈴を振る画面（`ui/suzu_furu.gd` の `BELL`） |
 
 ## 共通の約束（どのプロンプトにも、最後に付ける）
 

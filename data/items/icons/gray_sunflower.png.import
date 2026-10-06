@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cyhjm5wy2pnbw"
-path="res://.godot/imported/ogara_ember.svg-af60bebd6374500f636905b6e408d7df.ctex"
+uid="uid://f0ppm4j4xpot"
+path="res://.godot/imported/gray_sunflower.png-90e63dd51acf94621a48f6b357c0aaae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/ogara_ember.svg"
-dest_files=["res://.godot/imported/ogara_ember.svg-af60bebd6374500f636905b6e408d7df.ctex"]
+source_file="res://data/items/icons/gray_sunflower.png"
+dest_files=["res://.godot/imported/gray_sunflower.png-90e63dd51acf94621a48f6b357c0aaae.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

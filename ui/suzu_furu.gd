@@ -7,7 +7,7 @@ extends NatsumiScreen
 const SHAKE_TIME := 0.5
 const CLOSE_AFTER := 1.2
 const RING_TIME := 1.6
-const BELL: Texture2D = preload("res://data/items/icons/rusty_bell.svg")
+const BELL: Texture2D = preload("res://data/items/icons/rusty_bell.png")
 const P := preload("res://world/world_palette.gd")
 ## 背景の絵（朝のバスの車内）と、切り取るとき残したいところ
 const BG: Texture2D = preload("res://ui/minigame_bg/suzu_furu.jpg")
