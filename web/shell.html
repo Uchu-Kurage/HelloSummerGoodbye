@@ -40,13 +40,6 @@ body {
 	border: 0;
 }
 
-body {
-	color: white;
-	background-color: black;
-	overflow: hidden;
-	touch-action: none;
-}
-
 #canvas {
 	display: block;
 }
@@ -74,7 +67,7 @@ body {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	visibility: hidden;
+	visibility: visible;
 }
 
 #status-splash {
@@ -99,6 +92,18 @@ body {
 
 #status-progress, #status-notice {
 	display: none;
+}
+
+/* 読み込みの途中で起きたエラー（スマホで原因を見られるように、画面に出す） */
+#status-error {
+	display: none;
+	max-width: 90%;
+	margin: 0 auto;
+	font-size: 12px;
+	color: #3B3226;
+	white-space: pre-wrap;
+	word-break: break-all;
+	text-align: left;
 }
 
 #status-progress {
@@ -176,7 +181,33 @@ body {
 			<div id="status-text">じゅんびしています…</div>
 			<progress id="status-progress"></progress>
 			<div id="status-notice"></div>
+			<div id="status-error"></div>
 		</div>
+
+		<script>
+// 読み込みの途中のエラーを画面に出す（スマホでは開発ツールが見られないため）
+(function () {
+	const box = document.getElementById('status-error');
+	function show(msg) {
+		if (!box) {
+			return;
+		}
+		box.style.display = 'block';
+		box.textContent += msg + '\n';
+		const status = document.getElementById('status');
+		if (status) {
+			status.style.visibility = 'visible';
+		}
+	}
+	window.addEventListener('error', (e) => show('エラー: ' + (e.message || e.type) + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : '')));
+	window.addEventListener('unhandledrejection', (e) => show('エラー: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason))));
+	const canvas = document.getElementById('canvas');
+	if (canvas) {
+		canvas.addEventListener('webglcontextlost', () => show('がめんの えがきが とまりました（WebGL のコンテキストが失われた）'));
+	}
+	window.__showLoadError = show;
+}());
+		</script>
 
 		<script src="$GODOT_URL"></script>
 		<script>
