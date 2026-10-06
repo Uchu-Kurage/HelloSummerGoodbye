@@ -79,9 +79,13 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 2. **選ばなかった人を消す**（必要なら）：その人の NpcData の `appear_if` に条件を作り、`forbid_any` に相手のフラグを入れる
 3. **先の日の場面を変える**：もとの日のシーンを継承した差し替えシーンを `days/variants/` に作る。その日の DayData（`data/days/`）の `variants` に、条件（`require_all` にフラグ）・場面・タイトルを足す。DayVariant では、ほかに次も変えられる
    - `items`：その日のアイテム（ルート用のアイテムに差し替える。宝箱の枠もこちらになる）
-   - `time_from` / `time_to`：その日の時間帯の範囲（例：夕方〜夜だけの日は `time_from = 0.5`）
-   - `dawn_tint` / `dawn_until`：朝の色の上書き（早朝の暗く青い色など）
-4. **エンディングを足す**：`data/endings/` に EndingData（条件・見出し・しめくくりの一言）を作り、`data/day_list.tres` の `endings` の、ふつうのエンディングより上に入れる
+   - `time_keys`：その日の時間帯のキー（`Vector2(その日の中の位置 0〜1, 時間の値)`。時間の値は 早朝 -0.15／朝 0.00／昼 0.25／夕方 0.60／夜 0.85／夜の終わり 1.00。例：夕方〜夜の日は `[(0, 0.60), (1, 1.00)]`、早朝から昼の日は `[(0, -0.15), (0.6, 0.00), (1, 0.25)]`。同じ位置に2つ置くとそこで時間が飛ぶので、暗転で隠す。空なら朝→夜の終わり）
+   - `is_otherworld`：異界の日（色を褪せさせ、季節の色を止め、日付を「？？」に）
+   - `date_label_override`：日付の札に出す日付を「月/日」で上書き（例：「？？/？？」「8/16」）
+   - `engawa_extra_lines` / `engawa_extra_flag`：縁側の場面で、そのフラグが立っていれば返事のあとに足す行
+   - 差し替えが選ばれた日は、これらは DayData ではなく DayVariant の値を使う（DayData の値はノーマルルートと共通の日のもの）
+4. **縁側の場面の返事を足す**：`data/engawa/` に EngawaReply（`item_id`・`route`・`lines`）の `.tres` を1つ置くだけで出る。`route` は `normal`／`shinyu`／`hatsukoi`／`kamikakushi`（空なら全ルート共通）。`item_id` が空のものは「なんにも」のときの返事。探す順番は「ルートが同じもの → 共通 → なんにも」
+5. **エンディングを足す**：`data/endings/` に EndingData（条件・見出し・しめくくりの一言）を作り、`data/day_list.tres` の `endings` の、ふつうのエンディングより上に入れる
 
 - 人からもらうだけのアイテムは、ItemData の `on_ground` をオフにする（道に置かれない）
 - ルートで一言だけ変えるアイテムは、ItemData の `alt_if` と `alt_description` を使う（例：川のきれいな石）
@@ -110,7 +114,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 シナリオは「ノーマルエンド シナリオ（確定版）」に従う。親友・初恋・神隠しのどのフラグも立たなかった夏（4日目にお面の子の誘いを「かえる」で断ったときも）を、祖父母と過ごす。
 4〜10日目の場面は `days/variants/day_XX_normal.tscn`（それぞれ `day_XX.tscn` を継承）。DayData の `scene_path` がこれを指していて、どのルートの差し替えにも当たらないときに使われる。
-時間帯は DayData の `time_from` / `time_to`（差し替えがないときの範囲。5日目は夕方〜夜、9日目は夜、10日目は朝 など）。
+時間帯は DayData の `time_keys`（差し替えがないときのキー。5日目は夕方〜夜、9日目は夜、10日目は朝 など。値は「ルート分岐表」の「時間帯のキー」）。
 
 - **1〜3日目（全ルート共通）**：バス停で祖父母が待っている（`grandma_arrive`・`grandpa`）、祖母と村を歩く（`grandma_walk`）、祖父と川で帆つきの笹舟を流す（`grandpa_river`。初恋ルートではいない）
 - **4日目**：庭で洗濯物の取り込み → 縁側で雨 → また降りだして神社の軒下で雨宿り → 雨上がりの境内の木で抜け殻。神隠しルートの4日目（`day_04_kamikakushi.tscn`）は、この場面を継承して鈴とお面の子を足したもの
@@ -135,9 +139,9 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - **遠くのお面の子**（1〜3日目、どのルートでも）：`world/fox_far.gd`。田んぼの奥に小さく立ち、近づくと消える
 - **伏線**：駄菓子屋のおばちゃん（2日目）、祖父（3日目の夕方の家の前、`grandpa_bell.tres`。鈴を持っているときだけ）、10日目の祖父（`grandpa_farewell_kk.tres`）
 - **鈴がひとりでに鳴る**：`world/talk_cue.gd`（TalkCue）。決まった場所で音を鳴らし、ひとりごとを読ませる（4・5・6日目の鈴、10日目の目覚め）。音は `audio/sfx/suzu.ogg`・`suzu_far.ogg`
-- **日付の「？？」**：DayVariant の `date_hidden`（8・9日目）。日付の札・日の切り替わり・看板・宝箱の枠が「？？がつ ？？にち」になる（`GameState.day_date` / `item_date`）。7日目は送り火の煙（`world/smoke_gate.gd`）をくぐったところで札が「？？」にめくれる
+- **日付の「？？」**：DayVariant の `is_otherworld` と `date_label_override`（「？？/？？」。8・9日目）。日付の札・日の切り替わり・看板・宝箱の枠が「？？がつ ？？にち」になる（`GameState.day_date` / `item_date`）。7日目は送り火の煙（`world/smoke_gate.gd`）をくぐったところで札が「？？」にめくれる
 - **異界の色**：`world/otherworld_zone.gd`（OtherworldZone）。その日の小物と背景の層に、色を抜く軽いシェーダー（`world/shaders/desaturate.gdshader`）をかけ、時間帯の色と空も褪せさせる（`TimeOfDay.set_otherworld`）。主人公・夜の灯り（GlowLayer）・道のアイテムは色のまま。`strength` で強さ（5日目の夜市は 0.55、7日目の煙のむこうと 8・9日目は 1）
-- **10日目**：DayVariant の `shown_date`（8/16）で送り火の夜の神社に目覚め、`world/time_skip.gd`（TimeSkip）で暗転して日付が 8/31 までぱらぱらめくれる（`Transition.play_date_riffle`）。時間帯は `skip_at`・`skip_time_from/to` で夜から朝へ飛ぶ。バスは `world/kamikakushi_bus.gd`（走り出してから、鈴を振る）
+- **10日目**：DayVariant の `date_label_override`（「8/16」）で送り火の夜の神社に目覚め、`world/time_skip.gd`（TimeSkip）で暗転して日付が 8/31 までぱらぱらめくれる（`Transition.play_date_riffle`）。時間帯は `time_keys` の同じ位置（0.36。TimeSkip の暗転の中）に置いた2つのキーで、夜（0.90）から朝（0.00）へ飛ぶ。バスは `world/kamikakushi_bus.gd`（走り出してから、鈴を振る）
 - **お面を外す**：NpcData の `alt_sprite` / `alt_sprite_event`（会話の `@event unmask` で絵がかわる）
 - **場所の小物**：`world/kamikakushi_prop.gd`（祠・灯籠・狛犬・大木・夜市の屋台・顔の見えない店の人・青い提灯・ひまわり・知らない村の明かり）。お面の子・小物・ミニゲームの背景は Gemini の水彩の絵（`world/scenery/painted/`・`ui/minigame_bg/`。プロンプトは `tools/art/prompts_kamikakushi.md`）。アイテム6つも Gemini の絵（`data/items/icons/*.png`）。知らない村の明かりと山の上の草だけ図形で描く
 - **画面**：どれも `NatsumiScreen` を継承（上にひとことの小札、下に案内の小札）。失敗で止まらない

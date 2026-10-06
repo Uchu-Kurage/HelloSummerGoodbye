@@ -53,6 +53,18 @@ const DATE_DAY := "%s"
 const DATE_FULL := "%sがつ %sにち"
 const DATE_UNKNOWN := "？？"
 
+## 縁側の場面（日の切り替わりの中）。返事の文面は res://data/engawa/*.tres（EngawaReply）
+const ENGAWA_ASK := "おばあちゃん：きょうは、なにしたの？"
+## その日に拾ったものがないとき（と、見せるものの枠の名前）
+const ENGAWA_NOTHING := "なんにも"
+## 縁側の場面は戻る先がないので「もどる」ではなく「とばす」
+const ENGAWA_SKIP := "とばす"
+const ENGAWA_PICK_KEY := "やじるしで えらんで、けっていで みせる"
+const ENGAWA_PICK_TOUCH := "みせる ものを タップ"
+## 会話の話し手の名前（顔の絵と色を選ぶため）
+const GRANDMA := "おばあちゃん"
+const GRANDPA := "おじいちゃん"
+
 const ENDING_TITLE := "なつやすみ おしまい"
 const ENDING_COUNT := "たからもの %d / %d"
 const ENDING_FOUND_TITLE := "なつの たからもの"

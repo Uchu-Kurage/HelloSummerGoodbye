@@ -73,6 +73,17 @@ const TIME_ITEM_APPEAR := 0.3
 const TIME_ITEM_INTERVAL := 0.15
 const TIME_PRESS := 0.08
 const TIME_MESSAGE_AUTO_CLOSE := 6.0
+## 縁側の場面（スキル「5. 動き」）：夜の終わりから暗くなる・一枚絵が明ける・アイテムの出現（1つ／間隔）
+const TIME_ENGAWA_FADE := 0.6
+const TIME_ENGAWA_REVEAL := 0.6
+const TIME_ENGAWA_ITEM := 0.2
+const TIME_ENGAWA_ITEM_INTERVAL := 0.08
+## 縁側の場面の返事は、全文が出てからこの秒数で次の行へ進む（場面全体を TIME_ENGAWA_TOTAL 程度に収めるため。キー／タップですぐ進む）
+const TIME_ENGAWA_LINE_HOLD := 2.5
+## 縁側の場面の全体の目安（これより長くしない）
+const TIME_ENGAWA_TOTAL := 20.0
+## 異界の日の空の縁側（煙だけ）を見せる時間
+const TIME_ENGAWA_EMPTY := 2.0
 ## タイトルの「はじめる」案内がゆっくり明滅する周期の半分
 const TIME_PULSE := 1.2
 const PANEL_SCALE_FROM := 0.96

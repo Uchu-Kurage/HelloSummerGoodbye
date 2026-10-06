@@ -71,22 +71,19 @@ var _talk_index := 0
 var _talk_data: NpcData
 var _talk_npc: Npc
 var _next_show: ItemData
-## 会話パネルに出す顔（立ち絵の頭のまわりを切り出したもの）。立ち絵ごとに1つ作っておく
-var _faces := {}
 var _choice_list: MenuList
 var _choosing := false
 var _choice_at := 0
 var _burying := false
 var _minigame: Control
 var _auto_pending: Array[Npc] = []
-var _msg: PanelContainer
+var _msg: MessagePanel
 var _msg_swatch: ColorRect
 var _msg_icon: TextureRect
 var _msg_name: Label
 var _msg_text: Label
 var _msg_mark: Label
 var _msg_open := false
-var _msg_t := 0.0
 var _msg_done_t := 0.0
 var _hint: Label
 var _hint_start_x := NAN
@@ -269,73 +266,20 @@ func _interact_current() -> void:
 # --- 一言パネル（拾ったときの一言・会話） -------------------------------------------
 
 func _build_message() -> void:
-	_msg = PanelContainer.new()
-	_msg.theme_type_variation = &"PaperPanel"
+	# 一言パネルの見た目は MessagePanel（縁側の場面と同じ部品）
+	_msg = MessagePanel.new()
 	_place_message(false)
 	_msg.mouse_filter = Control.MOUSE_FILTER_STOP
 	_msg.add_to_group("touch_ui")
 	_msg.gui_input.connect(_on_msg_gui_input)
 	_root.add_child(_msg)
-	var outer := VBoxContainer.new()
-	outer.add_theme_constant_override("separation", UiTokens.SPACE_S)
-	outer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_msg.add_child(outer)
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", UiTokens.SPACE_M)
-	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	outer.add_child(h)
-	var icon_box := PanelContainer.new()
-	icon_box.theme_type_variation = &"PaperInset"
-	icon_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	h.add_child(icon_box)
-	_msg_swatch = ColorRect.new()
-	_msg_swatch.custom_minimum_size = Vector2(56, 56)
-	_msg_swatch.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon_box.add_child(_msg_swatch)
-	_msg_icon = TextureRect.new()
-	_msg_icon.custom_minimum_size = Vector2(56, 56)
-	_msg_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_msg_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon_box.add_child(_msg_icon)
-	var v := VBoxContainer.new()
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_theme_constant_override("separation", UiTokens.SPACE_XS)
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	h.add_child(v)
-	_msg_name = Label.new()
-	_msg_name.theme_type_variation = &"SmallLabel"
-	v.add_child(_msg_name)
-	_msg_text = Label.new()
-	_msg_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_msg_text.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
-	_msg_text.custom_minimum_size.y = UiTokens.FONT_BODY * UiTokens.LINE_HEIGHT_RATIO * 2
-	_msg_text.draw.connect(_draw_ruled_lines)
-	v.add_child(_msg_text)
-	_msg_mark = Label.new()
-	_msg_mark.text = Strings.CONTINUE_MARK
-	_msg_mark.theme_type_variation = &"SmallLabel"
-	_msg_mark.size_flags_vertical = Control.SIZE_SHRINK_END
-	h.add_child(_msg_mark)
-	# 会話の選択肢（パネルの下の段。横に並べる）
-	_choice_list = MenuList.new()
-	_choice_list.vertical = false
-	_choice_list.alignment = BoxContainer.ALIGNMENT_END
-	outer.add_child(_choice_list)
-	_choice_list.hide()
+	_msg_swatch = _msg.swatch
+	_msg_icon = _msg.icon
+	_msg_name = _msg.name_label
+	_msg_text = _msg.text_label
+	_msg_mark = _msg.mark
+	_choice_list = _msg.choice_list
 	_msg.hide()
-
-
-## ノートの罫線。文字の行にそろえて引く
-func _draw_ruled_lines() -> void:
-	# 実際の行の高さ（文字の高さ＋行間）にそろえ、文字のすぐ下に線を引く
-	var font_h := float(_msg_text.get_line_height())
-	var spacing := float(_msg_text.get_theme_constant("line_spacing"))
-	var lh := font_h + spacing
-	var n := maxi(1, floori((_msg_text.size.y + spacing) / lh))
-	for i in n:
-		var y := roundf(i * lh + font_h + spacing * 0.25)
-		_msg_text.draw_line(Vector2(0, y), Vector2(_msg_text.size.x, y), UiTokens.PAPER_DARK, 2.0)
 
 
 ## アイテムを拾ったときの一言。読む文があるもの（置き手紙など）は、先にそれを読ませる
@@ -521,33 +465,9 @@ func _show_line(e: String) -> void:
 	_open_message(speaker, e, color, icon)
 
 
-## 立ち絵から顔（頭のまわりの正方形）を切り出す。頭の位置は、絵の上のほうの不透明な部分から決める
+## 立ち絵から顔を切り出す（MessagePanel.face_of。縁側の場面と同じ）
 func _face(tex: Texture2D) -> Texture2D:
-	if tex == null:
-		return null
-	if _faces.has(tex):
-		return _faces[tex]
-	var img := tex.get_image()
-	if img == null:
-		return null
-	if img.is_compressed():
-		img.decompress()
-	var w := img.get_width()
-	# 4頭身なので、頭はだいたい上から 1/4。少し広めに、首もとまで入れる
-	var side := mini(int(img.get_height() * 0.3), w)
-	var left := w
-	var right := 0
-	for y in range(0, side, 4):
-		for x in range(0, w, 2):
-			if img.get_pixel(x, y).a > 0.5:
-				left = mini(left, x)
-				right = maxi(right, x)
-	var cx := int((left + right) / 2.0) if right >= left else int(w / 2.0)
-	var at := AtlasTexture.new()
-	at.atlas = tex
-	at.region = Rect2(clampi(cx - int(side / 2.0), 0, w - side), 0, side, side)
-	_faces[tex] = at
-	return at
+	return MessagePanel.face_of(tex)
 
 
 ## 「ことば:目印 | ことば:目印」の選択肢を出す。目印がなければ、そのまま次へ進む
@@ -690,10 +610,7 @@ func _open_message(title: String, body: String, swatch: Color, icon: Texture2D) 
 
 
 func _set_body(body: String) -> void:
-	_msg_text.text = body
-	_msg_text.visible_characters = 0
-	_msg_mark.modulate.a = 0.0
-	_msg_t = 0.0
+	_msg.set_body(body)
 	_msg_done_t = 0.0
 
 
@@ -752,15 +669,8 @@ func _on_msg_gui_input(event: InputEvent) -> void:
 func _update_message(delta: float) -> void:
 	if not _msg_open:
 		return
-	if _msg_text.visible_characters >= 0:
-		_msg_t += delta
-		var n := int(_msg_t / UiTokens.TIME_CHAR)
-		var total := _msg_text.get_total_character_count()
-		if n > _msg_text.visible_characters:
-			_msg_text.visible_characters = mini(n, total)
-			SfxPlayer.tick()
-		if n >= total:
-			_msg_text.visible_characters = -1
+	if _msg.is_typing():
+		_msg.type_step(delta)
 	if _msg_text.visible_characters < 0 and not _choosing and not _minigame:
 		if _msg_mark.modulate.a == 0.0:
 			UiAnim.fade(_msg_mark, 1.0, UiTokens.TIME_SMALL)

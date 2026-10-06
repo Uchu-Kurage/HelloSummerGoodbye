@@ -29,7 +29,7 @@ script = ExtResource("nprop")
 kind = 10
 show_on_event = "whistle"
 hide_on_event = "whistle_end"
-sfx = "kuchibue"
+sfx = "whistle"
 
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("glow")

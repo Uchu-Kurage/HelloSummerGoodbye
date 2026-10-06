@@ -27,6 +27,7 @@ script = ExtResource("v_script")
 condition = SubResource("cond_natsumi")
 scene_path = "res://days/variants/day_04_natsumi.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_n_handkerchief")])
+time_keys = Array[Vector2]([Vector2(0, 0.25), Vector2(1, 0.85)])
 
 [sub_resource type="Resource" id="cond_kk"]
 script = ExtResource("c_script")
@@ -37,8 +38,8 @@ forbid_any = Array[StringName]([&"route_takeru", &"route_natsumi"])
 script = ExtResource("v_script")
 condition = SubResource("cond_kk")
 scene_path = "res://days/variants/day_04_kamikakushi.tscn"
-time_from = 0.3
-time_to = 0.8
+engawa_extra_lines = Array[String](["おじいちゃん：……さっき、すずの おとが した きが したな"])
+engawa_extra_flag = &"route_kamikakushi"
 
 [resource]
 script = ExtResource("day_script")
@@ -49,5 +50,3 @@ title = "夕立の日"
 scene_path = "res://days/variants/day_04_normal.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_base")])
 variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi"), SubResource("var_kk")])
-time_from = 0.3
-time_to = 0.8
