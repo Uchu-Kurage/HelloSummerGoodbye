@@ -60,6 +60,13 @@ SPLITS = {
 	# 神隠しルート（お面の子）
 	'sunflowers': 'sunflower',
 	'fox_mg1': 'fox_mg1',
+	# ノーマルルート（祖父母。プロンプトは tools/art/prompts_normal.md）
+	'grandpa_mg1': 'grandpa_mg1',
+	'grandma_mg1': 'grandma_mg1',
+	'relatives': 'relative',
+	'cars': 'car',
+	'sentaku_clothes': 'sentaku_cloth',
+	'shoryouma_veg': 'shoryouma_veg',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {
