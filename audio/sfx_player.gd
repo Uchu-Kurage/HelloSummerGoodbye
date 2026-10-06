@@ -68,7 +68,8 @@ func unlock() -> void:
 		play_music(m)
 
 
-## cursor / accept / cancel / pickup / box_open / box_close / day_change / text_tick
+## cursor / accept / cancel / pickup / box_open / box_close / day_change / text_tick /
+## item_show（縁側の場面でアイテムを見せる）/ whistle（祖父・お面の子の口笛。素材がなければ「♪」の吹き出しだけ）など
 ## volume_db で大きさを変えられる（カブトムシとりの心臓の音など）
 func play(sfx_name: String, volume_db := 0.0) -> void:
 	if not enabled:
@@ -91,7 +92,12 @@ func tick() -> void:
 		play("text_tick")
 
 
-## 環境音（蝉の声など）を切り替える。前の音とゆっくり入れかえる。空文字で止める
+## いま鳴らしている環境音の名前（縁側の場面が、終わったときにもとの音へもどすため）
+func ambient_name() -> String:
+	return _ambient_name
+
+
+## 環境音（蝉の声、縁側の場面の engawa_night など）を切り替える。前の音とゆっくり入れかえる。空文字で止める
 func set_ambient(ambient_name: String) -> void:
 	if ambient_name == _ambient_name:
 		return

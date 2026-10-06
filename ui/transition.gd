@@ -61,16 +61,26 @@ func change_scene(path: String) -> void:
 
 
 ## 日の切り替わり。on_dark は真っ暗な間に呼ぶ（プレイヤーを次の日へ送るなど）。
-## 合計 TIME_DAY_CHANGE 秒前後。決定キーやタップで早送りできる。
-func play_day_change(date_text: String, title: String, on_dark: Callable, on_reveal: Callable) -> void:
+## interlude があれば、暗転のあと・日付の前に呼んで終わるまで待つ（縁側の場面。await できる処理）。
+## 合計 TIME_DAY_CHANGE 秒前後（縁側の場面のぶんは別）。決定キーやタップで早送りできる。
+func play_day_change(date_text: String, title: String, on_dark: Callable, on_reveal: Callable,
+		interlude: Callable = Callable()) -> void:
 	_busy = true
 	_block(true)
 	_date_label.text = date_text
 	_title_label.text = title
 	var total := UiTokens.TIME_DAY_CHANGE
 	_tween = create_tween().set_trans(UiTokens.TRANS)
-	_tween.tween_property(_fade, "modulate:a", 1.0, total * 0.3).set_ease(Tween.EASE_IN)
+	# 縁側の場面がある日は、夜の終わりからゆっくり暗くなる
+	var fade_in := UiTokens.TIME_ENGAWA_FADE if interlude.is_valid() else total * 0.3
+	_tween.tween_property(_fade, "modulate:a", 1.0, fade_in).set_ease(Tween.EASE_IN)
 	_tween.tween_callback(on_dark)
+	if interlude.is_valid():
+		await _tween.finished
+		# 縁側の場面のあいだは、ここでの早送りはしない（縁側の場面が入力を受ける）
+		_tween = null
+		await interlude.call()
+		_tween = create_tween().set_trans(UiTokens.TRANS)
 	_tween.tween_property(_date_box, "modulate:a", 1.0, total * 0.15).set_ease(Tween.EASE_OUT)
 	_tween.tween_interval(total * 0.25)
 	_tween.tween_property(_date_box, "modulate:a", 0.0, total * 0.1).set_ease(Tween.EASE_IN)

@@ -17,7 +17,7 @@ script = ExtResource("v_script")
 condition = SubResource("cond_takeru")
 scene_path = "res://days/variants/day_10_takeru.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_takeru")])
-time_to = 0.3
+time_keys = Array[Vector2]([Vector2(0, 0), Vector2(1, 0.15)])
 
 [sub_resource type="Resource" id="cond_natsumi_high"]
 script = ExtResource("c_script")
@@ -28,7 +28,7 @@ script = ExtResource("v_script")
 condition = SubResource("cond_natsumi_high")
 scene_path = "res://days/variants/day_10_natsumi_high.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_natsumi")])
-time_to = 0.3
+time_keys = Array[Vector2]([Vector2(0, 0), Vector2(1, 0.15)])
 
 [sub_resource type="Resource" id="cond_natsumi"]
 script = ExtResource("c_script")
@@ -38,7 +38,7 @@ require_all = Array[StringName]([&"route_natsumi"])
 script = ExtResource("v_script")
 condition = SubResource("cond_natsumi")
 scene_path = "res://days/variants/day_10_natsumi.tscn"
-time_to = 0.3
+time_keys = Array[Vector2]([Vector2(0, 0), Vector2(1, 0.15)])
 
 [sub_resource type="Resource" id="cond_kk"]
 script = ExtResource("c_script")
@@ -49,12 +49,8 @@ script = ExtResource("v_script")
 condition = SubResource("cond_kk")
 scene_path = "res://days/variants/day_10_kamikakushi.tscn"
 title = "お盆（送り火）"
-shown_date = Vector2i(8, 16)
-time_from = 0.93
-time_to = 0.97
-skip_at = 0.36
-skip_time_from = 0.04
-skip_time_to = 0.3
+time_keys = Array[Vector2]([Vector2(0, 0.9), Vector2(0.36, 0.9), Vector2(0.36, 0), Vector2(1, 0.15)])
+date_label_override = "8/16"
 
 [resource]
 script = ExtResource("day_script")
@@ -65,4 +61,4 @@ title = "帰る日"
 scene_path = "res://days/variants/day_10_normal.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_base")])
 variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi_high"), SubResource("var_natsumi"), SubResource("var_kk")])
-time_to = 0.3
+time_keys = Array[Vector2]([Vector2(0, 0), Vector2(1, 0.15)])

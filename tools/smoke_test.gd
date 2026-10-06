@@ -391,19 +391,47 @@ func _run() -> void:
 	check(GameState.day_scene_path(GameState.get_day(4)) == GameState.get_day(4).scene_path, "no route -> original day 5")
 	check(GameState.find_item(&"river_stone").text() == "つめたくて、すべすべ。", "no route -> normal river stone text")
 	check(GameState.day_time(GameState.get_day(8), 0.0) >= 0.85, "no route -> normal day 9 is at night (the last night with grandpa)")
-	check(GameState.day_time(GameState.get_day(3), 0.0) == GameState.get_day(3).time_from, "no route -> day 4 time range from DayData")
+	check(GameState.day_time(GameState.get_day(3), 0.0) == 0.0 and GameState.day_time(GameState.get_day(3), 1.0) == 1.0, "no route -> day 4 has no time keys (morning to night)")
+	check(is_equal_approx(GameState.day_time(GameState.get_day(4), 0.0), TimeKeys.EVENING) and is_equal_approx(GameState.day_time(GameState.get_day(4), 1.0), 1.0),
+		"no route -> day 5 starts in the evening (time keys)")
+	check(is_equal_approx(GameState.day_time(GameState.get_day(9), 1.0), 0.15), "no route -> day 10 ends in the morning")
 	GameState.set_flag(&"route_takeru")
 	check(GameState.day_time(GameState.get_day(8), 0.0) >= 0.8, "takeru day 9 is at night")
-	check(GameState.day_tint(GameState.get_day(5), 0.0).b > GameState.day_tint(GameState.get_day(5), 0.0).r, "takeru day 6 dawn is blue")
+	var dawn := TimeOfDay.sample_light(GameState.day_time(GameState.get_day(5), 0.0))
+	check(is_equal_approx(GameState.day_time(GameState.get_day(5), 0.0), TimeKeys.DAWN) and dawn.b > dawn.r and dawn.v < 0.9, "takeru day 6 starts at dawn (dark blue)")
+	check(is_equal_approx(GameState.day_time(GameState.get_day(5), 0.6), 0.0) and is_equal_approx(GameState.day_time(GameState.get_day(5), 1.0), TimeKeys.NOON),
+		"takeru day 6: dawn -> morning at 0.6 -> noon")
 	GameState.flags = keep_flags
+	# 時間帯のキー：補間、同じ x の2つで時間が飛ぶ、並び順
+	var jump: Array[Vector2] = [Vector2(0, 0.9), Vector2(0.15, 0.9), Vector2(0.15, 0.0), Vector2(1, 0.15)]
+	check(is_equal_approx(TimeKeys.sample(jump, 0.1), 0.9) and is_equal_approx(TimeKeys.sample(jump, 0.15), 0.0)
+		and is_equal_approx(TimeKeys.sample(jump, 1.0), 0.15) and TimeKeys.sample(jump, 0.5) > 0.0, "time keys: jump at the same x")
+	var empty: Array[Vector2] = []
+	check(is_equal_approx(TimeKeys.sample(empty, 0.5), 0.5), "time keys: none -> 0..1")
+	check(TimeKeys.is_sorted(jump) and not TimeKeys.is_sorted([Vector2(0.5, 0), Vector2(0.2, 1)] as Array[Vector2]), "time keys: order check")
+	for di in GameState.day_count():
+		var dd := GameState.get_day(di)
+		var all_keys: Array = [dd.time_keys]
+		for v in dd.variants:
+			all_keys.append(v.time_keys)
+		for k in all_keys:
+			check(TimeKeys.is_sorted(k), "day %d time keys sorted %s" % [di + 1, str(k)])
 	check(GameState.summer_progress(8, 31) > GameState.summer_progress(7, 21), "summer progress increases")
 	var c0 := TimeOfDay.sky_color(0.4, 0.0)
 	var c1 := TimeOfDay.sky_color(0.4, 1.0)
 	check(c1.s < c0.s, "sky fades late summer")
 	await _wait(6.0)
+	_check_engawa_data()
+	_check_engawa_takeru()
+	_engawa_seen.clear()
 	await _natsumi_route()
+	_check_engawa_natsumi()
+	_engawa_seen.clear()
 	await _kamikakushi_route()
+	_check_engawa_kamikakushi()
+	_engawa_seen.clear()
 	await _normal_route()
+	_check_engawa_normal()
 	await _check_debug_jump()
 
 
@@ -1092,7 +1120,7 @@ func _kamikakushi_route() -> void:
 	check(max_ow.get(7, 0.0) > 0.9 and max_ow.get(8, 0.0) > 0.9 and max_ow.get(3, 0.0) == 0.0, "otherworld: colors fade on days 8-9 only %s" % str(max_ow))
 	check(max_ow.get(4, 0.0) > 0.3 and max_ow.get(4, 0.0) < 0.9, "day 5: the night market is faintly otherworldly (%.2f)" % max_ow.get(4, 0.0))
 	check(cards.get(9, "").ends_with("16") and cards.get("d10_after", "").ends_with("31"), "day 10: wakes on 8/16, flips to 8/31 (%s -> %s)" % [cards.get(9, ""), cards.get("d10_after", "")])
-	check(d10_start_time > 0.9 and d10_after_time >= 0.0 and d10_after_time < 0.3, "day 10: night at the shrine, then morning (%.2f -> %.2f)" % [d10_start_time, d10_after_time])
+	check(d10_start_time >= 0.89 and d10_after_time >= 0.0 and d10_after_time < 0.3, "day 10: night at the shrine, then morning (%.2f -> %.2f)" % [d10_start_time, d10_after_time])
 	check(TimeSkip.dates_between(Vector2i(8, 16), Vector2i(8, 31)).size() == 16, "time skip riffles 8/16..8/31")
 	var scene := get_tree().current_scene
 	check(scene and scene.name == "Ending", "kamikakushi: ending reached")
@@ -1238,3 +1266,257 @@ func _normal_route() -> void:
 
 func player_x(main: Node) -> float:
 	return (main.get_node("Player") as Node2D).global_position.x
+
+
+# --- 縁側の場面（日の切り替わりの中） -------------------------------------------------
+
+## ルート → { 終わった日（1 始まり） → { empty, items, picked, lines, hint } }
+var _engawa_seen := {}
+## 何回目の縁側の場面か（1回目はキーボード、2回目はタッチ、3回目は「とばす」で確かめる。あとは自動）
+var _engawa_count := 0
+var _engawa_busy := false
+var _engawa_layout_checked := false
+
+
+func _process(_delta: float) -> void:
+	var scene := get_tree().current_scene
+	if _engawa_busy or scene == null or not ("engawa" in scene):
+		return
+	var e: Engawa = scene.engawa
+	if e and e.is_open():
+		_engawa_busy = true
+		# 矢印キー・タッチのイベントで、歩く道の押しつづけ（move_right）が離されるので、終わったらもどす
+		var held := Input.is_action_pressed("move_right")
+		await _drive_engawa(e)
+		if held:
+			Input.action_press("move_right")
+		_engawa_busy = false
+
+
+func _key(code: Key) -> void:
+	for pressed in [true, false]:
+		var ev := InputEventKey.new()
+		ev.keycode = code
+		ev.physical_keycode = code
+		ev.pressed = pressed
+		Input.parse_input_event(ev)
+		await get_tree().process_frame
+
+
+func _touch(pos: Vector2) -> void:
+	for pressed in [true, false]:
+		var ev := InputEventScreenTouch.new()
+		ev.position = pos
+		ev.pressed = pressed
+		Input.parse_input_event(ev)
+		await get_tree().process_frame
+
+
+func _until(cond: Callable, limit := 10.0) -> bool:
+	var t := 0.0
+	while not cond.call() and t < limit:
+		await get_tree().process_frame
+		t += get_process_delta_time()
+	return cond.call()
+
+
+## キャンバスの座標（UI）を、入力イベントの座標（ウィンドウ）に直す
+func _to_screen(p: Vector2) -> Vector2:
+	return get_tree().root.get_final_transform() * p
+
+
+func _drive_engawa(e: Engawa) -> void:
+	_engawa_count += 1
+	var n := _engawa_count
+	var route := String(GameState.current_route())
+	var day := GameState.current_day_index  # 日の切り替わりの暗転の中で、もう次の日になっている
+	var rec := {"empty": e.empty, "items": [], "picked": &"", "lines": [], "mode": "auto"}
+	_engawa_seen[route] = _engawa_seen.get(route, {})
+	_engawa_seen[route][day] = rec
+	check(get_tree().paused, "engawa pauses the game (day %d)" % day)
+	if e.empty:
+		var t0 := Time.get_ticks_msec()
+		await _until(func(): return not e.is_open())
+		rec["ms"] = (Time.get_ticks_msec() - t0) * Engine.time_scale
+		return
+	await _until(func(): return e.phase == Engawa.Phase.ASK)
+	if n == 3:
+		# 「とばす」相当（ui_cancel）で場面ごととばす
+		rec["mode"] = "skip"
+		var esc := InputEventAction.new()
+		esc.action = &"ui_cancel"
+		esc.pressed = true
+		Input.parse_input_event(esc)
+		await get_tree().process_frame
+		rec["skipped"] = e.phase == Engawa.Phase.OUTRO
+		await _until(func(): return not e.is_open())
+		return
+	if n == 1:
+		# キーボード：決定で問いかけを全文に → 並んだら右キーで枠を選び、決定で見せる
+		rec["mode"] = "key"
+		await _key(KEY_ENTER)
+		rec["ask_all"] = not e._panel.is_typing()
+	await _until(func(): return e.phase == Engawa.Phase.PICK and e._phase_t > Engawa.PICK_GUARD + 0.1)
+	var slots := e.slots()
+	for s in slots:
+		rec["items"].append(s.item.id)
+	rec["hint"] = e._hint_label.text
+	if not _engawa_layout_checked:
+		_engawa_layout_checked = true
+		await _check_engawa_layout(e)
+	if n == 1:
+		await _key(KEY_RIGHT)
+		await _key(KEY_RIGHT)
+		var f := get_viewport().gui_get_focus_owner()
+		rec["focused"] = (f as ItemSlot).item.id if f is ItemSlot else &""
+		rec["marked"] = f is ItemSlot and (f as ItemSlot).selected
+		rec["hint"] = e._hint_label.text
+		await _key(KEY_ENTER)
+	elif n == 2:
+		# タッチ：最後の枠をタップで即決定
+		rec["mode"] = "touch"
+		var last: ItemSlot = slots[-1]
+		await _touch(_to_screen(last.get_global_rect().get_center()))
+		rec["touch_target"] = last.item.id
+		rec["hint"] = e._hint_label.text
+	else:
+		e.pick(slots[0])
+	await _until(func(): return e.phase != Engawa.Phase.PICK)
+	rec["picked"] = e.shown_item.id if e.shown_item else &""
+	rec["lines"] = e.lines.duplicate()
+	if n == 2:
+		# タッチで文字送り → 全文 → 次の行
+		while e.is_open() and e.phase == Engawa.Phase.REPLY:
+			await _touch(_to_screen(Vector2(640, 360)))
+			await _wait(0.05)
+	elif n == 1:
+		while e.is_open() and e.phase == Engawa.Phase.REPLY:
+			await _key(KEY_ENTER)
+			await _wait(0.05)
+	await _until(func(): return not e.is_open(), 30.0)
+	rec["closed"] = not e.is_open()
+
+
+## 縦横比をかえても、縁側の場面の UI がはみ出さず、押せる部分が 72px 以上・画面端から 40px 以上あく
+func _check_engawa_layout(e: Engawa) -> void:
+	var win := get_tree().root
+	var keep_size := win.size
+	var keep_base := win.content_scale_size
+	for spec in [[Vector2i(1280, 720), UiTokens.BASE_SIZE], [Vector2i(2340, 1080), UiTokens.BASE_SIZE],
+			[Vector2i(1600, 1200), UiTokens.BASE_SIZE], [Vector2i(2340, 1080), UiTokens.COMPACT_BASE_SIZE]]:
+		win.size = spec[0]
+		win.content_scale_size = spec[1]
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var vis := e._root.get_global_rect()
+		var inner := vis.grow(-UiTokens.SCREEN_MARGIN + 1)
+		var ok := true
+		var why := ""
+		for c in [e._panel, e._skip, e._hint] + e.slots():
+			var r: Rect2 = c.get_global_rect()
+			if not inner.encloses(r):
+				ok = false
+				why += " %s%s" % [c.name, str(r)]
+		for c in [e._skip] + e.slots():
+			if c.size.x < UiTokens.TOUCH_MIN or c.size.y < UiTokens.TOUCH_MIN:
+				ok = false
+				why += " small %s" % c.name
+		check(ok, "engawa layout fits %s base %s (screen %s)%s" % [str(spec[0]), str(spec[1]), str(vis.size), why])
+	win.size = keep_size
+	win.content_scale_size = keep_base
+	await get_tree().process_frame
+
+
+func _engawa_lines(route: String, day: int) -> Array:
+	return _engawa_seen.get(route, {}).get(day, {}).get("lines", [])
+
+
+func _engawa_rec(route: String, day: int) -> Dictionary:
+	return _engawa_seen.get(route, {}).get(day, {})
+
+
+func _engawa_days() -> Array:
+	var days := []
+	for r in _engawa_seen:
+		days.append_array(_engawa_seen[r].keys())
+	days.sort()
+	return days
+
+
+func _reply_lines(item: StringName, route: StringName) -> Array:
+	var r := EngawaReply.find(item, route)
+	return r.lines if r else []
+
+
+## 返事のデータ：フォルダの .tres をぜんぶ読み、ルート → 共通 → 「なんにも」の順に探す
+func _check_engawa_data() -> void:
+	var files := Array(DirAccess.get_files_at(EngawaReply.DIR)).filter(func(f): return f.ends_with(".tres"))
+	check(EngawaReply.all().size() == files.size() and files.size() >= 28, "engawa replies: every .tres in data/engawa is read (%d)" % files.size())
+	check(_reply_lines(&"river_stone", &"shinyu")[0].begins_with("おじいちゃん：あそこの せがれか"), "engawa reply: route first (shinyu river stone)")
+	check(_reply_lines(&"river_stone", &"normal")[0].begins_with("おじいちゃん：いい いしだ"), "engawa reply: then the shared one")
+	check(_reply_lines(&"no_such_item", &"normal") == ["おじいちゃん：そういう ひも ある"], "engawa reply: unknown item -> なんにも")
+	check(_reply_lines(&"", &"kamikakushi") == ["おじいちゃん：そういう ひも ある"], "engawa reply: なんにも")
+	for r in EngawaReply.all():
+		for line in r.lines:
+			var body: String = line.substr(line.find("：") + 1)
+			check(body.length() <= 22, "engawa reply line is short: %s" % line)
+
+
+## 親友ルート（はじめの通しの道）：1回目はキーボード、2回目はタッチ、3回目は「とばす」
+func _check_engawa_takeru() -> void:
+	check(_engawa_days() == [1, 2, 3, 4, 5, 6, 7, 8, 9], "engawa: days 1-9 only, not day 10 %s" % str(_engawa_days()))
+	check(_engawa_layout_checked, "engawa layout checked")
+	var k := _engawa_rec("normal", 1)
+	check(k.get("mode") == "key" and k.get("ask_all", false), "engawa keyboard: accept shows the whole question")
+	check(k.get("items", []).has(&"bus_ticket") and k.get("items", []).has(&"blue_pencil"), "engawa day 1: the items picked up that day %s" % str(k.get("items")))
+	check(k.get("marked", false) and k.get("picked") == k.get("focused") and k.get("picked") != &"", "engawa keyboard: arrows + enter shows the focused item (%s)" % k.get("picked"))
+	check(k.get("hint") == Strings.ENGAWA_PICK_KEY, "engawa keyboard hint")
+	check(k.get("lines") == _reply_lines(k.get("picked", &""), &"normal") and not k.get("lines", []).is_empty(), "engawa keyboard: reply for %s %s" % [k.get("picked"), str(k.get("lines"))])
+	check(k.get("closed", false), "engawa keyboard: closes after the reply")
+	var t := _engawa_rec("normal", 2)
+	check(t.get("mode") == "touch" and t.get("picked") == t.get("touch_target") and t.get("picked") == &"marble", "engawa touch: tap shows the item at once (%s)" % t.get("picked"))
+	check(t.get("hint") == Strings.ENGAWA_PICK_TOUCH, "engawa touch hint")
+	check(t.get("lines") == ["おじいちゃん：ビーだまか。わしも むかし あつめた"] and t.get("closed", false), "engawa touch: reply read through by tapping")
+	check(_engawa_rec("shinyu", 3).get("skipped", false), "engawa: ui_cancel skips the whole scene")
+	check(_engawa_rec("shinyu", 4).get("picked") == &"base_plaque" and _engawa_lines("shinyu", 4).has("ぼく：ひみつ"), "engawa shinyu day 4: base plaque reply %s" % str(_engawa_lines("shinyu", 4)))
+	check(_engawa_rec("shinyu", 8).get("items", [1]) == [&""] and _engawa_lines("shinyu", 8) == ["おじいちゃん：そういう ひも ある"],
+		"engawa: nothing picked up -> なんにも %s" % str(_engawa_rec("shinyu", 8)))
+	for d in range(1, 10):
+		var rec := _engawa_rec("shinyu" if d >= 3 else "normal", d)
+		check(not rec.get("empty", true), "engawa shinyu day %d: grandparents are there" % d)
+
+
+func _check_engawa_natsumi() -> void:
+	check(_engawa_days() == [1, 2, 3, 4, 5, 6, 7, 8, 9], "engawa natsumi: days 1-9 %s" % str(_engawa_days()))
+	check(_engawa_lines("hatsukoi", 3) == ["おばあちゃん：あら、じょうずに かけたね。", "おばあちゃん：だれと かいたの？", "ぼく：なつみ", "おばあちゃん：ああ、なつみちゃん"],
+		"engawa natsumi day 3: river sketch %s" % str(_engawa_lines("hatsukoi", 3)))
+	check(_engawa_rec("hatsukoi", 9).get("picked") == &"senko_ash" and _engawa_lines("hatsukoi", 9)[-1] == "ぼく：うん", "engawa natsumi day 9: senko ash")
+
+
+func _check_engawa_kamikakushi() -> void:
+	check(_engawa_days() == [1, 2, 3, 4, 5, 6, 7, 8, 9], "engawa kamikakushi: days 1-9 %s" % str(_engawa_days()))
+	check(_engawa_lines("kamikakushi", 4)[-1] == "おじいちゃん：……さっき、すずの おとが した きが したな",
+		"engawa kamikakushi day 4: grandpa heard the bell after the reply %s" % str(_engawa_lines("kamikakushi", 4)))
+	check(_engawa_lines("kamikakushi", 5).has("ぼく：……おまつりの おく"), "engawa kamikakushi day 5: night market candy")
+	check(_engawa_lines("kamikakushi", 6)[-1] == "おじいちゃん：……", "engawa kamikakushi day 6: grandpa says nothing")
+	for d in [7, 8, 9]:
+		var rec := _engawa_rec("kamikakushi", d)
+		check(rec.get("empty", false) and rec.get("lines", [1]).is_empty() and rec.get("ms", 0.0) > 1500.0 and rec.get("ms", 0.0) < 3500.0,
+			"engawa kamikakushi day %d: nobody there, only the smoke (%s)" % [d, str(rec)])
+	for d in [1, 2, 3, 4, 5, 6]:
+		check(not _engawa_rec("kamikakushi" if d >= 4 else "normal", d).get("empty", true), "engawa kamikakushi day %d: grandparents are there" % d)
+	# 異界の日：季節の色は7日目で止まり、10日目は本当の日付の進み具合
+	var s7 := GameState.summer_progress_of(GameState.get_day(6))
+	check(GameState.is_otherworld(GameState.get_day(7)) and GameState.is_otherworld(GameState.get_day(8)) and not GameState.is_otherworld(GameState.get_day(6)),
+		"kamikakushi: days 8-9 are otherworld days")
+	check(GameState.summer_progress_of(GameState.get_day(7)) == s7 and GameState.summer_progress_of(GameState.get_day(8)) == s7
+		and GameState.summer_progress_of(GameState.get_day(9)) > s7, "kamikakushi: the season stops at day 7 on days 8-9")
+	check(GameState.day_date(GameState.get_day(9)) == ["8", "16"], "kamikakushi day 10: wakes on 8/16 (date_label_override)")
+
+
+func _check_engawa_normal() -> void:
+	check(_engawa_days() == [1, 2, 3, 4, 5, 6, 7, 8, 9], "engawa normal: days 1-9 %s" % str(_engawa_days()))
+	check(_engawa_lines("normal", 5) == ["おばあちゃん：よく にあってるよ"], "engawa normal day 5: festival mask %s" % str(_engawa_lines("normal", 5)))
+	check(_engawa_rec("normal", 9).get("picked") == &"straw_hat" and _engawa_lines("normal", 9) == ["おばあちゃん：あら、おじいちゃんの。にあうねえ"], "engawa normal day 9: straw hat")
+	for d in range(1, 10):
+		check(not _engawa_rec("normal", d).get("empty", true), "engawa normal day %d: grandparents are there" % d)

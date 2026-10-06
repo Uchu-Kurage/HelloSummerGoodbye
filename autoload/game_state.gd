@@ -327,13 +327,28 @@ func day_scene_path(d: DayData) -> String:
 	return v.scene_path if v and v.scene_path != "" else d.scene_path
 
 
-## 日付の札・日の切り替わり・看板に出す [月, 日]（文字）。異界の日は「？？」、shown_date があればそちら
-func day_date(d: DayData) -> Array[String]:
+## その日の場面の値（時間帯・異界・縁側）を持つもの。差し替えがあればその DayVariant、なければ DayData
+func _day_spec(d: DayData) -> Resource:
 	var v := day_variant(d)
-	if v and v.date_hidden:
+	return v if v else d
+
+
+## 異界の日か（神隠しルートの8・9日目）
+func is_otherworld(d: DayData) -> bool:
+	return _day_spec(d).is_otherworld
+
+
+## 日付の札・日の切り替わり・看板に出す [月, 日]（文字）。
+## date_label_override（「月/日」）があればそれ、異界の日は「？？」、ほかは本当の日付
+func day_date(d: DayData) -> Array[String]:
+	var o: String = _day_spec(d).date_label_override
+	if o != "":
+		var parts := o.replace("／", "/").split("/")
+		if parts.size() == 2:
+			return [parts[0].strip_edges(), parts[1].strip_edges()]
+		push_warning("date_label_override は「月/日」の形で書く: " + o)
+	if is_otherworld(d):
 		return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
-	if v and v.shown_date != Vector2i.ZERO:
-		return [str(v.shown_date.x), str(v.shown_date.y)]
 	return [str(d.month), str(d.day)]
 
 
@@ -343,8 +358,7 @@ func day_date_text(d: DayData) -> String:
 
 ## 宝箱の枠の日付 [月, 日]（本当の日付。異界の日だけ「？？」）
 func item_date(d: DayData) -> Array[String]:
-	var v := day_variant(d)
-	if v and v.date_hidden:
+	if is_otherworld(d):
 		return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
 	return [str(d.month), str(d.day)]
 
@@ -360,25 +374,50 @@ func day_items(d: DayData) -> Array[ItemData]:
 	return v.items if v and not v.items.is_empty() else d.items
 
 
-## その日の進み具合（0.0〜1.0）を時間帯（朝 0.00〜夜 1.00）に直す
+## その日の時間帯のキー（差し替えがあればそちら。空なら TimeKeys.DEFAULT として扱う）
+func day_time_keys(d: DayData) -> Array[Vector2]:
+	return _day_spec(d).time_keys
+
+
+## その日の中の位置（0.0〜1.0）の時間の値（早朝 -0.15／朝 0.00／昼 0.25／夕方 0.60／夜 0.85／夜の終わり 1.00）
 func day_time(d: DayData, progress: float) -> float:
-	var v := day_variant(d)
-	if v == null:
-		return lerpf(d.time_from, d.time_to, progress)
-	if v.skip_at > 0.0:
-		if progress >= v.skip_at:
-			return lerpf(v.skip_time_from, v.skip_time_to, inverse_lerp(v.skip_at, 1.0, progress))
-		return lerpf(v.time_from, v.time_to, progress / v.skip_at)
-	return lerpf(v.time_from, v.time_to, progress)
+	return TimeKeys.sample(day_time_keys(d), progress)
 
 
-## 朝の色の上書き（なければ白）。dawn_until に向けて少しずつ消える
-func day_tint(d: DayData, progress: float) -> Color:
-	var v := day_variant(d)
-	if v == null or v.dawn_tint == Color.WHITE:
-		return Color.WHITE
-	var k := 1.0 - smoothstep(0.0, maxf(v.dawn_until, 0.001), progress)
-	return Color.WHITE.lerp(v.dawn_tint, k)
+## いまのルート（縁側の場面の返事の選び方など）：&"shinyu"／&"hatsukoi"／&"kamikakushi"／&"normal"
+func current_route() -> StringName:
+	if has_flag(&"route_natsumi"):
+		return &"hatsukoi"
+	if has_flag(&"route_takeru"):
+		return &"shinyu"
+	if has_flag(&"route_kamikakushi"):
+		return &"kamikakushi"
+	return &"normal"
+
+
+## 縁側の場面に誰もいない日か：異界の日と、異界に入った日（次の日が異界の日。神隠しルートの7日目）
+func engawa_empty(index: int) -> bool:
+	if is_otherworld(get_day(index)):
+		return true
+	return index + 1 < day_count() and is_otherworld(get_day(index + 1))
+
+
+## 縁側の場面で、返事のあとに足す行（その日の engawa_extra_flag が立っていなければ空）
+func engawa_extra_lines(d: DayData) -> Array[String]:
+	var spec := _day_spec(d)
+	var f: StringName = spec.engawa_extra_flag
+	if f == &"" or not has_flag(f):
+		return []
+	return spec.engawa_extra_lines
+
+
+## その日に拾って、いま手もとにあるアイテム（縁側の場面で見せるもの）。人に返すもの（extra_items）も持っていれば入れる
+func engawa_items(d: DayData) -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	for it in day_items(d) + d.extra_items:
+		if it and holds(it.id) and not out.has(it):
+			out.append(it)
+	return out
 
 
 ## いまのフラグで迎えるエンディング（条件に合う最初のもの）
@@ -423,8 +462,13 @@ func summer_progress(month: int, day: int) -> float:
 	return clampf(float(_day_of_year(month, day) - start) / float(end - start), 0.0, 1.0)
 
 
+## その日の夏の進み具合。異界の日は、異界に入る直前の日（異界の日でない、いちばん近い前の日）の値で止める
 func summer_progress_of(d: DayData) -> float:
-	return summer_progress(d.month, d.day)
+	var i := day_list.days.find(d)
+	while i > 0 and is_otherworld(get_day(i)):
+		i -= 1
+	var base := get_day(i) if i >= 0 else d
+	return summer_progress(base.month, base.day)
 
 
 static func _day_of_year(month: int, day: int) -> int:

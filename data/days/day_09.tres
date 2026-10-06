@@ -18,7 +18,7 @@ script = ExtResource("v_script")
 condition = SubResource("cond_takeru")
 scene_path = "res://days/variants/day_09_takeru.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_takeru")])
-time_from = 0.8
+time_keys = Array[Vector2]([Vector2(0, 0.85), Vector2(1, 1)])
 
 [sub_resource type="Resource" id="cond_natsumi"]
 script = ExtResource("c_script")
@@ -29,7 +29,7 @@ script = ExtResource("v_script")
 condition = SubResource("cond_natsumi")
 scene_path = "res://days/variants/day_09_natsumi.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_n_senko_ash")])
-time_from = 0.85
+time_keys = Array[Vector2]([Vector2(0, 0.85), Vector2(1, 1)])
 
 [sub_resource type="Resource" id="cond_kk"]
 script = ExtResource("c_script")
@@ -41,8 +41,9 @@ condition = SubResource("cond_kk")
 scene_path = "res://days/variants/day_09_kamikakushi.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_kk")])
 title = "夜市の奥"
-date_hidden = true
-time_from = 0.88
+time_keys = Array[Vector2]([Vector2(0, 0.85), Vector2(1, 1)])
+is_otherworld = true
+date_label_override = "？？/？？"
 
 [resource]
 script = ExtResource("day_script")
@@ -53,5 +54,4 @@ title = "最後の夜"
 scene_path = "res://days/variants/day_09_normal.tscn"
 items = Array[ExtResource("item_script")]([ExtResource("item_base")])
 variants = Array[ExtResource("v_script")]([SubResource("var_takeru"), SubResource("var_natsumi"), SubResource("var_kk")])
-time_from = 0.86
-time_to = 0.98
+time_keys = Array[Vector2]([Vector2(0, 0.85), Vector2(1, 1)])

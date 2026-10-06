@@ -119,6 +119,20 @@ const SEIZA_SKY_LOW := Color("#2B3157")
 const SEIZA_EAVES := Color("#17140F")
 const SEIZA_LINE := Color(1.0, 0.94, 0.75, 0.75)
 const SEIZA_MILKY := Color(0.85, 0.88, 1.0, 0.06)
+## 縁側の場面（日の切り替わりの中の一枚絵）：夜空は星座さがしと同じ。月、庭のしげみ、板の間、座っている祖父母の影、蚊取り線香
+const ENGAWA_MOON := Color("#F3E9C6")
+const ENGAWA_MOON_GLOW := Color(0.95, 0.9, 0.75, 0.035)
+const ENGAWA_GARDEN := Color("#1C2621")
+const ENGAWA_FLOOR := Color("#3B2F25")
+const ENGAWA_FLOOR_LINE := Color("#2C231B")
+const ENGAWA_FLOOR_EDGE := Color("#55453A")
+const ENGAWA_FIGURE := Color("#141110")
+const ENGAWA_KAYARI := Color("#6F6A5E")
+const ENGAWA_KAYARI_DARK := Color("#3E3A33")
+const ENGAWA_EMBER := Color(1.0, 0.55, 0.3, 0.9)
+const ENGAWA_SMOKE := Color(0.9, 0.9, 0.88, 0.35)
+## 縁側の場面の環境音（虫の声。素材がなければ無音）
+const ENGAWA_AMBIENT := "engawa_night"
 ## バスの窓（10日目）：うしろの窓から見える朝の道
 const BUSWIN_SKY := Color("#BFDCEB")
 const BUSWIN_FIELD := Color("#9DBB77")
@@ -140,21 +154,25 @@ const PLAYER_SKIN := Color("#E9C29C")
 const PLAYER_HAT := Color("#E7D29A")
 
 # --- 1日の中の時間帯（DESIGN.md「7. 時間帯と季節の表現」） ---
-## [その日の進み具合, CanvasModulate の色, 空の色]
-## 朝 0.00〜0.25 / 昼 0.25〜0.60 / 夕方 0.60〜0.85 / 夜 0.85〜1.00
+## [時間の値, CanvasModulate の色, 空の色]。時間の値は TimeKeys（日ごとの time_keys）で決まる。
+## 早朝 -0.15 / 朝 0.00 / 昼 0.25 / 夕方 0.60 / 夜 0.85 / 夜の終わり 1.00（キーのあいだは補間する）
 const TIME_KEYS := [
+	# 早朝（夜明け前の暗く青い色。親友ルートの6日目のカブトムシとり）
+	[-0.15, Color(0.52, 0.56, 0.80), Color("#5B6C9A")],
 	[0.00, Color(1.00, 0.95, 0.90), Color("#BFDCEB")],
 	[0.18, Color(1.00, 0.99, 0.97), Color("#9FD0EA")],
 	[0.25, Color(1.00, 1.00, 1.00), Color("#8EC5E0")],
-	[0.55, Color(1.00, 1.00, 0.98), Color("#86BFDD")],
-	[0.68, Color(1.00, 0.88, 0.76), Color("#E9B489")],
-	[0.80, Color(0.92, 0.70, 0.62), Color("#D98A6A")],
-	[0.88, Color(0.55, 0.52, 0.66), Color("#5D5A80")],
+	[0.48, Color(1.00, 1.00, 0.98), Color("#86BFDD")],
+	[0.60, Color(1.00, 0.88, 0.76), Color("#E9B489")],
+	[0.73, Color(0.92, 0.70, 0.62), Color("#D98A6A")],
+	[0.85, Color(0.55, 0.52, 0.66), Color("#5D5A80")],
 	[1.00, Color(0.36, 0.38, 0.55), Color("#262B4A")],
 ]
 
-## 光の粒・光の筋（SummerAir）が消えていく時間帯（その日の進み具合）
-const DAYLIGHT_FADE := Vector2(0.6, 0.84)
+## 光の粒・光の筋（SummerAir）が消えていく時間帯（時間の値）
+const DAYLIGHT_FADE := Vector2(0.55, 0.82)
+## 早朝の光の粒・光の筋が出てくる時間帯（時間の値。早朝から朝にかけて出てくる）
+const DAYLIGHT_DAWN := Vector2(-0.15, 0.0)
 
 # --- 夕立（RainZone） ---
 ## 雨のときに画面全体へかける色（暗く、少し青く）
