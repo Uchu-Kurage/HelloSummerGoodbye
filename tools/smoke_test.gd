@@ -1547,7 +1547,7 @@ func _natsumi_declined_route(mode: String) -> void:
 	var stop_day := 3
 	Input.action_press("move_right")
 	var t := 0.0
-	while t < 500.0 and get_tree().current_scene == main:
+	while t < 500.0 and get_tree().current_scene == main and _declined.get("tries", 0) <= 2:
 		await get_tree().physics_frame
 		t += get_physics_process_delta_time()
 		var day := GameState.current_day_index
@@ -1618,6 +1618,7 @@ func _natsumi_declined_route(mode: String) -> void:
 
 ## なつみとの会話を最後まで送る。あしたの誘いの選択肢では「やめとく」を、キーボード（"takeru"）かタッチ（"bell"）で選ぶ
 func _decline_natsumi(hud: Hud, box: TreasureBox, mode: String) -> void:
+	_declined["tries"] = _declined.get("tries", 0) + 1
 	var guard := 0
 	while hud.is_talking() and guard < 300:
 		guard += 1
