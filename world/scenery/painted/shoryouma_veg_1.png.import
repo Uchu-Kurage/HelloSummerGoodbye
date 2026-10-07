@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b63dtpd17d6sw"
-path="res://.godot/imported/river_stone.svg-c5e41e1a873a3e24c0ecf04253839325.ctex"
+uid="uid://bemand7mfbdf5"
+path="res://.godot/imported/shoryouma_veg_1.png-cca60abd79023049c0cc164ec3f9bcda.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/river_stone.svg"
-dest_files=["res://.godot/imported/river_stone.svg-c5e41e1a873a3e24c0ecf04253839325.ctex"]
+source_file="res://world/scenery/painted/shoryouma_veg_1.png"
+dest_files=["res://.godot/imported/shoryouma_veg_1.png-cca60abd79023049c0cc164ec3f9bcda.ctex"]
 
 [params]
 
@@ -21,7 +21,7 @@ compress/lossy_quality=0.7
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=false
+mipmaps/generate=true
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

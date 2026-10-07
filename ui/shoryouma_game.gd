@@ -22,6 +22,11 @@ const P := preload("res://world/world_palette.gd")
 ## 背景の絵（お盆の夕方の座敷とちゃぶ台。窓の外は透明なので、うしろに夕方の空の色をぬる）と、残したいところ
 const BG: Texture2D = preload("res://ui/minigame_bg/shoryouma.png")
 const BG_FOCUS := Vector2(0.5, 0.5)
+## 足をさす前の、きゅうりとなすの絵（veg の順）
+const VEG_TEX: Array[Texture2D] = [
+	preload("res://world/scenery/painted/shoryouma_veg_1.png"),
+	preload("res://world/scenery/painted/shoryouma_veg_2.png"),
+]
 
 var phase := Phase.INTRO
 ## いまの野菜（0 きゅうり、1 なす）
@@ -120,7 +125,8 @@ func _input(event: InputEvent) -> void:
 ## 野菜を描く場所（まん中の大きな野菜）：左はし・右はし・おなかの高さ
 func _veg_rect() -> Rect2:
 	var s := size
-	var w := minf(s.x * 0.4, 520.0)
+	# なすは、きゅうりより短くて太い
+	var w := minf(s.x * 0.4, 520.0) * (1.0 if veg == 0 else 0.62)
 	return Rect2(s.x / 2.0 - w / 2.0, s.y * 0.42, w, s.y * 0.12)
 
 
@@ -165,24 +171,7 @@ func _draw_veg(i: int, r: Rect2, leg_list: Array, lift: float) -> void:
 		var foot := Vector2(x + tilt, body.end.y + leg_len * (0.25 + 0.6 * lift))
 		draw_line(Vector2(x, body.end.y - 4), foot, P.HASHI_EDGE, 9.0)
 		draw_line(Vector2(x, body.end.y - 4), foot, P.HASHI, 6.0)
-	var c := P.CUCUMBER if i == 0 else P.EGGPLANT
-	var light := P.CUCUMBER_LIGHT if i == 0 else P.EGGPLANT_LIGHT
-	var rad := body.size.y / 2.0
-	var mid := body.position.y + rad
-	if i == 0:
-		# きゅうり：細長く、ぶつぶつ
-		draw_rect(Rect2(body.position.x + rad, body.position.y, body.size.x - rad * 2.0, body.size.y), c)
-		draw_circle(Vector2(body.position.x + rad, mid), rad, c)
-		draw_circle(Vector2(body.end.x - rad, mid), rad, c)
-		for k in 9:
-			draw_circle(Vector2(body.position.x + rad + k * (body.size.x - rad * 2.0) / 8.0, mid - rad * 0.4), 2.0, light)
-		draw_rect(Rect2(body.end.x - 2, mid - 3, 14, 6), P.VEG_STEM)
-	else:
-		# なす：ふっくら、へたつき
-		draw_set_transform(Vector2(body.position.x + body.size.x * 0.55, mid), 0.0, Vector2(1.0, body.size.y * 1.1 / body.size.x))
-		draw_circle(Vector2.ZERO, body.size.x * 0.45, c)
-		draw_set_transform(Vector2.ZERO)
-		draw_circle(Vector2(body.position.x + body.size.x * 0.6, mid - rad * 0.4), rad * 0.3, light)
-		draw_colored_polygon(PackedVector2Array([Vector2(body.position.x + body.size.x * 0.08, mid - rad * 0.8),
-			Vector2(body.position.x + body.size.x * 0.2, mid), Vector2(body.position.x + body.size.x * 0.08, mid + rad * 0.8),
-			Vector2(body.position.x - 8, mid)]), P.VEG_STEM)
+	# 野菜の絵を、横の長さを body にそろえて、おなかの高さに置く（足は上で描いた）
+	var tex: Texture2D = VEG_TEX[i]
+	var h := body.size.x * tex.get_height() / tex.get_width()
+	draw_texture_rect(tex, Rect2(body.position.x, body.end.y - h + body.size.y * 0.15, body.size.x, h), false)

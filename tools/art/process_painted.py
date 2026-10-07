@@ -7,6 +7,8 @@
 #                   （SPLITS の名前に番号をつけて書き出す。例: stone_1.png, stone_2.png, …）
 #   mountains / trees / paddies / river / road … 横にくり返せる帯にする（右端を左端に重ねてなじませる）
 #   branch / cloud_wide … 左右の端をぼかす（絵の端で切れている部分を見せない）
+#   item_<アイテムID> … アイテムの絵。正方形 256px の PNG にして data/items/icons/ に書き出す
+#   sentaku_clothes（CUTS） … 決めた横の範囲で切り分ける（くつしたのように2つに分かれたものがあるとき）
 #   bg_*（BACKGROUNDS） … ミニゲームの背景。空をマゼンタにした絵を、空だけ透明にして ui/minigame_bg/ に書き出す
 # 必要: pillow, numpy
 import sys
@@ -42,14 +44,28 @@ CROPS = {
 	# ノーマルルート：ミニゲームの背景の、下のふちの色の帯や線を落とす
 	'bg_sentaku': [None, None, None, 402],
 	'bg_bus_window': [None, 92, None, 408],
+	# きゅうりとなす：下の地面の帯を落とす
+	'shoryouma_veg': [None, None, None, 370],
 }
 ## ミニゲームの背景で、空（や窓の外）をマゼンタにしたもの：透明にして、絵の大きさのまま ui/minigame_bg/<名前から bg_ を除いたもの>.png に書き出す。
 ## 透明なところには、ゲームの中で空の色（時間・夕立の雲・夜空）を描く
 BACKGROUNDS = ('bg_sentaku', 'bg_shoryouma', 'bg_seiza', 'bg_kakurenbo_jiji', 'bg_bus_window')
 BG_OUT = 'ui/minigame_bg/'
-## 竿にかけた洗濯物（laundry_line）は、洗濯物の取り込みの札にも使うので、1つずつの絵（sentaku_cloth_1〜6）も書き出す。
-## 洗濯物どうしが重なっているので、切り分ける横の範囲（px。切り抜いたあとの絵の中）を決めておく。並びは Strings.SENTAKU_CLOTHES と同じ
-LAUNDRY_CUTS = [(19, 230), (230, 403), (418, 469), (470, 648), (652, 804), (823, 987)]
+## 横に並べて描いたが、2つに分かれたもの（くつした）があって自動では切り分けられない絵：名前 -> [書き出す名前, 横の範囲（元の絵の px）]
+CUTS = {
+	'sentaku_clothes': ['sentaku_cloth', [(0, 228), (228, 388), (388, 512), (512, 655), (655, 828), (828, 1024)]],
+}
+## アイテムの絵（item_<アイテムID>）：切り抜いて、正方形・ITEM_SIZE px の PNG にし、data/items/icons/<アイテムID>.png に書き出す
+ITEM_SIZE = 256
+ITEM_OUT = 'data/items/icons/'
+
+
+def item_icon(im):
+	im = im.crop(im.getbbox())
+	side = int(max(im.size) * 1.08)
+	sq = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+	sq.paste(im, ((side - im.width) // 2, (side - im.height) // 2))
+	return sq.resize((ITEM_SIZE, ITEM_SIZE), Image.LANCZOS)
 ## 1枚に横に並んだものを切り分けるときの、書き出す名前
 SPLITS = {
 	'clouds_small': 'cloud_small',
@@ -75,7 +91,6 @@ SPLITS = {
 	'grandpa_mg1': 'grandpa_mg1',
 	'grandma_mg1': 'grandma_mg1',
 	'cars': 'car',
-	'sentaku_clothes': 'sentaku_cloth',
 	'shoryouma_veg': 'shoryouma_veg',
 }
 ## 左右の端をぼかす幅：[左, 右]
@@ -90,10 +105,12 @@ EDGE_FADES = {
 
 ## 背景のマゼンタが、まん中だけ明るい桃色になっている絵（光のにじみ・グラデーション）。
 ## 桃色の部分も背景として抜けるよう、マゼンタらしさを明るさとの比で見る（紫のものがない絵だけに使う）
-RATIO_KEY = ('prop_hozuki', 'prop_mask_board')
+RATIO_KEY = ('prop_hozuki', 'prop_mask_board', 'item_river_stone')
+## 紫のもの（なす）がある絵。暗い紫は背景のマゼンタとまちがえないよう、暗いところは抜かず、紫のにじみ消しもかけない
+KEEP_DARK = ('shoryouma_veg',)
 
 
-def key(path, crop=None, ratio=False):
+def key(path, crop=None, ratio=False, keep_dark=False):
 	im = Image.open(path).convert('RGB')
 	if crop:
 		w, h = im.size
@@ -112,13 +129,16 @@ def key(path, crop=None, ratio=False):
 	if ratio:
 		r = m / np.maximum(np.maximum(a[..., 0], a[..., 2]), 1.0)
 		alpha = np.minimum(alpha, np.clip((0.5 - r) / 0.25, 0, 1))
+	# 背景のマゼンタは明るいので、R と B のどちらも暗いところは絵の一部
+	protect = np.clip((190.0 - np.maximum(a[..., 0], a[..., 2])) / 50.0, 0, 1) if keep_dark else np.zeros(m.shape)
+	alpha = np.maximum(alpha, protect)
 	# 小さなノイズ（JPEG のにじみ）を消す
 	al = Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(3))
 	alpha = np.array(al).astype(float) / 255
 	safe = np.maximum(alpha, 1e-3)[..., None]
 	fg = np.clip((a - (1 - alpha)[..., None] * M) / safe, 0, 255)
 	# 紫のにじみを消す：R と B の両方が G より大きいぶん（＝マゼンタの成分）を引く
-	spill = np.clip(np.minimum(fg[..., 0], fg[..., 2]) - fg[..., 1], 0, None)
+	spill = np.clip(np.minimum(fg[..., 0], fg[..., 2]) - fg[..., 1], 0, None) * (1.0 - protect)
 	fg[..., 0] -= spill
 	fg[..., 2] -= spill
 	# ふちを 1px 内側へ縮める（にじんだ輪郭を残さない）
@@ -274,8 +294,17 @@ def edge_fade(fg, al, left, right):
 def main():
 	for arg in sys.argv[1:]:
 		name, path = arg.split('=', 1)
-		fg, al = key(path, CROPS.get(name), name in RATIO_KEY)
-		if name in BACKGROUNDS:
+		fg, al = key(path, CROPS.get(name), name in RATIO_KEY, name in KEEP_DARK)
+		if name.startswith('item_'):
+			im = item_icon(to_image(fg, al))
+			im.save(ITEM_OUT + name[5:] + '.png', optimize=True)
+			print(name[5:], im.size)
+		elif name in CUTS:
+			out, cuts = CUTS[name]
+			im = to_image(fg, al)
+			for k, (x0, x1) in enumerate(cuts):
+				save(im.crop((x0, 0, x1, im.height)), '%s_%d' % (out, k + 1))
+		elif name in BACKGROUNDS:
 			im = to_image(fg, al)
 			im.save(BG_OUT + name[3:] + '.png', optimize=True)
 			print(name[3:], im.size)
@@ -288,10 +317,6 @@ def main():
 			save(edge_fade(fg, al, *EDGE_FADES[name]), name)
 		else:
 			im = to_image(fg, al)
-			if name == 'laundry_line':
-				im = im.crop(im.getbbox())
-				for k, (x0, x1) in enumerate(LAUNDRY_CUTS):
-					save(im.crop((x0, 0, x1, im.height)), 'sentaku_cloth_%d' % (k + 1))
 			save(im, name)
 
 

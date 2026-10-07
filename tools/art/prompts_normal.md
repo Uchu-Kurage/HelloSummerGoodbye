@@ -14,9 +14,11 @@
 | 笹・笹舟・竿にかけた洗濯物・お面の板・座敷・親戚・精霊馬・親戚の車・ほおずき・蚊取り線香 | 水彩の絵にした | `world/normal_prop.gd`（NormalProp） |
 | 物干しの柱と竿、蚊取り線香のけむり | 図形のまま（`prop_monohoshi` が描けたら差し替える） | `world/normal_prop.gd` |
 | ミニゲームの背景5枚 | 水彩の絵にした（空や窓の外は透明にして、うしろに空の色・夕立の雲・夜の色をゲームの中で描く。`process_painted.py` の `BACKGROUNDS`） | `ui/sentaku_game.gd`・`ui/shoryouma_game.gd`・`ui/seiza_game.gd`・`ui/kakurenbo_game.gd`・`ui/bus_window.gd` |
-| 洗濯物（取り込みの札の絵） | 水彩の絵にした（`laundry_line` から切り分ける。`process_painted.py` の `LAUNDRY_CUTS`） | `ui/sentaku_game.gd` の `CLOTHES` |
-| きゅうりとなす（足をさす前）・バスのうしろの窓わく | まだ（図形） | `ui/shoryouma_game.gd`・`ui/bus_window.gd` |
-| お面3つ・ノーマルルートのアイテム | まだ（SVG） | `data/items/` |
+| 洗濯物（取り込みの札の絵） | 水彩の絵にした（`sentaku_clothes` を `process_painted.py` の `CUTS` の範囲で切り分ける） | `ui/sentaku_game.gd` の `CLOTHES` |
+| きゅうりとなす（足をさす前） | 水彩の絵にした（足の割りばしは図形でさす） | `ui/shoryouma_game.gd` の `VEG_TEX` |
+| バスのうしろの窓わく（車内） | 水彩の絵にした（窓ガラスは透明。うしろの窓の場所は `FRAME_WINDOW`） | `ui/bus_window.gd` の `FRAME` |
+| アイテム（川のきれいな石・セミの抜け殻・線香花火・ほおずき・友達の置き手紙・祖父の麦わら帽子・おにぎりの包み） | 水彩の絵にした（正方形・256px の PNG。`process_painted.py` の `item_<アイテムID>`） | `data/items/<名前>.tres` の `icon` |
+| お面3つ・バスの切符・ビー玉 | まだ（SVG） | `data/items/` |
 | 口笛の「♪」 | 文字 | `world/normal_prop.gd` の `WHISTLE`。絵ではなく、口笛の音（`audio/sfx/kuchibue.ogg`）が入るまでのかわりなので、プロンプトはない |
 
 ## 共通の約束（どのプロンプトにも、最後に付ける）

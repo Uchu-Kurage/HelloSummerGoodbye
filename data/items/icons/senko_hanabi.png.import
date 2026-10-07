@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dji8bujsqbdmq"
-path="res://.godot/imported/straw_hat.svg-c8ed84a1d2aa7f356a19b63eb40b4c44.ctex"
+uid="uid://br0hv36o18h0g"
+path="res://.godot/imported/senko_hanabi.png-0a242e9801a6064da05181aee9dcd5fe.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/straw_hat.svg"
-dest_files=["res://.godot/imported/straw_hat.svg-c8ed84a1d2aa7f356a19b63eb40b4c44.ctex"]
+source_file="res://data/items/icons/senko_hanabi.png"
+dest_files=["res://.godot/imported/senko_hanabi.png-0a242e9801a6064da05181aee9dcd5fe.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

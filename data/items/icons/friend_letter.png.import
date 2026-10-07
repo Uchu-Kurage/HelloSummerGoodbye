@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bmohlkiykl2k8"
-path="res://.godot/imported/onigiri_wrap.svg-71d9f547506720240c30eb10b020a1eb.ctex"
+uid="uid://demofk4v2bcs1"
+path="res://.godot/imported/friend_letter.png-971390aa11418b5b2ea6e24e324e4a91.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/onigiri_wrap.svg"
-dest_files=["res://.godot/imported/onigiri_wrap.svg-71d9f547506720240c30eb10b020a1eb.ctex"]
+source_file="res://data/items/icons/friend_letter.png"
+dest_files=["res://.godot/imported/friend_letter.png-971390aa11418b5b2ea6e24e324e4a91.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
