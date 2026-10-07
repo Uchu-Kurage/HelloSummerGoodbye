@@ -17,8 +17,8 @@
 | 洗濯物（取り込みの札の絵） | 水彩の絵にした（`sentaku_clothes` を `process_painted.py` の `CUTS` の範囲で切り分ける） | `ui/sentaku_game.gd` の `CLOTHES` |
 | きゅうりとなす（足をさす前） | 水彩の絵にした（足の割りばしは図形でさす） | `ui/shoryouma_game.gd` の `VEG_TEX` |
 | バスのうしろの窓わく（車内） | 水彩の絵にした（窓ガラスは透明。うしろの窓の場所は `FRAME_WINDOW`） | `ui/bus_window.gd` の `FRAME` |
-| アイテム（川のきれいな石・セミの抜け殻・線香花火・ほおずき・友達の置き手紙・祖父の麦わら帽子・おにぎりの包み） | 水彩の絵にした（正方形・256px の PNG。`process_painted.py` の `item_<アイテムID>`） | `data/items/<名前>.tres` の `icon` |
-| お面3つ・バスの切符・ビー玉 | まだ（SVG） | `data/items/` |
+| アイテム（バスの切符・ビー玉・川のきれいな石・セミの抜け殻・線香花火・ほおずき・友達の置き手紙・祖父の麦わら帽子・おにぎりの包み） | 水彩の絵にした（正方形・256px の PNG。`process_painted.py` の `item_<アイテムID>`） | `data/items/<名前>.tres` の `icon` |
+| お面3つ（きつね・ひょっとこ・おかめ） | 水彩の絵にした（`item_mask_<種類>`。きつねはお祭りのお面のはじめの絵にもなる） | `GameState.MASK_ICON`（選んだお面で `festival_mask` の絵をかえる） |
 | 口笛の「♪」 | 文字 | `world/normal_prop.gd` の `WHISTLE`。絵ではなく、口笛の音（`audio/sfx/kuchibue.ogg`）が入るまでのかわりなので、プロンプトはない |
 
 ## 共通の約束（どのプロンプトにも、最後に付ける）

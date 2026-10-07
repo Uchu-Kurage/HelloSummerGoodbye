@@ -105,7 +105,7 @@ EDGE_FADES = {
 
 ## 背景のマゼンタが、まん中だけ明るい桃色になっている絵（光のにじみ・グラデーション）。
 ## 桃色の部分も背景として抜けるよう、マゼンタらしさを明るさとの比で見る（紫のものがない絵だけに使う）
-RATIO_KEY = ('prop_hozuki', 'prop_mask_board', 'item_river_stone')
+RATIO_KEY = ('prop_hozuki', 'prop_mask_board', 'item_river_stone', 'item_marble', 'item_bus_ticket')
 ## 紫のもの（なす）がある絵。暗い紫は背景のマゼンタとまちがえないよう、暗いところは抜かず、紫のにじみ消しもかけない
 KEEP_DARK = ('shoryouma_veg',)
 

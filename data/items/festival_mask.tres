@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1_b2e5m"]
-[ext_resource type="Texture2D" path="res://data/items/icons/festival_mask.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://data/items/icons/mask_kitsune.png" id="icon"]
 
 [resource]
 script = ExtResource("1_b2e5m")

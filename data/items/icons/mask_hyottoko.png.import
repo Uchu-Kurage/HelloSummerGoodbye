@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cexwg1t18g1pp"
-path="res://.godot/imported/festival_mask.svg-855f7bb4142bc1685ebb9966efa6d411.ctex"
+uid="uid://b2eugjqgggxtu"
+path="res://.godot/imported/mask_hyottoko.png-1854ba5bd466d5c588a9da0f2df4343c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/festival_mask.svg"
-dest_files=["res://.godot/imported/festival_mask.svg-855f7bb4142bc1685ebb9966efa6d411.ctex"]
+source_file="res://data/items/icons/mask_hyottoko.png"
+dest_files=["res://.godot/imported/mask_hyottoko.png-1854ba5bd466d5c588a9da0f2df4343c.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
