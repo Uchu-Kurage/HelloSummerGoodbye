@@ -17,10 +17,14 @@ extends Resource
 @export_multiline var read_text: String
 ## 空でなければ、手に入れたときにこのフラグを立てる（日の場面の差し替えの条件に使う。例：さびた鈴 → 4日目の神社）
 @export var collect_flag: StringName
+## 拾い逃したときに宝箱の影で出す、だいたいの場所（「かわら」→「かわらの どこか」）。10日目のものは空でよい
+@export var place_hint: String
 @export_group("ルートで一言を変える")
 ## この条件が合うときは description のかわりに alt_description を出す
 @export var alt_if: FlagCondition
 @export_multiline var alt_description: String
+## この条件が合うときは place_hint のかわりに出す場所（空なら place_hint のまま）
+@export var alt_place_hint: String
 
 
 ## いまのフラグで出す一言
@@ -28,3 +32,10 @@ func text() -> String:
 	if alt_description != "" and alt_if and alt_if.is_met():
 		return alt_description
 	return description
+
+
+## いまのフラグで出す場所のヒント
+func place_hint_text() -> String:
+	if alt_place_hint != "" and alt_if and alt_if.is_met():
+		return alt_place_hint
+	return place_hint

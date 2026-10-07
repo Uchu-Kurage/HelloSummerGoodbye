@@ -12,3 +12,4 @@ icon = ExtResource("icon")
 day_number = 8
 placeholder_color = Color(0.929, 0.898, 0.812, 1)
 read_text = "「あした よる きち こい」"
+place_hint = "ひみつきち"

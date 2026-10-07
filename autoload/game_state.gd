@@ -440,6 +440,17 @@ func all_items() -> Array[ItemData]:
 	return out
 
 
+## 拾い逃したか（宝箱の影）：その日を越えた（次の日に入った）のに拾っていない、いまのルートのアイテム。
+## まだ来ていない日のもの・手ばなしたもの（あげた・うめた）・枠に数えないもの（色えんぴつ）は影にしない
+func is_missed(item: ItemData) -> bool:
+	if item == null or is_collected(item.id) or gone.has(item.id) or is_extra(item):
+		return false
+	var d := day_for_item(item)
+	if d == null or not day_items(d).has(item):
+		return false
+	return day_list.days.find(d) < current_day_index
+
+
 ## 宝箱の枠に数えないもの（extra_items）か
 func is_extra(item: ItemData) -> bool:
 	for d in day_list.days:

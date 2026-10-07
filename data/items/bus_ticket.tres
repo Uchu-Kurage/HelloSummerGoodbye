@@ -11,3 +11,4 @@ description = "ここまで のった バスの きっぷ。"
 icon = ExtResource("icon")
 day_number = 1
 placeholder_color = Color(0.788235, 0.560784, 0.352941, 1)
+place_hint = "バスてい"

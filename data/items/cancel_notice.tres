@@ -11,3 +11,4 @@ description = "あめで にじんでる。"
 icon = ExtResource("icon")
 day_number = 8
 placeholder_color = Color(0.945, 0.929, 0.886, 1)
+place_hint = "こうみんかん"

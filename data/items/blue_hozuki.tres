@@ -12,5 +12,4 @@ description = "なかで、ぼんやり ひかってる。"
 icon = ExtResource("icon")
 day_number = 7
 placeholder_color = Color(0.61, 0.78, 0.93, 1)
-
-
+place_hint = "おくりびの けむりの むこう"

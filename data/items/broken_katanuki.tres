@@ -12,3 +12,4 @@ icon = ExtResource("icon")
 day_number = 5
 placeholder_color = Color(0.902, 0.843, 0.690, 1)
 on_ground = false
+place_hint = "かたぬきの やたい"
