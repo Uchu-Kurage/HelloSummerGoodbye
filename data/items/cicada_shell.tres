@@ -11,3 +11,4 @@ description = "木に しがみついた ままだった。"
 icon = ExtResource("icon")
 day_number = 4
 placeholder_color = Color(0.721569, 0.537255, 0.305882, 1)
+place_hint = "じんじゃの き"

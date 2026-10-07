@@ -11,3 +11,4 @@ description = "あかくて、ちょうちんみたい。"
 icon = ExtResource("icon")
 day_number = 7
 placeholder_color = Color(0.85098, 0.462745, 0.247059, 1)
+place_hint = "かどぐち"

@@ -235,6 +235,17 @@ func _run() -> void:
 	# 親友ルート
 	check(GameState.has_flag(&"route_takeru") and not GameState.has_flag(&"route_natsumi"), "route flag: takeru")
 	check(GameState.gone_note(&"marble") == "タケルに あげた", "marble given to takeru")
+	# エンディングの宝箱：拾わずに通り過ぎた8日目の置き手紙は影のまま、ビー玉は「タケルに あげた」のまま
+	var end_scene := get_tree().current_scene
+	if end_scene and end_scene.name == "Ending":
+		var eb: TreasureBox = end_scene.get_node("TreasureBox")
+		var ghost: Array = eb._slots.filter(func(sl): return sl.item.id == skipped.id)
+		check(ghost.size() == 1 and ghost[0].missed and ghost[0].theme_type_variation == &"SlotMissed",
+			"ending box: the skipped day 8 item stays a shadow (%s)" % skipped.id)
+		check(TreasureBox.missed_hint(skipped) == "8/20　ひみつきちの どこか", "ending box: shadow hint %s" % TreasureBox.missed_hint(skipped))
+		var marble_slot: Array = eb._slots.filter(func(sl): return sl.item.id == &"marble")
+		check(marble_slot.size() == 1 and not marble_slot[0].missed and marble_slot[0].note == "タケルに あげた", "ending box: the marble slot keeps タケルに あげた")
+		check(eb._slots.filter(func(sl): return sl.missed).size() == 1, "ending box: only the one skipped item is a shadow")
 	check(GameState.holds(&"river_stone") and GameState.was_received(&"river_stone"), "river stone received from takeru")
 	check(GameState.find_item(&"river_stone").text().begins_with("タケルがくれた"), "river stone text changes on the route")
 	for i in range(3, 10):
@@ -425,6 +436,7 @@ func _run() -> void:
 	await _wait(6.0)
 	_check_engawa_data()
 	_check_engawa_takeru()
+	await _check_missed()
 	_engawa_seen.clear()
 	await _natsumi_route()
 	_check_engawa_natsumi()
@@ -1650,3 +1662,75 @@ func _decline_natsumi(hud: Hud, box: TreasureBox, mode: String) -> void:
 		else:
 			TouchControls.fire_action(&"interact")
 		await _wait(0.1)
+
+
+
+# --- 宝箱の影（拾い逃したアイテム） -------------------------------------------------
+
+func _check_missed() -> void:
+	GameState.reset()
+	# 1日目を越えて2日目にいる：1日目のものは影、2日目（いまいる日）と先の日のものは影にしない
+	GameState.current_day_index = 1
+	var ticket := GameState.find_item(&"bus_ticket")
+	check(GameState.is_missed(ticket) and GameState.is_missed(GameState.find_item(&"rusty_bell")), "missed: day 1 items become shadows on day 2")
+	check(not GameState.is_missed(GameState.find_item(&"marble")) and not GameState.is_missed(GameState.find_item(&"river_stone")), "missed: today and later days stay plain")
+	check(not GameState.is_missed(GameState.find_item(&"blue_pencil")), "missed: the pencil (not counted) is never a shadow")
+	check(TreasureBox.missed_hint(ticket) == "7/21　バスていの どこか", "missed hint: %s" % TreasureBox.missed_hint(ticket))
+	# 他ルートのアイテムは影にしない（ルートなし＝ノーマルで9日目）
+	GameState.current_day_index = 9
+	check(not GameState.is_missed(GameState.find_item(&"base_plaque")) and not GameState.is_missed(GameState.find_item(&"gray_sunflower"))
+		and GameState.is_missed(GameState.find_item(&"straw_hat")), "missed: only the current route's items")
+	# 神隠し：異界の日は日付を「？？/？？」で
+	GameState.set_flag(&"route_kamikakushi")
+	var sun := GameState.find_item(&"gray_sunflower")
+	check(GameState.is_missed(sun) and TreasureBox.missed_hint(sun) == "？？/？？　いろの ない むらの どこか", "missed hint (otherworld): %s" % TreasureBox.missed_hint(sun))
+	check(TreasureBox.missed_hint(GameState.find_item(&"fox_mask")) == "？？/？？　よいちの おくの じんじゃの どこか", "missed hint (otherworld day 9)")
+	check(not GameState.is_missed(GameState.find_item(&"festival_mask")), "missed: the normal route's mask is not in the kamikakushi box")
+	# 親友：あげたビー玉は「タケルに あげた」のまま。川の石のヒントはルートで変わる
+	GameState.reset()
+	GameState.collect(GameState.find_item(&"marble"))
+	GameState.give_away(GameState.find_item(&"marble"), "タケルに あげた")
+	GameState.set_flag(&"route_takeru")
+	GameState.current_day_index = 5
+	check(not GameState.is_missed(GameState.find_item(&"marble")), "missed: the marble given to takeru is not a shadow")
+	check(GameState.find_item(&"river_stone").place_hint_text() == "かわらの いわ", "missed hint: the river stone is on the rock in the takeru route")
+	for it in GameState.all_items():
+		if it.day_number < 10 and not GameState.is_extra(it):
+			check(it.place_hint_text() != "", "every day 1-9 item has a place hint (%s)" % it.id)
+	# 宝箱の画面：3日目から始めて（1・2日目は拾っていない）、影の枠をキーボードとタップで選ぶ
+	GameState.reset()
+	GameState.start_day_index = 2
+	get_tree().change_scene_to_file("res://world/main.tscn")
+	await _wait(0.8)
+	var main := get_tree().current_scene
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	TouchControls.fire_action(&"open_box")
+	await _wait(1.0)
+	check(box.is_open, "missed: box opens")
+	var by_id := {}
+	for sl in box._slots:
+		by_id[sl.item.id] = sl
+	check(by_id[&"bus_ticket"].missed and by_id[&"marble"].missed and by_id[&"bus_ticket"].theme_type_variation == &"SlotMissed",
+		"missed: day 1-2 slots are shadows in the box")
+	check(not by_id[&"river_stone"].missed and by_id[&"river_stone"].theme_type_variation == &"SlotEmpty", "missed: today's slot stays plain")
+	check(not by_id[&"bus_ticket"].content.visible and by_id[&"bus_ticket"]._ghost.visible, "missed: the shadow shows only the outline (no name)")
+	# キーボード：矢印で最初の枠（バスの切符）へ
+	await _key(KEY_RIGHT)
+	await _wait(0.2)
+	var f := get_viewport().gui_get_focus_owner()
+	check(f is ItemSlot and (f as ItemSlot).missed and box._detail_name.text == Strings.BOX_EMPTY_NAME,
+		"missed keyboard: the shadow slot can be focused (%s)" % box._detail_name.text)
+	check(box._detail_date.text == TreasureBox.missed_hint((f as ItemSlot).item) and (f as ItemSlot).selected,
+		"missed keyboard: date and place hint (%s)" % box._detail_date.text)
+	# タップ：ビー玉の影
+	var mslot: ItemSlot = by_id[&"marble"]
+	await _touch(_to_screen(mslot.get_global_rect().get_center()))
+	await _wait(0.2)
+	check(box._detail_name.text == Strings.BOX_EMPTY_NAME and box._detail_date.text == "7/23　みちばたの どこか",
+		"missed touch: tapping the shadow shows the hint (%s)" % box._detail_date.text)
+	var esc := InputEventAction.new()
+	esc.action = &"ui_cancel"
+	esc.pressed = true
+	Input.parse_input_event(esc)
+	await _wait(0.8)
+	check(not box.is_open, "missed: box closes")

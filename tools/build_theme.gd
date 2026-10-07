@@ -184,3 +184,9 @@ func _buttons(theme: Theme) -> void:
 	var filled_s := flat(T.PAPER, T.ACCENT_INK, 3, R, T.SPACE_XS)
 	_button(theme, "SlotEmptySelected", empty_s, empty_p, T.FONT_SMALL, T.INK_SOFT)
 	_button(theme, "SlotFilledSelected", filled_s, filled_p, T.FONT_SMALL, T.INK)
+	# 拾い逃したアイテムの影：PAPER_DARK の地（輪郭は ItemSlot が MISSED_LINE で描く）。選んでいるときは ACCENT_INK の枠
+	var missed := flat(T.PAPER_DARK, Color.TRANSPARENT, 0, R, T.SPACE_XS)
+	var missed_p := flat(T.PAPER_DARK.darkened(0.06), Color.TRANSPARENT, 0, R, T.SPACE_XS)
+	var missed_s := flat(T.PAPER_DARK, T.ACCENT_INK, 3, R, T.SPACE_XS)
+	_button(theme, "SlotMissed", missed, missed_p, T.FONT_SMALL, T.INK_SOFT)
+	_button(theme, "SlotMissedSelected", missed_s, missed_p, T.FONT_SMALL, T.INK_SOFT)

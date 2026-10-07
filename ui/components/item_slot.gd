@@ -1,9 +1,16 @@
 class_name ItemSlot
 extends Button
 ## 宝箱の枠1つ。拾ったもの：アイコン（仮は色付き四角）＋名前 / 拾っていないもの：空の枠。
+## 拾い逃したもの（missed）：PAPER_DARK の地に、絵の輪郭だけを MISSED_LINE で薄く描く（絵がなければ点線の四角）
 
 const SIZE := Vector2(136, 136)
 const ICON := Vector2(48, 48)
+## 影の絵の大きさ（名前を出さないぶん、少し大きく）
+const GHOST := Vector2(64, 64)
+const OUTLINE := preload("res://ui/shaders/silhouette_outline.gdshader")
+## 影の輪郭の線の太さ（画面の px）と、点線のきざみ
+const GHOST_LINE := 2.0
+const GHOST_DASH := 6.0
 
 var item: ItemData
 ## 手もとにある（拾った・もらった）
@@ -11,6 +18,8 @@ var collected := false
 ## 手ばなしたときのひとこと（「タケルにあげた」「うめた」）。空なら手ばなしていない
 var note := ""
 var selected := false
+## 拾い逃した（その日を越えたのに拾っていない）。影で出す
+var missed := false
 var content: Control
 
 var _swatch: ColorRect
@@ -18,6 +27,8 @@ var _icon: TextureRect
 var _name: Label
 var _mark: Label
 var _note: Label
+var _ghost: Control
+var _ghost_mat: ShaderMaterial
 
 
 func _ready() -> void:
@@ -60,6 +71,12 @@ func _ready() -> void:
 	_note.add_theme_constant_override("line_spacing", 2)
 	_note.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(_note)
+	# 拾い逃したアイテムの影（輪郭だけ）
+	_ghost = Control.new()
+	_ghost.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ghost.draw.connect(_draw_ghost)
+	add_child(_ghost)
 	_mark = Label.new()
 	_mark.text = Strings.SELECT_MARK
 	_mark.theme_type_variation = &"AccentMarkLabel"
@@ -70,10 +87,12 @@ func _ready() -> void:
 	_refresh()
 
 
-func setup(p_item: ItemData, p_collected: bool, p_note := "") -> void:
+func setup(p_item: ItemData, p_collected: bool, p_note := "", p_missed := false) -> void:
 	item = p_item
 	collected = p_collected
 	note = p_note
+	# 手ばなしたものの表示（あげた・うめた）を優先する
+	missed = p_missed and not p_collected and p_note == ""
 	if is_node_ready():
 		_refresh()
 
@@ -89,11 +108,13 @@ func shows_content() -> bool:
 
 
 func _refresh() -> void:
-	var base := "SlotFilled" if collected else "SlotEmpty"
+	var base := "SlotFilled" if collected else ("SlotMissed" if missed else "SlotEmpty")
 	theme_type_variation = StringName(base + ("Selected" if selected else ""))
 	_mark.visible = selected
 	content.visible = shows_content()
 	_note.visible = not collected and note != ""
+	_ghost.visible = missed
+	_ghost.queue_redraw()
 	if item and collected:
 		_swatch.visible = item.icon == null
 		_swatch.color = item.placeholder_color
@@ -109,3 +130,27 @@ func _refresh() -> void:
 		_name.text = item.display_name
 		# 「タケルに あげた」は空白のところで行を分ける（枠がせまいので、ことばの途中で折り返さない）
 		_note.text = note.replace(" ", "\n")
+
+
+## 影：絵の輪郭だけを薄い線で描く。絵がないもの（仮素材）は点線の四角
+func _draw_ghost() -> void:
+	if not missed or item == null:
+		return
+	var r := Rect2((_ghost.size - GHOST) / 2.0, GHOST)
+	if item.icon:
+		var tex := item.icon
+		var k := minf(GHOST.x / tex.get_width(), GHOST.y / tex.get_height())
+		var sz := tex.get_size() * k
+		if _ghost_mat == null:
+			_ghost_mat = ShaderMaterial.new()
+			_ghost_mat.shader = OUTLINE
+			_ghost.material = _ghost_mat
+		_ghost_mat.set_shader_parameter("line_color", UiTokens.MISSED_LINE)
+		# 線の太さを、描く大きさに合わせて絵の画素に直す
+		_ghost_mat.set_shader_parameter("width", GHOST_LINE / k)
+		_ghost.draw_texture_rect(tex, Rect2(r.get_center() - sz / 2.0, sz), false)
+	else:
+		_ghost.material = null
+		var pts := [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y), r.position]
+		for i in 4:
+			_ghost.draw_dashed_line(pts[i], pts[i + 1], UiTokens.MISSED_LINE, GHOST_LINE, GHOST_DASH)
