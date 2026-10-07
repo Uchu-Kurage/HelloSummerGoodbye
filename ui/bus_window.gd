@@ -11,8 +11,12 @@ const AWAY_TIME := 7.0
 ## 手をふりかえす動きの長さ
 const WAVE_TIME := 0.8
 const P := preload("res://world/world_palette.gd")
-const GRANDPA_TEX: Texture2D = preload("res://world/scenery/painted/npc_grandpa.png")
-const GRANDMA_TEX: Texture2D = preload("res://world/scenery/painted/npc_grandma.png")
+## 正面を向いて手をふる祖父母
+const GRANDPA_TEX: Texture2D = preload("res://world/scenery/painted/grandpa_mg1_2.png")
+const GRANDMA_TEX: Texture2D = preload("res://world/scenery/painted/grandma_mg1_1.png")
+## 窓の外の景色の絵（田んぼのあいだの一本道）と、道が消える点の高さ（絵の高さに対する割合）
+const VIEW: Texture2D = preload("res://ui/minigame_bg/bus_window.png")
+const VIEW_HORIZON := 0.26
 const BUS_STOP_TEX: Texture2D = preload("res://world/scenery/painted/prop_busstop.png")
 
 var phase := Phase.LOOK
@@ -92,19 +96,10 @@ func _draw() -> void:
 	# 車内（窓のまわり）
 	draw_rect(Rect2(Vector2.ZERO, s), P.BUSWIN_FRAME)
 	var win := Rect2(s.x * 0.12, s.y * 0.16, s.x * 0.76, s.y * 0.56)
-	# 窓の外：朝の空、田んぼ、遠ざかる道（消える点は窓の上のほう）
-	draw_rect(win, P.BUSWIN_SKY)
-	var horizon := win.position.y + win.size.y * 0.42
-	draw_rect(Rect2(win.position.x, horizon, win.size.x, win.end.y - horizon), P.BUSWIN_FIELD)
+	# 窓の外：田んぼのあいだの一本道の絵（道が消える点は窓の上のほう）
+	MinigameBg.draw_cover(self, VIEW, win)
+	var horizon := win.position.y + win.size.y * VIEW_HORIZON
 	var vp := Vector2(win.position.x + win.size.x * 0.5, horizon)
-	draw_colored_polygon(PackedVector2Array([vp + Vector2(-6, 0), vp + Vector2(6, 0),
-		Vector2(win.position.x + win.size.x * 0.82, win.end.y), Vector2(win.position.x + win.size.x * 0.18, win.end.y)]), P.BUSWIN_ROAD)
-	# 田んぼのすじ（流れていく）
-	var c := clock() * speed
-	for i in 6:
-		var f := fposmod(i / 6.0 + c * 0.15, 1.0)
-		var y := lerpf(horizon, win.end.y, f * f)
-		draw_line(Vector2(win.position.x, y), Vector2(win.end.x, y), P.PADDY_ROW, 1.0 + 2.0 * f)
 	# バス停と、手をふる祖父母（遠ざかるほど小さく、消える点へ近づく）
 	var k := 1.0 - away()
 	var sc := lerpf(0.03, 1.0, k * (0.4 + 0.6 * k))
@@ -113,13 +108,8 @@ func _draw() -> void:
 	if sc > 0.03:
 		_art(BUS_STOP_TEX, foot + Vector2(h * 0.9, 0), h * 0.9, Color(1, 1, 1, 0.9))
 		var bob := 0.0 if UiAnim.reduced() else sin(clock() * 6.0) * h * 0.03
-		_art(GRANDPA_TEX, foot + Vector2(-h * 0.22, bob), h)
-		_art(GRANDMA_TEX, foot + Vector2(h * 0.22, -bob), h * 0.86)
-		# ふっている手（小さな丸がゆれる）
-		if not UiAnim.reduced():
-			for side in [-1.0, 1.0]:
-				var hand := foot + Vector2(side * h * 0.22, -h * 0.95) + Vector2(sin(clock() * 7.0 + side) * h * 0.08, 0)
-				draw_circle(hand, maxf(1.5, h * 0.04), P.PLAYER_SKIN)
+		_art(GRANDPA_TEX, foot + Vector2(-h * 0.2, bob), h)
+		_art(GRANDMA_TEX, foot + Vector2(h * 0.22, -bob), h * 0.84)
 	# 窓ガラスの反射と、窓わく
 	draw_rect(win, Color(P.BUS_WINDOW, 0.18))
 	draw_rect(win, P.BUSWIN_FRAME.darkened(0.2), false, 10.0)

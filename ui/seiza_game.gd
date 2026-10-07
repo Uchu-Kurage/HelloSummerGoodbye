@@ -12,6 +12,9 @@ const END_TIME := 2.6
 ## 押せる範囲（星の絵は小さいが、押せるのは 88px 四方）
 const STAR_BOX := 88.0
 const P := preload("res://world/world_palette.gd")
+## 背景の絵（縁側から見上げた夜空。軒・柱・縁側の板と、天の川・小さな星まで描いてある。まわりは透明）
+const BG: Texture2D = preload("res://ui/minigame_bg/seiza.png")
+const BG_FOCUS := Vector2(0.5, 0.5)
 ## あかるい星：[空の中の位置（幅・高さに対する割合）, 大きさ, 大三角か, 色]
 const STARS := [
 	[Vector2(0.40, 0.20), 7.0, true, Color(0.85, 0.92, 1.0)],   # ベガ
@@ -161,17 +164,9 @@ func _draw() -> void:
 	var s := size
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(s.x, 0), s, Vector2(0, s.y)]),
-		PackedColorArray([P.SEIZA_SKY_TOP, P.SEIZA_SKY_TOP, P.SEIZA_SKY_LOW, P.SEIZA_SKY_LOW]))
-	# 天の川（うすい帯）と、小さな星
-	draw_colored_polygon(PackedVector2Array([Vector2(s.x * 0.45, 0), Vector2(s.x * 0.7, 0), Vector2(s.x * 0.62, s.y), Vector2(s.x * 0.36, s.y)]), P.SEIZA_MILKY)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 30
-	var c := clock()
-	for i in 140:
-		var p := Vector2(rng.randf() * s.x, rng.randf() * s.y * 0.8)
-		var tw := 0.6 + 0.4 * sin(c * (1.0 + rng.randf()) + i)
-		draw_circle(p, 0.8 + rng.randf() * 1.2, Color(P.STAR, P.STAR.a * tw * 0.7))
+	# 縁側から見上げた夜空の絵（あかるい星は、選べるように上に描く）
+	draw_rect(Rect2(Vector2.ZERO, s), P.SEIZA_EAVES)
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
 	# つないだ線（3つそろったら三角を閉じる）
 	for k in range(1, linked.size()):
 		draw_line(_star_pos(linked[k - 1]), _star_pos(linked[k]), P.SEIZA_LINE, 3.0)
@@ -199,8 +194,3 @@ func _draw() -> void:
 		for k in TRIANGLE.size():
 			var p := _star_pos(TRIANGLE[k]) + Vector2(16, -14)
 			draw_string(font, p, Strings.SEIZA_NAMES[k], HORIZONTAL_ALIGNMENT_LEFT, -1, UiTokens.FONT_SMALL, UiTokens.PAPER)
-	# 縁側の軒（上）と、柱・板の間（下）
-	draw_rect(Rect2(0, 0, s.x, s.y * 0.06), P.SEIZA_EAVES)
-	draw_rect(Rect2(0, s.y * 0.86, s.x, s.y * 0.14), P.SEIZA_EAVES)
-	for x in [s.x * 0.04, s.x * 0.96]:
-		draw_rect(Rect2(x - 10, 0, 20, s.y), P.SEIZA_EAVES)
