@@ -19,6 +19,9 @@ const GOOD_LEGS := 6
 ## 出てすぐのタップは受けつけない（会話を送るつもりの連打で、さしてしまわないように）
 const TAP_GUARD := 0.3
 const P := preload("res://world/world_palette.gd")
+## 背景の絵（お盆の夕方の座敷とちゃぶ台。窓の外は透明なので、うしろに夕方の空の色をぬる）と、残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/shoryouma.png")
+const BG_FOCUS := Vector2(0.5, 0.5)
 
 var phase := Phase.INTRO
 ## いまの野菜（0 きゅうり、1 なす）
@@ -117,7 +120,7 @@ func _input(event: InputEvent) -> void:
 ## 野菜を描く場所（まん中の大きな野菜）：左はし・右はし・おなかの高さ
 func _veg_rect() -> Rect2:
 	var s := size
-	var w := minf(s.x * 0.56, 640.0)
+	var w := minf(s.x * 0.4, 520.0)
 	return Rect2(s.x / 2.0 - w / 2.0, s.y * 0.42, w, s.y * 0.12)
 
 
@@ -125,17 +128,12 @@ func _draw() -> void:
 	var s := size
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	# たたみと、ちゃぶ台
-	draw_rect(Rect2(Vector2.ZERO, s), P.SHORYOUMA_TATAMI)
-	for i in 8:
-		var y := s.y * i / 8.0
-		draw_line(Vector2(0, y), Vector2(s.x, y), P.SHORYOUMA_TATAMI.darkened(0.08), 2.0)
-	var table := Rect2(s.x * 0.08, s.y * 0.2, s.x * 0.84, s.y * 0.56)
-	draw_rect(table, P.SHORYOUMA_TABLE)
-	draw_rect(table, P.SHORYOUMA_TABLE_EDGE, false, 6.0)
-	# できた うま（きゅうり）は、左の奥に小さく立てておく
+	# 座敷とちゃぶ台の絵（窓の外は夕方の空の色）
+	draw_rect(Rect2(Vector2.ZERO, s), P.KAKURENBO_EVENING_TOP)
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
+	# できた うま（きゅうり）は、ちゃぶ台の左の奥に小さく立てておく
 	if veg == 1 or phase == Phase.END:
-		_draw_veg(0, Rect2(table.position.x + 24, table.position.y + 30, 150, 28), legs[0], 1.0)
+		_draw_veg(0, Rect2(s.x * 0.3, s.y * 0.33, s.x * 0.1, s.y * 0.03), legs[0], 1.0)
 	var r := _veg_rect()
 	var lift := 0.0
 	if phase == Phase.STAND:

@@ -7,6 +7,7 @@
 #                   （SPLITS の名前に番号をつけて書き出す。例: stone_1.png, stone_2.png, …）
 #   mountains / trees / paddies / river / road … 横にくり返せる帯にする（右端を左端に重ねてなじませる）
 #   branch / cloud_wide … 左右の端をぼかす（絵の端で切れている部分を見せない）
+#   bg_*（BACKGROUNDS） … ミニゲームの背景。空をマゼンタにした絵を、空だけ透明にして ui/minigame_bg/ に書き出す
 # 必要: pillow, numpy
 import sys
 from PIL import Image, ImageFilter
@@ -38,7 +39,17 @@ CROPS = {
 	'prop_hokora': [222, None, None, None],
 	# 送り火の煙：足もとの地面の線は落とす
 	'okuribi_smoke': [None, None, None, 940],
+	# ノーマルルート：ミニゲームの背景の、下のふちの色の帯や線を落とす
+	'bg_sentaku': [None, None, None, 402],
+	'bg_bus_window': [None, 92, None, 408],
 }
+## ミニゲームの背景で、空（や窓の外）をマゼンタにしたもの：透明にして、絵の大きさのまま ui/minigame_bg/<名前から bg_ を除いたもの>.png に書き出す。
+## 透明なところには、ゲームの中で空の色（時間・夕立の雲・夜空）を描く
+BACKGROUNDS = ('bg_sentaku', 'bg_shoryouma', 'bg_seiza', 'bg_kakurenbo_jiji', 'bg_bus_window')
+BG_OUT = 'ui/minigame_bg/'
+## 竿にかけた洗濯物（laundry_line）は、洗濯物の取り込みの札にも使うので、1つずつの絵（sentaku_cloth_1〜6）も書き出す。
+## 洗濯物どうしが重なっているので、切り分ける横の範囲（px。切り抜いたあとの絵の中）を決めておく。並びは Strings.SENTAKU_CLOTHES と同じ
+LAUNDRY_CUTS = [(19, 230), (230, 403), (418, 469), (470, 648), (652, 804), (823, 987)]
 ## 1枚に横に並んだものを切り分けるときの、書き出す名前
 SPLITS = {
 	'clouds_small': 'cloud_small',
@@ -63,7 +74,6 @@ SPLITS = {
 	# ノーマルルート（祖父母。プロンプトは tools/art/prompts_normal.md）
 	'grandpa_mg1': 'grandpa_mg1',
 	'grandma_mg1': 'grandma_mg1',
-	'relatives': 'relative',
 	'cars': 'car',
 	'sentaku_clothes': 'sentaku_cloth',
 	'shoryouma_veg': 'shoryouma_veg',
@@ -78,7 +88,12 @@ EDGE_FADES = {
 }
 
 
-def key(path, crop=None):
+## 背景のマゼンタが、まん中だけ明るい桃色になっている絵（光のにじみ・グラデーション）。
+## 桃色の部分も背景として抜けるよう、マゼンタらしさを明るさとの比で見る（紫のものがない絵だけに使う）
+RATIO_KEY = ('prop_hozuki', 'prop_mask_board')
+
+
+def key(path, crop=None, ratio=False):
 	im = Image.open(path).convert('RGB')
 	if crop:
 		w, h = im.size
@@ -94,6 +109,9 @@ def key(path, crop=None):
 	M = np.median(edge, axis=0)
 	m_bg = float(min(M[0], M[2]) - M[1])
 	alpha = np.clip((m_bg - 30.0 - m) / (m_bg - 60.0), 0, 1)
+	if ratio:
+		r = m / np.maximum(np.maximum(a[..., 0], a[..., 2]), 1.0)
+		alpha = np.minimum(alpha, np.clip((0.5 - r) / 0.25, 0, 1))
 	# 小さなノイズ（JPEG のにじみ）を消す
 	al = Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(3))
 	alpha = np.array(al).astype(float) / 255
@@ -129,6 +147,8 @@ def bleed(fg, alpha, solid=0.95, steps=14):
 		grow = (~filled) & (cnt > 0)
 		out[grow] = acc[grow] / cnt[grow][..., None]
 		filled = filled | grow
+	# 不透明なところから遠い細い線（笹の茎など）は、黒く残さず、もとの色のままにする
+	out[~filled] = fg[~filled]
 	return out
 
 
@@ -254,8 +274,12 @@ def edge_fade(fg, al, left, right):
 def main():
 	for arg in sys.argv[1:]:
 		name, path = arg.split('=', 1)
-		fg, al = key(path, CROPS.get(name))
-		if name in STRIPS:
+		fg, al = key(path, CROPS.get(name), name in RATIO_KEY)
+		if name in BACKGROUNDS:
+			im = to_image(fg, al)
+			im.save(BG_OUT + name[3:] + '.png', optimize=True)
+			print(name[3:], im.size)
+		elif name in STRIPS:
 			rows, ov = STRIPS[name]
 			save(strip(fg, al, rows, ov), name, crop=False)
 		elif name in SPLITS:
@@ -263,7 +287,12 @@ def main():
 		elif name in EDGE_FADES:
 			save(edge_fade(fg, al, *EDGE_FADES[name]), name)
 		else:
-			save(to_image(fg, al), name)
+			im = to_image(fg, al)
+			if name == 'laundry_line':
+				im = im.crop(im.getbbox())
+				for k, (x0, x1) in enumerate(LAUNDRY_CUTS):
+					save(im.crop((x0, 0, x1, im.height)), 'sentaku_cloth_%d' % (k + 1))
+			save(im, name)
 
 
 main()

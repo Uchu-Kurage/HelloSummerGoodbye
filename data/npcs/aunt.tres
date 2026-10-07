@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_aunt.png" id="sprite"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,7 @@ id = &"aunt"
 display_name = "おばさん"
 lines = Array[String](["あら、おおきく なったねえ。", "おかあさん、げんき？", "ぼく：うん"])
 repeat_lines = Array[String](["ゆっくり していきなさいね。"])
+sprite = ExtResource("sprite")
 placeholder_color = Color(0.722, 0.541, 0.478, 1)
 height = 160.0
 skin_color = Color(0.902, 0.745, 0.612, 1)

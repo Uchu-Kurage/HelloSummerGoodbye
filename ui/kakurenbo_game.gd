@@ -16,8 +16,12 @@ const CHOICE_SIZE := Vector2(176, 168)
 const P := preload("res://world/world_palette.gd")
 const K := preload("res://world/kamikakushi_prop.gd")
 const FOX_TEX: Texture2D = preload("res://world/scenery/painted/npc_fox_child.png")
-const JIJI_TEX: Texture2D = preload("res://world/scenery/painted/npc_grandpa.png")
-const TORII_TEX: Texture2D = preload("res://world/scenery/painted/prop_torii.png")
+## 柱のうしろからのぞくおじいちゃん（絵の中の、顔と肩のところだけを使う）
+const JIJI_TEX: Texture2D = preload("res://world/scenery/painted/grandpa_mg1_1.png")
+const JIJI_PEEK := Rect2(92, 24, 104, 150)
+## 夕方の境内の絵（空は透明なので、うしろに夕焼けを描く）
+const JIJI_BG: Texture2D = preload("res://ui/minigame_bg/kakurenbo_jiji.png")
+const JIJI_BG_FOCUS := Vector2(0.5, 0.45)
 ## 背景の絵（夕立の境内）と、切り取るとき残したいところ
 const BG: Texture2D = preload("res://ui/minigame_bg/kakurenbo.jpg")
 const BG_FOCUS := Vector2(0.5, 0.4)
@@ -148,22 +152,13 @@ func _draw() -> void:
 		draw_line(p, p + Vector2(-5, 22), Color(P.RAIN_STREAK, 0.35), 2.0)
 
 
-## 夕方の境内（おじいちゃんとのかくれんぼ）：夕焼けの空、遠くの山、鳥居と地面
+## 夕方の境内（おじいちゃんとのかくれんぼ）：夕焼けの空と、境内の絵
 func _draw_evening(s: Vector2) -> void:
 	var top := P.KAKURENBO_EVENING_TOP
 	var low := P.KAKURENBO_EVENING_LOW
 	draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(s.x, 0), s, Vector2(0, s.y)]),
 		PackedColorArray([top, top, low, low]))
-	var ground := s.y * 0.72
-	var hills := PackedVector2Array([Vector2(0, ground)])
-	for i in 13:
-		var x := s.x * i / 12.0
-		hills.append(Vector2(x, ground - 60.0 - 40.0 * sin(i * 1.3) * sin(i * 0.7 + 0.4)))
-	hills.append(Vector2(s.x, ground))
-	draw_colored_polygon(hills, P.KAKURENBO_EVENING_HILL)
-	draw_rect(Rect2(0, ground, s.x, s.y - ground), P.KAKURENBO_EVENING_GROUND)
-	K.draw_art(self, TORII_TEX, Vector2(s.x * 0.5, ground + 6), s.y * 0.55, Color(0.95, 0.85, 0.78))
-
+	MinigameBg.draw_cover(self, JIJI_BG, Rect2(Vector2.ZERO, s), JIJI_BG_FOCUS)
 
 func _draw_spot(a: Control, i: int) -> void:
 	var foot := Vector2(a.size.x / 2.0, a.size.y - 34)
@@ -171,11 +166,16 @@ func _draw_spot(a: Control, i: int) -> void:
 		var k := 0.5 + 0.5 * sin(_hint_t * 4.0) if not UiAnim.reduced() else 1.0
 		a.draw_circle(foot + Vector2(0, -60), 52, Color(1.0, 0.95, 0.7, 0.18 + 0.12 * k))
 	if phase != Phase.SEEK and i == hiding:
-		# のぞいているお面の子／おじいちゃん（絵の上半分）
-		var tex := JIJI_TEX if jiji else FOX_TEX
-		var h := 132.0 if jiji else 120.0
-		var w := tex.get_width() * h / tex.get_height()
-		a.draw_texture_rect_region(tex, Rect2(foot.x + 6, foot.y - h + 4, w, h * 0.5), Rect2(0, 0, tex.get_width(), tex.get_height() * 0.5))
+		if jiji:
+			# 狛犬のうしろから、顔と肩をのぞかせるおじいちゃん
+			var ph := 72.0
+			var pw := JIJI_PEEK.size.x * ph / JIJI_PEEK.size.y
+			a.draw_texture_rect_region(JIJI_TEX, Rect2(foot.x + 4, foot.y - 112, pw, ph), JIJI_PEEK)
+		else:
+			# のぞいているお面の子（絵の上半分）
+			var h := 120.0
+			var w := FOX_TEX.get_width() * h / FOX_TEX.get_height()
+			a.draw_texture_rect_region(FOX_TEX, Rect2(foot.x + 6, foot.y - h + 4, w, h * 0.5), Rect2(0, 0, FOX_TEX.get_width(), FOX_TEX.get_height() * 0.5))
 	match i:
 		0: K.draw_stone_lantern(a, foot, 110.0)
 		1: K.draw_big_tree(a, foot, 130.0)

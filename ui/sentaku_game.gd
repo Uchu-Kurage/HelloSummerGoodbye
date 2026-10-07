@@ -13,6 +13,18 @@ const RAIN_TIME := 10.0
 const END_TIME := 1.8
 const CHOICE_SIZE := Vector2(120, 132)
 const P := preload("res://world/world_palette.gd")
+## 背景の絵（夏の昼の庭。空は透明なので、うしろに空と夕立の雲を描く）と、残したいところ
+const BG: Texture2D = preload("res://ui/minigame_bg/sentaku.png")
+const BG_FOCUS := Vector2(0.4, 0.6)
+## 洗濯物の絵（Strings.SENTAKU_CLOTHES の順）
+const CLOTHES: Array[Texture2D] = [
+	preload("res://world/scenery/painted/sentaku_cloth_1.png"),
+	preload("res://world/scenery/painted/sentaku_cloth_2.png"),
+	preload("res://world/scenery/painted/sentaku_cloth_3.png"),
+	preload("res://world/scenery/painted/sentaku_cloth_4.png"),
+	preload("res://world/scenery/painted/sentaku_cloth_5.png"),
+	preload("res://world/scenery/painted/sentaku_cloth_6.png"),
+]
 const STREAKS := 60
 
 var phase := Phase.PICK
@@ -143,9 +155,10 @@ func _draw() -> void:
 		var x := front - i * s.x * 0.16 + sin(c * 0.6 + i) * 6.0
 		draw_circle(Vector2(x, s.y * 0.12 + (i % 2) * r * 0.5), r, P.SENTAKU_CLOUD)
 	draw_rect(Rect2(-10, 0, maxf(0.0, front - s.x * 0.9), s.y * 0.24), P.SENTAKU_CLOUD)
-	# 庭の地面と、両はしの物干しの柱。洗濯物のならぶ高さに、ひもを張る
+	# 庭の絵（空のところは透明）。雲がかかるほど、少し暗くする
+	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS, Color.WHITE.lerp(P.RAIN_LIGHT, k * 0.6))
+	# 両はしの物干しの柱。洗濯物のならぶ高さに、ひもを張る
 	var ground := s.y * 0.88
-	draw_rect(Rect2(0, ground, s.x, s.y - ground), P.SENTAKU_GROUND.lerp(P.RAIN_SKY, k * 0.3))
 	if _row and _row.size.x > 0.0:
 		var top := _row.global_position.y - global_position.y + 14.0
 		var left := _row.global_position.x - global_position.x - 40.0
@@ -170,28 +183,17 @@ func _draw_cloth(a: Control, i: int) -> void:
 		a.draw_rect(Rect2(x - 3, top - 6, 6, 12), P.SENTAKU_POLE)
 	if taken[i]:
 		return
-	var col: Color = P.SENTAKU_CLOTHES[i % P.SENTAKU_CLOTHES.size()]
-	var sway := sin(clock() * 2.0 + i) * 2.0
-	var cx := w / 2.0 + sway
-	match i:
-		0:  # シャツ
-			a.draw_colored_polygon(PackedVector2Array([Vector2(cx - 34, top), Vector2(cx + 34, top), Vector2(cx + 44, top + 22),
-				Vector2(cx + 28, top + 28), Vector2(cx + 26, top + 72), Vector2(cx - 26, top + 72), Vector2(cx - 28, top + 28), Vector2(cx - 44, top + 22)]), col)
-			a.draw_line(Vector2(cx, top + 6), Vector2(cx, top + 70), col.darkened(0.15), 2.0)
-		1, 3, 5:  # タオル・てぬぐい・まくらカバー（四角い布）
-			var h: float = [0, 70, 0, 80, 0, 56][i]
-			var ww: float = [0, 64, 0, 40, 0, 70][i]
-			a.draw_rect(Rect2(cx - ww / 2.0, top, ww, h), col)
-			a.draw_line(Vector2(cx - ww / 2.0, top + h - 8), Vector2(cx + ww / 2.0, top + h - 8), col.darkened(0.15), 2.0)
-		2:  # くつした（2つ）
-			for dx in [-16, 16]:
-				a.draw_rect(Rect2(cx + dx - 8, top, 16, 44), col)
-				a.draw_rect(Rect2(cx + dx - 8, top + 36, 22, 12), col)
-		4:  # ズボン
-			a.draw_colored_polygon(PackedVector2Array([Vector2(cx - 26, top), Vector2(cx + 26, top), Vector2(cx + 30, top + 74),
-				Vector2(cx + 6, top + 74), Vector2(cx, top + 26), Vector2(cx - 6, top + 74), Vector2(cx - 30, top + 74)]), col)
+	# 洗濯物の絵。枠の上のふちに洗濯ばさみがそろうように、上から吊るす
+	var tex: Texture2D = CLOTHES[i % CLOTHES.size()]
+	var box := Vector2(w - 16.0, a.size.y - top - 34.0)
+	var k := minf(box.x / tex.get_width(), box.y / tex.get_height())
+	var sz := tex.get_size() * k
+	var sway := sin(clock() * 2.0 + i) * 0.04
+	var cx := w / 2.0
+	a.draw_set_transform(Vector2(cx, top - 6.0), sway, Vector2.ONE)
+	a.draw_texture_rect(tex, Rect2(-sz.x / 2.0, 0, sz.x, sz.y), false, Color(0.82, 0.86, 0.95) if wet[i] else Color.WHITE)
+	a.draw_set_transform(Vector2.ZERO)
 	if wet[i]:
-		# 少しぬれた（色を暗く、しずく）
-		a.draw_rect(Rect2(cx - 40, top, 80, 80), P.SENTAKU_WET)
+		# 少しぬれた（色は上で暗くしてある。しずく）
 		for d in 3:
 			a.draw_circle(Vector2(cx - 16 + d * 16, top + 86 + (d % 2) * 6), 3, Color(P.RAIN_STREAK, 0.9))

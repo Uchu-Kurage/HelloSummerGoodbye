@@ -3,19 +3,20 @@
 ノーマルルートで、いま図形で描いている仮の絵を、ほかの場面と同じ水彩の絵（Google Gemini）に差し替えるためのプロンプト。
 コードの枠（```text）の中を、そのままコピーして Gemini に貼る（共通の約束は付けてある）。
 できた絵は `tools/art/process_painted.py` で切り抜いて `world/scenery/painted/<名前>.png` に置く（ミニゲームの背景は `ui/minigame_bg/<名前>.jpg`、アイテムは `data/items/icons/<名前>.png`）。
-1枚に並べて描くもの（`*_mg1`・`relatives`・`cars`・`sentaku_clothes`・`shoryouma_veg`）は、`process_painted.py` の `SPLITS` に名前を足してあるので、そのまま切り分けられる。
+1枚に並べて描くもの（`*_mg1`・`cars`・`sentaku_clothes`・`shoryouma_veg`）は、`process_painted.py` の `SPLITS` に名前を足してあるので、そのまま切り分けられる。親戚（`relatives`）は、たたみがつながって描かれやすいので、1枚の絵 `prop_relatives` のまま使う。
 
-いまの状態（どれも仮の絵。差し替えるときは、使っているところの描き方も絵に置きかえる）：
+いまの状態：
 
-| 絵 | いまの仮の絵 | 使っているところ |
+| 絵 | 状態 | 使っているところ |
 | --- | --- | --- |
-| おばさん・いとこ | 図形の人（`NpcData` の仮の見た目） | `data/npcs/aunt*.tres`・`cousin.tres` の `sprite` |
-| 祖父母のポーズ（のぞく・手をふる など） | 立ち絵をそのまま使う | かくれんぼ（`ui/kakurenbo_game.gd` の `JIJI_TEX`）、バスの窓（`ui/bus_window.gd`） |
-| 笹・笹舟・物干し・お面の板・座敷・親戚・精霊馬・親戚の車・ほおずき・蚊取り線香 | 図形 | `world/normal_prop.gd`（NormalProp） |
-| ミニゲームの背景5枚 | 図形（かくれんぼは鳥居の絵＋図形） | `ui/sentaku_game.gd`・`ui/shoryouma_game.gd`・`ui/seiza_game.gd`・`ui/kakurenbo_game.gd`（`_draw_evening`）・`ui/bus_window.gd` |
-| ミニゲームの中の絵（洗濯物・きゅうりとなす・バスのうしろの窓わく） | 図形 | 同上 |
-| お面3つ（きつね・ひょっとこ・おかめ） | SVG | `data/items/icons/mask_*.svg`（`GameState.set_mask` で `festival_mask` の絵をかえる）、お面の板 |
-| ノーマルルートのアイテム（切符〜おにぎりの包み） | SVG | `data/items/<名前>.tres` の `icon` |
+| おばさん・いとこ | 水彩の絵にした | `data/npcs/aunt*.tres`・`cousin.tres` の `sprite` |
+| 祖父のポーズ3つ・祖母のポーズ2つ | 水彩の絵にした（使っているのは、祖父の 1・2 と祖母の 1。のこりはこれから） | かくれんぼ（`ui/kakurenbo_game.gd` の `JIJI_TEX`。柱からのぞく顔だけ）、バスの窓（`ui/bus_window.gd`） |
+| 笹・笹舟・竿にかけた洗濯物・お面の板・座敷・親戚・精霊馬・親戚の車・ほおずき・蚊取り線香 | 水彩の絵にした | `world/normal_prop.gd`（NormalProp） |
+| 物干しの柱と竿、蚊取り線香のけむり | 図形のまま（`prop_monohoshi` が描けたら差し替える） | `world/normal_prop.gd` |
+| ミニゲームの背景5枚 | 水彩の絵にした（空や窓の外は透明にして、うしろに空の色・夕立の雲・夜の色をゲームの中で描く。`process_painted.py` の `BACKGROUNDS`） | `ui/sentaku_game.gd`・`ui/shoryouma_game.gd`・`ui/seiza_game.gd`・`ui/kakurenbo_game.gd`・`ui/bus_window.gd` |
+| 洗濯物（取り込みの札の絵） | 水彩の絵にした（`laundry_line` から切り分ける。`process_painted.py` の `LAUNDRY_CUTS`） | `ui/sentaku_game.gd` の `CLOTHES` |
+| きゅうりとなす（足をさす前）・バスのうしろの窓わく | まだ（図形） | `ui/shoryouma_game.gd`・`ui/bus_window.gd` |
+| お面3つ・ノーマルルートのアイテム | まだ（SVG） | `data/items/` |
 | 口笛の「♪」 | 文字 | `world/normal_prop.gd` の `WHISTLE`。絵ではなく、口笛の音（`audio/sfx/kuchibue.ogg`）が入るまでのかわりなので、プロンプトはない |
 
 ## 共通の約束（どのプロンプトにも、最後に付ける）
@@ -90,8 +91,8 @@
 なつかしくて、あたたかい。少しだけさみしい。やわらかい透明水彩のイラスト。細い茶色の鉛筆の線を少し残し、にじみと紙の白を活かす。日本の田舎の昭和〜平成の夏。くすんだ緑・砂色・夕焼け色を基調に、強い原色や光る縁取りは使わない。真横から見た図（遠近をつけすぎない）。足もと（地面との境目）を絵の下のふちにそろえる。地面の影は描かない。背景は完全に均一なマゼンタ（#FF00FF）一色で、グラデーション・紙の質感・影を背景に入れない。文字や看板の字は入れない。
 ```
 
-### 座敷にすわる親戚（1枚に横に4人）　`relatives`
-6日目、座敷に集まった親戚（`NormalProp` の `RELATIVES`）。`relative_1〜4.png` に切り分けられる。顔ははっきり描かず、にぎやかな「集まり」の空気を出す。
+### 座敷にすわる親戚（1枚に横に4人）　`prop_relatives`
+6日目、座敷に集まった親戚（`NormalProp` の `RELATIVES`）。切り分けずに、1枚のまま使う。顔ははっきり描かず、にぎやかな「集まり」の空気を出す。
 
 ```text
 お盆に集まった日本の親戚4人を、横一列に間をあけて並べる。どれもたたみに正座やあぐらですわった全身、少しななめ前向き。1. 白い開襟シャツのおじさん（あぐら、うちわを持つ） 2. 紺のワンピースのおばさん（正座、湯のみを持つ） 3. 白いブラウスの若いおねえさん（横ずわり） 4. 小さな女の子（ひざをかかえてすわる）。顔は小さく、目鼻はかんたんに。

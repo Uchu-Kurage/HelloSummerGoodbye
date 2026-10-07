@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_cousin.png" id="sprite"]
 
 [resource]
 script = ExtResource("1")
@@ -9,8 +10,9 @@ display_name = "いとこ"
 lines = Array[String](["せんこうはなび、やろうよ！", "（ぱち、ぱち……）", "……あ、ぼくの おちた。", "@show senko_hanabi", "ぼく：……まだ ついてる", "すごい！ さいごまで おちなかった！", "@give senko_hanabi"])
 repeat_lines = Array[String](["らいねんも やろうね。"])
 auto_talk = true
+sprite = ExtResource("sprite")
 placeholder_color = Color(0.478, 0.549, 0.627, 1)
-height = 128.0
+height = 140.0
 skin_color = Color(0.886, 0.722, 0.58, 1)
 hair_color = Color(0.165, 0.137, 0.125, 1)
 shirt_color = Color(0.478, 0.549, 0.627, 1)

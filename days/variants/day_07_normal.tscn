@@ -37,14 +37,14 @@ position = Vector2(1700, 604)
 script = ExtResource("nprop")
 kind = 7
 drive_on_event = "cars_leave"
-tint = Color(0.79, 0.83, 0.84, 1)
+car = 1
 
 [node name="Car2" type="Node2D" parent="Props"]
 position = Vector2(2000, 604)
 script = ExtResource("nprop")
 kind = 7
 drive_on_event = "cars_leave"
-tint = Color(0.72, 0.56, 0.5, 1)
+car = 2
 
 [node name="Grandma" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2520, 604)
