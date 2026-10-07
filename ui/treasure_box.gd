@@ -163,8 +163,8 @@ func _rebuild_slots() -> void:
 		if not GameState.is_extra(it):
 			total += 1
 			got += 1 if GameState.is_collected(it.id) else 0
-		# 手ばなしたもの（あげた・うめた）は、枠にそのひとことを出す
-		s.setup(it, GameState.holds(it.id), GameState.gone_note(it.id))
+		# 手ばなしたもの（あげた・うめた）は、枠にそのひとことを出す。拾い逃したもの（その日を越えた）は影で出す
+		s.setup(it, GameState.holds(it.id), GameState.gone_note(it.id), GameState.is_missed(it))
 		s.pressed.connect(_on_slot_pressed.bind(s))
 		s.focus_entered.connect(_on_slot_focused.bind(s))
 		_grid.add_child(s)
@@ -291,10 +291,25 @@ func _show_detail(s: ItemSlot) -> void:
 		_detail_name.text = s.item.display_name
 		_detail_date.text = s.note if s.note != "" else (fmt % GameState.item_date(d) if d else "")
 		_detail_text.text = s.item.text()
+	elif s.missed:
+		# 拾い逃したもの：名前は「？？？」のまま、日付とだいたいの場所だけ（異界の日は「？？/？？」）
+		_detail_name.text = Strings.BOX_EMPTY_NAME
+		_detail_date.text = missed_hint(s.item)
+		_detail_text.text = ""
 	else:
 		_detail_name.text = Strings.BOX_EMPTY_NAME
 		_detail_date.text = ""
 		_detail_text.text = Strings.BOX_EMPTY_DESC
+
+
+## 影の枠に出すヒント（「7/27　かわらの どこか」）。場所のヒントがなければ日付だけ
+static func missed_hint(item: ItemData) -> String:
+	var d := GameState.day_for_item(item)
+	var date := Strings.BOX_MISSED_DATE % GameState.item_date(d) if d else ""
+	var place := item.place_hint_text()
+	if place == "":
+		return date
+	return Strings.BOX_MISSED_HINT % [date, Strings.BOX_MISSED_PLACE % place]
 
 
 # --- 開く・閉じる ----------------------------------------------------------------
@@ -407,5 +422,8 @@ func _input(event: InputEvent) -> void:
 			or event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down"):
 		var f := get_viewport().gui_get_focus_owner()
 		if (f == null or not is_ancestor_of(f)) and first_slot():
-			(_selected if _selected else first_slot()).grab_focus()
+			# 最初の矢印キーは、InputMode がキーボードに切りかわる前にここへ届くことがあるので、ここで選んで詳細も出す
+			var s: ItemSlot = _selected if _selected else first_slot()
+			s.grab_focus()
+			_select(s)
 			get_viewport().set_input_as_handled()

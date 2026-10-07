@@ -19,3 +19,4 @@ placeholder_color = Color(0.890, 0.722, 0.353, 1)
 on_ground = false
 alt_if = SubResource("alt")
 alt_description = "ぼくのが さきに おちた。"
+place_hint = "たんぼみち"

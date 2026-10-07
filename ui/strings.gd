@@ -29,6 +29,10 @@ const BURY_TITLE := "なにを いれる？"
 const BURY_HINT := "かんに いれる ものを えらんでね"
 ## 手ばなしたものの枠に出すひとこと（@bury）
 const BURIED_NOTE := "うめた"
+## 拾い逃したアイテムの影（宝箱）：名前は BOX_EMPTY_NAME（？？？）のまま、日付と場所のヒントだけ出す（「7/27　かわらの どこか」）
+const BOX_MISSED_DATE := "%s/%s"
+const BOX_MISSED_PLACE := "%sの どこか"
+const BOX_MISSED_HINT := "%s　%s"
 const BOX_HINT_SELECT := "えらぶと くわしく みられるよ"
 const BACK := "もどる"
 const BUTTON_BOX := "たからばこ"

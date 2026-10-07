@@ -18,3 +18,5 @@ day_number = 3
 placeholder_color = Color(0.604, 0.647, 0.608, 1)
 alt_if = SubResource("alt")
 alt_description = "タケルがくれた。つめたくて、すべすべ。"
+place_hint = "かわら"
+alt_place_hint = "かわらの いわ"

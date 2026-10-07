@@ -18,6 +18,8 @@ const SKY := Color("#8EC5E0")
 const SHADE := Color(0, 0, 0, 0.45)
 const FADE := Color("#14110D")
 const SHADOW := Color(0, 0, 0, 0.2)
+## 宝箱の影（拾い逃したアイテム）の輪郭の線：INK_SOFT を不透明度 50% で
+const MISSED_LINE := Color(0.396, 0.353, 0.294, 0.5)
 
 # --- 文字サイズ（スキル「3. フォント」） ---
 const FONT_BODY := 24

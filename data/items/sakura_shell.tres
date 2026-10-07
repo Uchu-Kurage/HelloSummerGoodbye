@@ -12,3 +12,4 @@ icon = ExtResource("icon")
 day_number = 6
 placeholder_color = Color(0.961, 0.788, 0.824, 1)
 on_ground = false
+place_hint = "すなはま"

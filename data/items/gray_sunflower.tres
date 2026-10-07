@@ -12,5 +12,4 @@ description = "いろが ない。でも、さいてる。"
 icon = ExtResource("icon")
 day_number = 8
 placeholder_color = Color(0.72, 0.72, 0.70, 1)
-
-
+place_hint = "いろの ない むら"

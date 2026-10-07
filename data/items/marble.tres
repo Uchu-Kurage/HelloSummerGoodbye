@@ -11,3 +11,4 @@ description = "ぴかぴかの ビー玉。たからもの。"
 icon = ExtResource("icon")
 day_number = 2
 placeholder_color = Color(0.498039, 0.713726, 0.788235, 1)
+place_hint = "みちばた"
