@@ -42,6 +42,7 @@ enum Kind {
 	SWIM_FLAG,     ## 遊泳禁止の旗
 	SHELLS,        ## 波打ちぎわの貝がら
 	BUCKET,        ## 水を入れたバケツ（線香花火の）
+	FAR_BRIDGE,    ## 川の向こうの遠くの木の橋（width の幅。3日目、橋の上で絵を描くなつみ）
 }
 
 @export var kind: Kind = Kind.SHOP:
@@ -174,6 +175,7 @@ func _draw() -> void:
 		Kind.SWIM_FLAG: _swim_flag()
 		Kind.SHELLS: _shells()
 		Kind.BUCKET: _bucket()
+		Kind.FAR_BRIDGE: _far_bridge()
 
 
 func _poly(points: Array, c: Color) -> void:
@@ -506,3 +508,37 @@ func _shells() -> void:
 
 func _bucket() -> void:
 	_art("prop_bucket", Vector2(0, 8), 96.0)
+
+
+## 川の向こうの遠くの木の橋。足もと（道）が原点。橋げたの上の面は、まん中で FAR_BRIDGE_DECK の高さ（少し反っている）。
+## 遠くにあるので、色はかすませ、線は細くする
+func _far_bridge() -> void:
+	var half := width / 2.0
+	var deck := func(x: float) -> float:
+		var t := x / half
+		return -FAR_BRIDGE_DECK - FAR_BRIDGE_ARCH * (1.0 - t * t)
+	# 橋脚（川の中に立つ）
+	for x in [-half * 0.62, 0.0, half * 0.62]:
+		draw_rect(Rect2(x - 3.0, deck.call(x), 6.0, -deck.call(x) - RIVER_H * 0.35), P.FAR_BRIDGE_DARK)
+	# 橋げた（少し反った板）
+	var top := PackedVector2Array()
+	var bottom := PackedVector2Array()
+	for i in 13:
+		var x := -half + width * i / 12.0
+		top.append(Vector2(x, deck.call(x)))
+		bottom.append(Vector2(x, deck.call(x) + 7.0))
+	bottom.reverse()
+	draw_colored_polygon(top + bottom, P.FAR_BRIDGE)
+	# 欄干（手すりと細い柱）
+	var rail := PackedVector2Array()
+	for p in top:
+		rail.append(p + Vector2(0, -FAR_BRIDGE_RAIL))
+	draw_polyline(rail, P.FAR_BRIDGE_DARK, 2.0, true)
+	for i in range(0, 13, 2):
+		draw_line(top[i], rail[i], P.FAR_BRIDGE_DARK, 2.0)
+
+
+## 遠くの橋の上の面の高さ（道から、まん中で）。橋の上の人はここに立たせる
+const FAR_BRIDGE_DECK := 70.0
+const FAR_BRIDGE_ARCH := 10.0
+const FAR_BRIDGE_RAIL := 16.0

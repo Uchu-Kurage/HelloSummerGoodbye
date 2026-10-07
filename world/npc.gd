@@ -4,6 +4,10 @@ extends Interactable
 ## 見た目とせりふは NpcData で決める。日のシーンの Props の下などに置いて使う。
 
 @export var npc_data: NpcData
+## 遠くにいる人（3日目、川の向こうの橋の上のなつみなど）：姿だけを小さくし、足もとを持ち上げる。
+## 話しかけられる範囲は道の高さのまま（主人公が近くを通れば話せる）
+@export var visual_scale := 1.0
+@export var visual_lift := 0.0
 
 ## 呼吸のようなごく小さな動き
 const BREATH_SPEED := 1.6
@@ -24,8 +28,9 @@ func _ready() -> void:
 	super()
 	# 絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
 	_visual.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_visual.position.y = -visual_lift
 	if npc_data:
-		bubble_height = npc_data.height + 40.0
+		bubble_height = visual_lift + npc_data.height * visual_scale + 40.0
 	# 出てくる条件に合わないときは、いないことにする（フラグが変わったら見直す）
 	_present = FlagCondition.met(npc_data.appear_if) if npc_data else true
 	visible = _present
@@ -42,10 +47,10 @@ func _process(delta: float) -> void:
 		_facing = signf(_player.global_position.x - global_position.x)
 		if _facing == 0.0:
 			_facing = 1.0
-	_visual.scale.x = _facing
+	_visual.scale.x = _facing * visual_scale
 	if not UiAnim.reduced():
 		_t += delta
-	_visual.scale.y = 1.0 + sin(_t * BREATH_SPEED) * BREATH_AMOUNT / 100.0
+	_visual.scale.y = (1.0 + sin(_t * BREATH_SPEED) * BREATH_AMOUNT / 100.0) * visual_scale
 	_visual.queue_redraw()
 
 

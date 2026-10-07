@@ -752,8 +752,9 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _minigame:
 		return
-	if _choosing and event.is_action_pressed("interact"):
-		# E でも、選んでいる選択肢を決める
+	if _choosing and (event.is_action_pressed("interact") or event.is_action_pressed("ui_accept")):
+		# E・Enter でも、選んでいる選択肢を決める（Enter はボタンが押し下げだけ受けて、ここにも届く。
+		# 最初の項目へフォーカスをもどすと、離したときに別の項目の上になって選べないので、ここで決める）
 		var f := get_viewport().gui_get_focus_owner()
 		if f is BaseButton and _choice_list.is_ancestor_of(f):
 			(f as BaseButton).pressed.emit()

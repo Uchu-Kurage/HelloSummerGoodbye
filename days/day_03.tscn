@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_base.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://world/fox_far.gd" id="fox_far"]
 [ext_resource type="Script" path="res://world/normal_prop.gd" id="nprop"]
 [ext_resource type="Resource" path="res://data/npcs/grandpa_river.tres" id="npc_grandpa_river"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_bridge.tres" id="npc_natsumi_bridge"]
 
 [node name="Day03" instance=ExtResource("base")]
 
@@ -51,6 +52,18 @@ npc_data = ExtResource("npc_grandpa_river")
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1500, 516)
 npc_data = ExtResource("npc_takeru_river")
+
+[node name="FarBridge" type="Node2D" parent="Props"]
+position = Vector2(2300, 604)
+script = ExtResource("prop")
+kind = 35
+width = 320.0
+
+[node name="NatsumiBridge" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2300, 604)
+npc_data = ExtResource("npc_natsumi_bridge")
+visual_scale = 0.55
+visual_lift = 80.0
 
 [node name="FoxFar" type="Node2D" parent="Props"]
 position = Vector2(2560, 604)
