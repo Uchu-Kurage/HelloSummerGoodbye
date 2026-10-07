@@ -250,6 +250,8 @@ func _run() -> void:
 	for id in [&"takeru_base", &"takeru_festival", &"takeru_festival_home", &"takeru_dawn", &"takeru_trap", &"takeru_dive", &"takeru_okuribi", &"takeru_capsule"]:
 		check(GameState.has_talked(id), "takeru talks on his own: %s" % id)
 	check(not GameState.has_talked(&"natsumi"), "natsumi was not talked to")
+	var bridge_npc: NpcData = load("res://data/npcs/natsumi_bridge.tres")
+	check(not GameState.has_flag(&"natsumi_declined") and not FlagCondition.met(bridge_npc.appear_if), "pencil not returned -> no natsumi on the day 3 bridge")
 	check(takeru_left_day7, "takeru goes home angry on day 7")
 	var buried := GameState.gone.keys().filter(func(k): return GameState.gone[k] == Strings.BURIED_NOTE)
 	check(buried.size() == 1, "one item buried in the time capsule %s" % str(buried))
@@ -432,6 +434,8 @@ func _run() -> void:
 	_engawa_seen.clear()
 	await _normal_route()
 	_check_engawa_normal()
+	await _natsumi_declined_route("takeru")
+	await _natsumi_declined_route("bell")
 	await _check_debug_jump()
 
 
@@ -1520,3 +1524,128 @@ func _check_engawa_normal() -> void:
 	check(_engawa_rec("normal", 9).get("picked") == &"straw_hat" and _engawa_lines("normal", 9) == ["おばあちゃん：あら、おじいちゃんの。にあうねえ"], "engawa normal day 9: straw hat")
 	for d in range(1, 10):
 		check(not _engawa_rec("normal", d).get("empty", true), "engawa normal day %d: grandparents are there" % d)
+
+
+
+# --- 初恋ルート：2日目の誘いを「やめとく」 -----------------------------------------------
+
+var _declined := {}
+
+
+## 2日目に色えんぴつを返して、あしたの川への誘いに「やめとく」と答える。
+## mode "takeru"：キーボードで「やめとく」を選び、3日目にタケルへビー玉を「わたす」（親友ルートに入れる）。
+## mode "bell"：タッチで「やめとく」を選び、タケルには話しかけない。4日目に鈴を持っていれば、神社でお面の子が誘う
+func _natsumi_declined_route(mode: String) -> void:
+	GameState.reset()
+	_declined.clear()
+	get_tree().change_scene_to_file("res://world/main.tscn")
+	await _wait(0.5)
+	var main := get_tree().current_scene
+	var hud: Hud = main.get_node("HUD")
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	var streamer: DayStreamer = main.get_node("DayStreamer")
+	var stop_day := 3
+	Input.action_press("move_right")
+	var t := 0.0
+	while t < 500.0 and get_tree().current_scene == main:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		var day := GameState.current_day_index
+		# 3日目の川原の、遠くの橋の上のなつみ
+		var loaded: Dictionary = streamer._loaded
+		if loaded.has(2) and day == 2:
+			var nb := (loaded[2] as Node).get_node_or_null("Props/NatsumiBridge") as Npc
+			if nb:
+				_declined["bridge_present"] = nb._present
+		if day == stop_day and not Transition.is_busy():
+			_declined["day4_scene"] = (loaded[3] as Node).scene_file_path if loaded.has(3) else ""
+			if mode == "takeru":
+				break
+		if hud.is_talking():
+			Input.action_release("move_right")
+			if hud.speaker_name() == "なつみ" and day == 1:
+				await _decline_natsumi(hud, box, mode)
+			elif mode == "bell" and hud.speaker_name() == "おめんの子":
+				# 神社で鈴が鳴り、お面の子が「あそぼ」と誘う（ここで確かめて終わる）
+				_declined["fox_invite"] = true
+				break
+			else:
+				await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		var target := hud.current_target()
+		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk:
+			var id := (target as Npc).npc_data.id
+			if mode == "bell" and id == &"takeru_river":
+				continue
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.2)
+			if id == &"natsumi_bridge":
+				_declined["bridge_line"] = hud._msg_text.text
+			if hud.speaker_name() == "なつみ" and day == 1:
+				await _decline_natsumi(hud, box, mode)
+			else:
+				await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		if target is ItemPickup:
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.3)
+			TouchControls.fire_action(&"interact")
+			TouchControls.fire_action(&"interact")
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	var tag := "natsumi declined (%s): " % mode
+	check(_declined.get("choices", []) == ["いく", "やめとく"], tag + "the invitation offers いく / やめとく %s" % str(_declined.get("choices")))
+	check(_declined.get("picked_by", "") == mode, tag + "やめとく chosen by %s" % ("keyboard" if mode == "takeru" else "touch"))
+	check(_declined.get("reply", "") == "……そっか。", tag + "she says ……そっか。 (%s)" % _declined.get("reply", ""))
+	check(GameState.gone_note(&"blue_pencil") != "" and not GameState.holds(&"blue_pencil"), tag + "the pencil was handed back anyway")
+	check(not GameState.has_flag(&"route_natsumi") and GameState.has_flag(&"natsumi_declined"), tag + "no natsumi route flag")
+	# 1日目の「ごめん」と2日目の「そらの いろ、きれいだった」の2つだけ（「やめとく」は好感度の選択肢ではない）
+	check(GameState.natsumi_heart == 2, tag + "いく/やめとく is not a heart choice (%d)" % GameState.natsumi_heart)
+	check(_declined.get("bridge_present", false), tag + "day 3: natsumi drawing on the far bridge")
+	check(_declined.get("bridge_line", "") == "……（ぺこり）", tag + "the bridge natsumi only bows (%s)" % _declined.get("bridge_line", ""))
+	if mode == "takeru":
+		check(GameState.has_flag(&"route_takeru"), tag + "giving the marble to takeru starts the takeru route")
+		check(str(_declined.get("day4_scene", "")).ends_with("day_04_takeru.tscn"), tag + "day 4 is the takeru scene (%s)" % _declined.get("day4_scene", ""))
+	else:
+		check(not GameState.has_flag(&"route_takeru") and GameState.has_flag(&"rusty_bell_found"), tag + "no takeru flag, bell in hand")
+		check(str(_declined.get("day4_scene", "")).ends_with("day_04_kamikakushi.tscn"), tag + "day 4 is the bell shrine scene (%s)" % _declined.get("day4_scene", ""))
+		check(_declined.get("fox_invite", false), tag + "the masked child invites on day 4")
+
+
+## なつみとの会話を最後まで送る。あしたの誘いの選択肢では「やめとく」を、キーボード（"takeru"）かタッチ（"bell"）で選ぶ
+func _decline_natsumi(hud: Hud, box: TreasureBox, mode: String) -> void:
+	var guard := 0
+	while hud.is_talking() and guard < 300:
+		guard += 1
+		if hud.is_choosing():
+			var items := hud._choice_list.items()
+			var texts := items.map(func(b): return (b as Button).text)
+			if texts.has("やめとく"):
+				_declined["choices"] = texts
+				# 出てすぐは受けつけないので、少し待つ
+				while Time.get_ticks_msec() - hud._choice_at < Hud.CHOICE_GUARD * 1000.0 + 100.0:
+					await get_tree().process_frame
+				var target: Button = items[texts.find("やめとく")]
+				if mode == "takeru":
+					await _key(KEY_RIGHT)
+					var guard_k := 0
+					while get_viewport().gui_get_focus_owner() != target and guard_k < 4:
+						await _key(KEY_RIGHT)
+						guard_k += 1
+					await _key(KEY_ENTER)
+				else:
+					await _touch(_to_screen(target.get_global_rect().get_center()))
+				await get_tree().process_frame
+				if not hud.is_choosing():
+					_declined["picked_by"] = mode
+				await _wait(0.6)
+				_declined["reply"] = hud._msg_text.text
+			else:
+				hud.choose(0)
+		else:
+			TouchControls.fire_action(&"interact")
+		await _wait(0.1)

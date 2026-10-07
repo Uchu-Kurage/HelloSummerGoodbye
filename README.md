@@ -95,8 +95,9 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 ### 初恋ルート（なつみ）
 
 シナリオは「初恋ルート シナリオ（確定版）」に従う。1日目の夕方、田んぼ道で絵を描くなつみが走り去ったあとに「あおい色えんぴつ」を拾い（`@drop`）、
-2日目の朝、公民館のラジオ体操のあとで話しかけて返すと `route_natsumi` が立ち、3〜10日目が `days/variants/day_XX_natsumi.tscn` に差し替わります。
-色えんぴつを持っていない／話しかけないと、フラグは立ちません。なつみの会話は `data/npcs/natsumi*.tres`（3日目以降は `auto_talk`）。
+2日目の朝、公民館のラジオ体操のあとで話しかけて返し、あしたの川への誘いに「いく」と答えると `route_natsumi` が立ち、3〜10日目が `days/variants/day_XX_natsumi.tscn` に差し替わります。
+色えんぴつを持っていない／話しかけない／「やめとく」と答えると、フラグは立ちません（色えんぴつは返した時点で手ばなす）。
+「やめとく」のときは `natsumi_declined` が立ち、3日目の川原の遠くの橋の上（`world/scenery_prop.gd` の FAR_BRIDGE）に、絵を描くなつみ（`data/npcs/natsumi_bridge.tres`。話しかけると会釈だけ）が見えます。なつみの会話は `data/npcs/natsumi*.tres`（3日目以降は `auto_talk`）。
 
 - **好感度**：`GameState.natsumi_heart`（最大 `HEART_MAX` = 13）。会話の好みの選択肢（`@heart`、全9か所）と、ミニゲームの高得点（`GameState.set_natsumi_game`、全4種）で +1。エンディングの差分だけに使い、ルートからは外れない
 - **エンディングの段階**：好感度が `HEART_MID`（5）以上でフラグ `natsumi_heart_mid`、`HEART_HIGH`（10）以上で `natsumi_heart_high` が立つ。10日目の場面（`day_10_natsumi_high.tscn`／`day_10_natsumi.tscn`）とエンディング（`data/endings/natsumi_high.tres`・`natsumi_mid.tres`・`natsumi.tres`）はこのフラグで選ぶ。しきい値は遊んでみて `GameState` で調整する
