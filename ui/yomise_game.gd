@@ -11,6 +11,8 @@ enum Phase { TRADE, END }
 ## 交換のならび（Strings.YOMISE_GOODS の番号）。店 i は品物 i をほしがり、品物 i+1 をくれる
 const FOOD := 2
 const GOAL := 3
+## 首を横にふられたのがこれ以下なら「よくできた」（仮の値）
+const GOOD_REFUSALS := 0
 const END_TIME := 1.8
 const CHOICE_SIZE := Vector2(208, 150)
 const P := preload("res://world/world_palette.gd")
@@ -103,6 +105,7 @@ func trade(slot: int) -> void:
 	if held == GOAL:
 		phase = Phase.END
 		_t = 0.0
+		grade = GameState.Grade.GOOD if refusals <= GOOD_REFUSALS else GameState.Grade.NORMAL
 		say(Strings.YOMISE_DONE)
 		hide_hint()
 	elif held == FOOD:

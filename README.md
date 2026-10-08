@@ -62,6 +62,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 | `@choice わたす:give \| わたさない:no` | 選択肢を出し、選んだほうの目印へ飛ぶ（`:目印` を省くとそのまま次へ） |
 | `#give` / `@goto give` / `@end` | 目印 / 目印へ飛ぶ / 会話をおわる |
 | `@if_has marble ask` / `@if_flag route_takeru given` | アイテムを持っていたら / フラグが立っていたら、目印へ飛ぶ |
+| `@if_good dry` | この会話で、すぐ前に遊んだミニゲームが「よくできた」なら、目印へ飛ぶ（直後のせりふを結果で分ける） |
 | `@give river_stone` | アイテムをもらう（宝箱では「〜に もらった」） |
 | `@take marble タケルに あげた` | アイテムを手ばなす（宝箱とエンディングの枠に「タケルに あげた」と出る） |
 | `@bury` | 宝箱から1つ選んで手ばなす（枠に「うめた」） |
@@ -124,10 +125,10 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - **9日目**：星座さがしのあと、祖父が口笛を吹く。音素材（`audio/sfx/kuchibue.ogg`）が入るまでは「♪」（`NormalProp` の `WHISTLE`）とせりふで表す
 - **10日目**：祖母がおにぎりをくれる（`@give onigiri_wrap`）。バス（`world/normal_bus.gd`）が走り出すと、うしろの窓から手をふる祖父母が小さくなっていく（`@game bus_window`）。そのあと、おにぎりの包みを開く
 - **場所の小物**：`world/normal_prop.gd`（NormalProp。笹・笹舟・物干し・お面の屋台・座敷・親戚・精霊馬・親戚の車・ほおずき・蚊取り線香・口笛の♪）。Gemini の水彩の絵（プロンプトは `tools/art/prompts_normal.md`）。物干しの柱と竿、けむり、♪ は図形で描く
-- **画面**：どれも `NatsumiScreen` を継承（上に祖父母のひとことの小札、下に案内の小札）。失敗で止まらない。結果はフラグ `<名前>_good` / `<名前>_miss`（`GameState.set_game_result`）
+- **画面**：どれも `NatsumiScreen` を継承（上に祖父母のひとことの小札、下に案内の小札）。失敗で止まらない。結果（ふつう／よくできた）で直後のせりふが変わる（`@if_good`。フラグ `<名前>_good` / `<名前>_miss` も立つ）
   - 洗濯物の取り込み（4日目、`ui/sentaku_game.gd`）：洗濯物をタップで取り込む。`RAIN_TIME`（10 秒）で降りだすと、残りは少しぬれる
   - 精霊馬づくり（6日目、`ui/shoryouma_game.gd`）：行き来する割りばしが ● の上に来たらタップでさす。きゅうりとなすに4本ずつ。ずれると少しななめの足になるだけ
-  - かくれんぼ（8日目、`ui/kakurenbo_game.gd` の `@game kakurenbo_jiji`）：夕方の境内。`MISS_HINT` 回はずすと、せきばらいと光でわかる
+  - かくれんぼ（8日目、`ui/kakurenbo_game.gd` の `@game kakurenbo_jiji`）：夕方の境内。`MISS_HINT` 回はずすと、せきばらいをして、狛犬のうしろから自分で出てくる（ふつう）。それまでに見つけたら よくできた
   - 星座さがし（9日目、`ui/seiza_game.gd`）：あかるい星のうち、夏の大三角の3つをタップでつなぐ。2回はずすと大三角の星が光る
   - バスの窓（10日目、`ui/bus_window.gd`）：見るだけ。タップで手をふりかえす
 
@@ -159,9 +160,17 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 場面の小物は `world/scenery_prop.gd`（駄菓子屋・川原・秘密基地・夏祭り・バス停など）、夕立は `world/rain_zone.gd`、
 夜の灯り（提灯・街灯・送り火・星・懐中電灯）は `world/glow_layer.gd` の下に置くと暗くなりません。10日目のバスの場面は `world/bus_departure.gd` です。
 
+### ミニゲームの結果（ふつう／よくできた）
+
+- 点数のあるミニゲームは、終わる前に画面の `grade` に `GameState.Grade.NORMAL` か `GOOD` を入れる。HUD が `GameState.record_grade` で記録する（フラグ `<名前>_good` / `<名前>_miss` も立つ。初恋ルートは よくできたら好感度 +1）
+- 新しいミニゲームを足すときは、`GameState.GRADED_GAMES` に `@game` の名前を足す。「よくできた」の条件は、画面のスクリプトの `GOOD_` で始まる定数（仮の値）
+- アイテムの一言を変える：ItemData の `grade_game` にミニゲームの名前、`description_good` に よくできたときの一言（空ならふつうの一言）。ルートで一言を変えるもの（`alt_if`）は `alt_description_good`
+- 直後のせりふを変える：会話に `@if_good 目印` を書く
+- 一覧は DESIGN.md「8.698 ミニゲームの結果」
+
 ### ミニゲーム：石切り（3日目）
 
-- 画面：`ui/ishikiri_game.gd`（会話の `@game ishikiri`。ビー玉を渡したあと）。タケルのお手本（5回）→ 足もとの石を選ぶ → 押しつづけて腕を引き、離して投げる。3回
+- 画面：`ui/ishikiri_game.gd`（会話の `@game ishikiri`。「お、きたな。」のあと、ビー玉の選択肢の前）。タケルのお手本（5回）→ 足もとの石を選ぶ → 押しつづけて腕を引き、離して投げる。3回
 - 石：`data/skip_stones/*.tres`（SkipStone：名前・いちばんうまいときの回数・選んだときのタケルの一言・仮の絵）
 - 跳ねる回数 ＝ 石の回数 ×「ちょうどいいところ」への近さ。ちょうどいいところは `SWEET_SPOT`（0.8 秒）、幅は `SWEET_WINDOW`（前後 0.12 秒）、ずれたときの減り方は `FALLOFF`
 - 結果（`GameState.ishikiri_best`・`ishikiri_result`、フラグ `ishikiri_win` / `ishikiri_draw` / `ishikiri_lose`）でタケルの一言が変わる。せりふは `data/npcs/takeru_river.tres`

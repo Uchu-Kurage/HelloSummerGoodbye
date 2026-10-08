@@ -1,22 +1,17 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
-[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
 [ext_resource type="Texture2D" path="res://data/items/icons/senko_ash.svg" id="icon"]
-
-[sub_resource type="Resource" id="alt"]
-script = ExtResource("2")
-require_all = Array[StringName]([&"senko_miss"])
 
 [resource]
 script = ExtResource("1")
 id = &"senko_ash"
 display_name = "線香花火のもえかす"
-description = "なつみのが さきに おちた。"
+description = "ぼくのが さきに おちた。"
+grade_game = &"senko"
+description_good = "なつみのが さきに おちた。"
 icon = ExtResource("icon")
 day_number = 9
 placeholder_color = Color(0.890, 0.722, 0.353, 1)
 on_ground = false
-alt_if = SubResource("alt")
-alt_description = "ぼくのが さきに おちた。"
 place_hint = "たんぼみち"

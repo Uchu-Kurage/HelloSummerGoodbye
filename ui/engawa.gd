@@ -177,7 +177,13 @@ func pick(slot: ItemSlot) -> void:
 	for s in slots():
 		s.disabled = true
 		UiAnim.float_out(s)
-	UiAnim.float_out(_hint)
+	if shown_item:
+		# 見せたものの一言（宝箱・エンディングと同じ。ミニゲームの結果で変わる）を、案内の小札に入れかえて出しておく
+		_hint_label.text = item_note(shown_item)
+		_hint.modulate.a = 0.0
+		UiAnim.fade(_hint, 1.0, UiTokens.TIME_SMALL)
+	else:
+		UiAnim.float_out(_hint)
 	var reply := EngawaReply.find(shown_item.id if shown_item else &"", GameState.current_route())
 	lines = []
 	if reply:
@@ -322,7 +328,14 @@ func _clear_row() -> void:
 		c.queue_free()
 
 
+## 見せたものの名前と一言（返事のあいだ、下の小札に出す）
+static func item_note(item: ItemData) -> String:
+	return Strings.ENGAWA_ITEM_NOTE % [item.display_name, item.text()]
+
+
 func _refresh_hint() -> void:
+	if phase != Phase.PICK:
+		return
 	_hint_label.text = Strings.ENGAWA_PICK_TOUCH if InputMode.touch else Strings.ENGAWA_PICK_KEY
 
 

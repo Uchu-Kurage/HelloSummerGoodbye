@@ -4,11 +4,18 @@ extends NatsumiScreen
 ## @game kakurenbo_jiji（8日目、ノーマルルート。夕方の境内でおじいちゃん）で始まる。仕組みは同じ。
 ## 灯籠・大きな木・狛犬・さいせん箱のうち、どちらも狛犬のうしろ（HIDING）に隠れている（におわせ。明言しない）。
 ## 隠れていそうなところを調べる。いなければ「……いない」。MISS_HINT 回はずすと、隠れているところで
-## 鈴がかすかに鳴る（おじいちゃんは、せきばらい）。光ってわかる。見つけたらおしまい。失敗はない。
+## 鈴がかすかに鳴り、光ってわかる。見つけたらおしまい。失敗はない。
+## おじいちゃんのときは、MISS_HINT 回はずすと、せきばらいをして、狛犬のうしろから自分で出てくる（見つけられなかった）。
+## GOOD_TRIES 回までに見つけたら「よくできた」。
 
-enum Phase { SEEK, FOUND, END }
+enum Phase { SEEK, FOUND, COME_OUT, END }
 
 const MISS_HINT := 2
+## この回数までに調べて見つけたら「よくできた」（仮の値。はずれが MISS_HINT になる前）
+const GOOD_TRIES := MISS_HINT
+## おじいちゃんが狛犬のうしろから出てくるまでの時間と、出てきてから終わるまでの時間
+const COME_OUT_TIME := 1.2
+const COME_OUT_END := 2.4
 ## 隠れている場所（Strings.KAKURENBO_SPOTS の番号。こまいぬ）
 const HIDING := 2
 const END_TIME := 1.6
@@ -19,6 +26,10 @@ const FOX_TEX: Texture2D = preload("res://world/scenery/painted/npc_fox_child.pn
 ## 柱のうしろからのぞくおじいちゃん（絵の中の、顔と肩のところだけを使う）
 const JIJI_TEX: Texture2D = preload("res://world/scenery/painted/grandpa_mg1_1.png")
 const JIJI_PEEK := Rect2(92, 24, 104, 150)
+## 見つけられなかったとき、狛犬のうしろから出てくる、立ったおじいちゃん（高さと、狛犬の横へ出る量）
+const JIJI_STAND: Texture2D = preload("res://world/scenery/painted/npc_grandpa.png")
+const JIJI_STAND_H := 200.0
+const JIJI_STEP_OUT := 64.0
 ## 夕方の境内の絵（空は透明なので、うしろに夕焼けを描く）
 const JIJI_BG: Texture2D = preload("res://ui/minigame_bg/kakurenbo_jiji.png")
 const JIJI_BG_FOCUS := Vector2(0.5, 0.45)
@@ -37,6 +48,7 @@ var rng := RandomNumberGenerator.new()
 var _checked: Array[bool] = []
 var _t := 0.0
 var _hint_t := -1.0
+var _came_out := false
 var _row: HBoxContainer
 var _buttons: Array[Button] = []
 
@@ -86,8 +98,7 @@ func check_spot(i: int) -> void:
 		_t = 0.0
 		SfxPlayer.play("accept" if jiji else "suzu")
 		caption(Strings.KAKURENBO_FOUND)
-		if jiji:
-			GameState.set_game_result(&"kakurenbo", tries <= MISS_HINT)
+		grade = GameState.Grade.GOOD if tries <= GOOD_TRIES else GameState.Grade.NORMAL
 		hide_hint()
 		for b in _buttons:
 			b.disabled = true
@@ -98,7 +109,7 @@ func check_spot(i: int) -> void:
 		if tries >= MISS_HINT and _hint_t < 0.0:
 			_hint_t = 0.0
 			if jiji:
-				caption(Strings.KAKURENBO_JIJI_COUGH)
+				_come_out()
 			else:
 				SfxPlayer.play("suzu_far")
 				caption(Strings.KAKURENBO_BELL)
@@ -108,6 +119,24 @@ func check_spot(i: int) -> void:
 					b.grab_focus()
 					break
 	_redraw_choices()
+
+
+## 見つけられなかった：おじいちゃんが、せきばらいをして、狛犬のうしろから自分で出てくる
+func _come_out() -> void:
+	phase = Phase.COME_OUT
+	_t = 0.0
+	grade = GameState.Grade.NORMAL
+	caption(Strings.KAKURENBO_JIJI_COUGH)
+	hide_hint()
+	for b in _buttons:
+		b.disabled = true
+
+
+## おじいちゃんが出てくる進みぐあい（0 狛犬のうしろ〜1 となりに立つ）。動きを減らす設定では、すぐ出てくる
+func come_out_k() -> float:
+	if phase == Phase.COME_OUT or (phase == Phase.END and _came_out):
+		return 1.0 if UiAnim.reduced() else clampf(_t / COME_OUT_TIME, 0.0, 1.0)
+	return 0.0
 
 
 func _redraw_choices() -> void:
@@ -125,11 +154,20 @@ func _process(delta: float) -> void:
 	if phase == Phase.FOUND and _t >= END_TIME:
 		phase = Phase.END
 		finish()
+	if phase == Phase.COME_OUT:
+		_redraw_choices()
+		if _t >= COME_OUT_TIME and not _came_out:
+			_came_out = true
+			SfxPlayer.play("accept")
+			caption(Strings.KAKURENBO_JIJI_CAME_OUT)
+		if _t >= COME_OUT_END:
+			phase = Phase.END
+			finish()
 	queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
-	if phase == Phase.FOUND and is_tap(event):
+	if phase in [Phase.FOUND, Phase.COME_OUT] and is_tap(event):
 		speed = UiTokens.SKIP_SPEED
 		get_viewport().set_input_as_handled()
 
@@ -167,10 +205,18 @@ func _draw_spot(a: Control, i: int) -> void:
 		a.draw_circle(foot + Vector2(0, -60), 52, Color(1.0, 0.95, 0.7, 0.18 + 0.12 * k))
 	if phase != Phase.SEEK and i == hiding:
 		if jiji:
-			# 狛犬のうしろから、顔と肩をのぞかせるおじいちゃん
-			var ph := 72.0
-			var pw := JIJI_PEEK.size.x * ph / JIJI_PEEK.size.y
-			a.draw_texture_rect_region(JIJI_TEX, Rect2(foot.x + 4, foot.y - 112, pw, ph), JIJI_PEEK)
+			# 狛犬のうしろから、顔と肩をのぞかせるおじいちゃん。見つけられなかったときは、横へ出てきて全身が見える
+			var k := come_out_k()
+			if k < 1.0:
+				var ph := 72.0
+				var pw := JIJI_PEEK.size.x * ph / JIJI_PEEK.size.y
+				a.draw_texture_rect_region(JIJI_TEX, Rect2(foot.x + 4, foot.y - 112, pw, ph), JIJI_PEEK, Color(1, 1, 1, 1.0 - k))
+			if k > 0.0:
+				# 立ったおじいちゃん（頭の大きさを、のぞいている絵にそろえる）が、狛犬の横へ出てくる
+				var h := JIJI_STAND_H
+				var w := JIJI_STAND.get_width() * h / JIJI_STAND.get_height()
+				var x := lerpf(foot.x + 8, foot.x + JIJI_STEP_OUT, k)
+				a.draw_texture_rect(JIJI_STAND, Rect2(x - w / 2.0, foot.y + 6 - h, w, h), false, Color(1, 1, 1, k))
 		else:
 			# のぞいているお面の子（絵の上半分）
 			var h := 120.0

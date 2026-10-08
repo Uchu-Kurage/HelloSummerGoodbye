@@ -46,6 +46,8 @@ const BREAK_MIN_X := 0.35
 const INTRO_TIME := 0.6
 ## 結果を見せる時間（決定キー・タップで早送りできる）
 const RESULT_TIME := 2.4
+## 「よくできた」になる結果（ぼくの型が きれいに ぬけた）
+const GOOD_RESULT := &"clean"
 const P := preload("res://world/world_palette.gd")
 ## 背景の絵（夜の屋台の台。水彩）
 const BG: Texture2D = preload("res://ui/minigame_bg/katanuki.jpg")
@@ -77,6 +79,8 @@ const OUTLINE := [
 const EYE := Vector2(0.63, 0.21)
 
 var hud: Hud
+## ミニゲームの結果（ふつう／よくできた）。終わったら HUD が GameState.record_grade で記録する
+var grade := GameState.Grade.NORMAL
 var phase := Phase.INTRO
 ## &"clean"（ぬけた）／&"broken"（われた）
 var result := &""
@@ -273,6 +277,7 @@ func _end(r: StringName) -> void:
 	_hold.is_down = false
 	_show_hint(false)
 	GameState.set_katanuki_result(r)
+	grade = GameState.Grade.GOOD if r == GOOD_RESULT else GameState.Grade.NORMAL
 	if r == &"clean":
 		SfxPlayer.play("katanuki_clean")
 		SfxPlayer.set_ambient_volume(0.0, UiTokens.TIME_PANEL)

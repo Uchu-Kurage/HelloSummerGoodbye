@@ -19,6 +19,13 @@ extends Resource
 @export var collect_flag: StringName
 ## 拾い逃したときに宝箱の影で出す、だいたいの場所（「かわら」→「かわらの どこか」）。10日目のものは空でよい
 @export var place_hint: String
+@export_group("ミニゲームの結果で一言を変える")
+## 結びつくミニゲーム（@game の名前）。手に入れたときの結果を GameState.item_grades に記録する
+@export var grade_game: StringName
+## 「よくできた」ときの一言。空なら description（ふつうの一言）を使う
+@export_multiline var description_good: String
+## alt_if が合うときの「よくできた」の一言。空なら alt_description を使う
+@export_multiline var alt_description_good: String
 @export_group("ルートで一言を変える")
 ## この条件が合うときは description のかわりに alt_description を出す
 @export var alt_if: FlagCondition
@@ -27,11 +34,12 @@ extends Resource
 @export var alt_place_hint: String
 
 
-## いまのフラグで出す一言
+## いまのフラグと、手に入れたときのミニゲームの結果で出す一言（宝箱・エンディング・縁側の場面で同じものを出す）
 func text() -> String:
+	var good := GameState.item_grade(id) == GameState.Grade.GOOD
 	if alt_description != "" and alt_if and alt_if.is_met():
-		return alt_description
-	return description
+		return alt_description_good if good and alt_description_good != "" else alt_description
+	return description_good if good and description_good != "" else description
 
 
 ## いまのフラグで出す場所のヒント

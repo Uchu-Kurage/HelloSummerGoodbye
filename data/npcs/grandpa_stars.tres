@@ -7,7 +7,7 @@
 script = ExtResource("1")
 id = &"grandpa_stars"
 display_name = "おじいちゃん"
-lines = Array[String](["なつの さんかく、わかるか。", "@game seiza", "（おじいちゃんが、くちぶえを ふいた）", "@event whistle", "♪　～　♪", "ぼく：なんの うた？", "……なんだったかな。", "@event whistle_end", "……これ、もってけ。", "ちょっと おおきいけど、", "すぐ ちょうど よく なる。", "@give straw_hat"])
+lines = Array[String](["なつの さんかく、わかるか。", "@game seiza", "@if_good found", "@goto whistle", "#found", "……よく みつけたな。", "#whistle", "（おじいちゃんが、くちぶえを ふいた）", "@event whistle", "♪　～　♪", "ぼく：なんの うた？", "……なんだったかな。", "@event whistle_end", "……これ、もってけ。", "ちょっと おおきいけど、", "すぐ ちょうど よく なる。", "@give straw_hat"])
 repeat_lines = Array[String](["……いい よるだな。"])
 auto_talk = true
 sprite = ExtResource("sprite")

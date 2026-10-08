@@ -7,7 +7,7 @@
 script = ExtResource("1")
 id = &"natsumi_festival"
 display_name = "なつみ"
-lines = Array[String](["……へん？", "@choice にあってる:good | いつもと ちがう:diff", "#good", "@heart", "……ありがと。", "@goto go", "#diff", "……ゆかた、だもん。", "#go", "きんぎょすくい、しよ。", "@game kingyo", "@if_flag kingyo_good many", "……やぶれちゃった。", "@goto bag", "#many", "すごい。……いっぱい とれたね。", "#bag", "おじさん：はい、1ぴき もってきな。", "@give goldfish_bag"])
+lines = Array[String](["……へん？", "@choice にあってる:good | いつもと ちがう:diff", "#good", "@heart", "……ありがと。", "@goto go", "#diff", "……ゆかた、だもん。", "#go", "きんぎょすくい、しよ。", "@game kingyo", "@if_flag kingyo_good many", "……やぶれちゃった。", "@goto bag", "#many", "すごい。……いっぱい とれたね。", "#bag", "@if_good two", "おじさん：はい、1ぴき もってきな。", "@goto take", "#two", "おじさん：はい、2ひき もってきな。", "#take", "@give goldfish_bag"])
 repeat_lines = Array[String](["きんぎょ、なまえ つけてね。"])
 auto_talk = true
 sprite = ExtResource("sprite")

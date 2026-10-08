@@ -3,11 +3,13 @@ extends NatsumiScreen
 ## ミニゲーム「星座さがし」（9日目、ノーマルルート）。会話の @game seiza で始まる。
 ## 縁側から見上げた夜空。あかるい星のうち、夏の大三角（ベガ・アルタイル・デネブ）の3つをタップして線でつなぐ。
 ## ちがう星を選ぶと、おじいちゃんが「ちがうな」。MISS_HINT 回はずすと、大三角の星がゆっくり光る。
-## 3つつなぐと三角が閉じて、星の名前が出る。失敗で止まらない。はずさずに見つけたらフラグ seiza_good（ちがえば seiza_miss）。
+## 3つつなぐと三角が閉じて、星の名前が出る。失敗で止まらない。はずしが GOOD_MISSES 回以下なら、よくできた（grade。HUD がフラグ seiza_good／ちがえば seiza_miss を立てる）。
 
 enum Phase { FIND, DONE }
 
 const MISS_HINT := 2
+## ちがう星を選んだのがこれ以下なら「よくできた」（仮の値）
+const GOOD_MISSES := 0
 const END_TIME := 2.6
 ## 押せる範囲（星の絵は小さいが、押せるのは 88px 四方）
 const STAR_BOX := 88.0
@@ -101,7 +103,7 @@ func pick(i: int) -> void:
 			_t = 0.0
 			hide_hint()
 			say(Strings.SEIZA_DONE)
-			GameState.set_game_result(&"seiza", misses == 0)
+			grade = GameState.Grade.GOOD if misses <= GOOD_MISSES else GameState.Grade.NORMAL
 			for b in _buttons:
 				b.disabled = true
 		else:
