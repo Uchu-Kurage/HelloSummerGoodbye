@@ -60,8 +60,10 @@ jobs:
           touch build/.gdignore
           ~/godot/godot --headless --import
 
+      # 全ルートを通し、ミニゲーム16種も遊ぶので数分かかる（5分では足りなくなった）。止まったときだけ切れるよう、長めにする
       - name: Smoke test
-        run: timeout 300 ~/godot/godot --headless res://tools/smoke_test.tscn
+        timeout-minutes: 30
+        run: timeout 1800 ~/godot/godot --headless res://tools/smoke_test.tscn
 
       - name: Export Web
         run: |
