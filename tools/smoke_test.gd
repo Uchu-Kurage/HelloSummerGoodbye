@@ -30,6 +30,9 @@ func _ready() -> void:
 	get_tree().current_scene = dummy
 	Engine.time_scale = 8.0
 	Engine.physics_ticks_per_second = 60
+	# 見たエンディングの記録は、ふだんの記録を消さないよう別のファイルに
+	EndingRecord.path = EPI_RECORD
+	DirAccess.remove_absolute(EPI_RECORD)
 	await _run()
 	print("SMOKE ", "FAILED" if _fail else "OK")
 	get_tree().quit(1 if _fail else 0)
@@ -467,6 +470,180 @@ func _run() -> void:
 	await _check_debug_jump()
 	await _check_grades()
 	await _check_cameos()
+	await _check_epilogue()
+
+
+# --- エピローグ「それから」 ----------------------------------------------------
+
+const EPI_RECORD := "user://endings_smoke.cfg"
+
+
+func _open_title() -> Node:
+	get_tree().change_scene_to_file("res://ui/title.tscn")
+	await _wait(0.6)
+	return get_tree().current_scene
+
+
+func _check_epilogue() -> void:
+	# 本編の4ルート（ノーマル・親友・初恋・神隠し）を通したので、4つとも記録されている
+	check(EndingRecord.seen_count() == 4 and EndingRecord.all_seen(), "ending record: all 4 endings seen after the route runs (%d)" % EndingRecord.seen_count())
+	var cf := ConfigFile.new()
+	check(cf.load(EPI_RECORD) == OK and cf.get_section_keys(EndingRecord.SECTION).size() == 4, "ending record: saved to user:// as 4 booleans")
+	# 3つ以下では「それから」が出ない。印の数は見た数
+	DirAccess.remove_absolute(EPI_RECORD)
+	for n in 5:
+		if n > 0:
+			EndingRecord.mark(EndingRecord.ROUTES[n - 1])
+		var t := await _open_title()
+		var has_epi: bool = t.menu_texts().has(Strings.MENU_EPILOGUE)
+		check(t.marks.seen == n and has_epi == (n == 4), "title: %d endings seen -> marks %d, それから %s" % [n, t.marks.seen, has_epi])
+	await _play_epilogue(false)
+	await _play_epilogue(true)
+
+
+## エピローグを最初から最後まで遊ぶ（touch：タッチだけ／そうでなければキーボードだけ）
+func _play_epilogue(touch: bool) -> void:
+	var tag := "epilogue (%s): " % ("touch" if touch else "keyboard")
+	var keep_scale := Engine.time_scale
+	Engine.time_scale = 3.0
+	var t := await _open_title()
+	var vs := get_viewport().get_visible_rect().size
+	if touch:
+		await _touch(_to_screen(vs / 2.0))
+		await _wait(0.6)
+		var item: Control = null
+		for c in t._list.get_children():
+			if c is MenuItem and (c as MenuItem).text == Strings.MENU_EPILOGUE:
+				item = c
+		await _touch(_to_screen(item.get_global_rect().get_center()))
+	else:
+		await _key(KEY_ENTER)
+		await _wait(0.6)
+		await _key(KEY_RIGHT)
+		await _key(KEY_ENTER)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Main", 6.0) and GameState.epilogue, tag + "それから opens the epilogue")
+	var main := get_tree().current_scene
+	await _wait(0.6)
+	var hud: Hud = main.get_node("HUD")
+	var player: Player = main.get_node("Player")
+	var day: DayBase = null
+	for c in main.get_node("Days").get_children():
+		if c is DayBase:
+			day = c
+	check(GameState.day_count() == 1 and day and day.scene_file_path == "res://days/epilogue.tscn" and day.get_node("Items").get_child_count() == 0,
+		tag + "one day, no items")
+	check(hud.card_text().contains("31") and GameState.summer_progress_of(GameState.current_day()) == 1.0, tag + "date card 8/31 (%s), summer at the end" % hud.card_text())
+	check(is_equal_approx(GameState.day_time(GameState.current_day(), 0.0), 0.45) and is_equal_approx(GameState.day_time(GameState.current_day(), 1.0), 0.85), tag + "time keys 0.45 -> 0.85")
+	check(player.body_scale > 1.0, tag + "the grown-up is taller")
+	# 右へ歩きつづける。会話は決定（タップ）で送り、神社の二人は決定（タップ）で早送り
+	var hold := InputEventScreenTouch.new()
+	hold.index = 0
+	hold.position = _to_screen(Vector2(vs.x * 0.8, vs.y * 0.75))
+	hold.pressed = true
+	var right := InputEventKey.new()
+	right.keycode = KEY_RIGHT
+	right.physical_keycode = KEY_RIGHT
+	right.pressed = true
+	Input.parse_input_event(hold if touch else right)
+	var seen: Array[String] = []
+	var kids_skipped := false
+	var g := 0.0
+	var kids: Node2D = day.get_node("Props/Kids")
+	var bell := false
+	var kids_state := [false, 1.0, 1.0]
+	while is_instance_valid(main) and get_tree().current_scene == main and g < 90.0:
+		await _wait(0.12)
+		g += 0.12
+		if not is_instance_valid(kids) or not is_instance_valid(hud):
+			break
+		bell = day.get("bell_rang")
+		kids_state = [kids.done, kids.speed, kids.modulate.a]
+		if kids.started and not kids.done and not kids_skipped:
+			kids_skipped = true
+			if touch:
+				var tap := InputEventScreenTouch.new()
+				tap.index = 1
+				tap.position = _to_screen(Vector2(vs.x * 0.75, vs.y * 0.4))
+				tap.pressed = true
+				Input.parse_input_event(tap)
+				await get_tree().process_frame
+				tap.pressed = false
+				Input.parse_input_event(tap)
+			else:
+				await _key(KEY_ENTER)
+		if hud.is_talking() and hud.is_message_open():
+			var line: String = hud._msg_text.text
+			if seen.is_empty() or seen[-1] != line:
+				seen.append(line)
+			if touch:
+				# 歩く指を離してから、一言パネルをタップ（1本目の指のタップだけがクリックになる）。そのあと、また押しつづける
+				hold.pressed = false
+				Input.parse_input_event(hold)
+				await _touch(_to_screen(hud._msg.get_global_rect().get_center()))
+				hold.pressed = true
+				Input.parse_input_event(hold)
+			else:
+				await _key(KEY_ENTER)
+	hold.pressed = false
+	right.pressed = false
+	Input.parse_input_event(hold if touch else right)
+	check(bell, tag + "the bell rang once at the shrine by the bus stop")
+	check(kids_state[0] and kids_state[1] == UiTokens.SKIP_SPEED and kids_state[2] < 0.01, tag + "the two children ran up and faded (fast-forwarded)")
+	check(seen.has("……おそいぞ、とかいもん。"), tag + "the man at the base: ……おそいぞ、とかいもん。")
+	var a := seen.find("おかえり。")
+	check(a >= 0 and seen.find("……きょうは、なにしたの？") > a and seen.find("……ただいま") > seen.find("……きょうは、なにしたの？"), tag + "grandma, then ……ただいま %s" % str(seen))
+	check(get_tree().current_scene and get_tree().current_scene.name == "Ending", tag + "then the treasure box")
+	var end_scene := get_tree().current_scene
+	if end_scene == null or end_scene.name != "Ending":
+		Engine.time_scale = keep_scale
+		return
+	var box: TreasureBox = end_scene.get_node("TreasureBox")
+	await _until(func(): return box.is_open and box._tween == null, 40.0)
+	await _wait(0.5)
+	var every := GameState.every_item()
+	check(box.header_caption.text == Strings.EPILOGUE_TITLE and box._slots.size() == every.size() and every.size() >= 30,
+		tag + "final box: every route's items (%d)" % box._slots.size())
+	check(box._slots.all(func(sl): return sl.collected and not sl.missed and sl.note == ""), tag + "final box: no shadows, no notes")
+	check(box.page_count() > 1 and box.page_slots().size() < box._slots.size(), tag + "final box: pages (%d)" % box.page_count())
+	var ids := {}
+	if touch:
+		for p in box.page_count():
+			for sl in box.page_slots():
+				ids[sl.item.id] = true
+			if p < box.page_count() - 1:
+				await _touch(_to_screen(box._next.get_global_rect().get_center()))
+				await _wait(0.2)
+		await _touch(_to_screen(box.page_slots()[0].get_global_rect().get_center()))
+		await _wait(0.2)
+		check(box._detail_name.text == box.page_slots()[0].item.display_name, tag + "tap a slot shows it")
+		await _touch(_to_screen(box._prev.get_global_rect().get_center()))
+		await _wait(0.2)
+		check(box.page == box.page_count() - 2, tag + "まえ goes back a page")
+	else:
+		await _key(KEY_DOWN)
+		for p in box.page_count():
+			for sl in box.page_slots():
+				ids[sl.item.id] = true
+			if p < box.page_count() - 1:
+				for i in box._cols:
+					await _key(KEY_RIGHT)
+				await _wait(0.2)
+		check(box.page == box.page_count() - 1, tag + "right at the row end turns the page (%d)" % box.page)
+		var f := get_viewport().gui_get_focus_owner()
+		check(f is ItemSlot and box._detail_name.text == (f as ItemSlot).item.display_name, tag + "the focused slot shows its line")
+		await _key(KEY_LEFT)
+	check(ids.size() == every.size(), tag + "every item can be seen across the pages (%d / %d)" % [ids.size(), every.size()])
+	# タイトルへ
+	var back: MenuItem = end_scene._list.get_child(0)
+	check(back.text == Strings.EPILOGUE_TO_TITLE, tag + "タイトルへ")
+	if touch:
+		await _touch(_to_screen(back.get_global_rect().get_center()))
+	else:
+		back.grab_focus()
+		await _key(KEY_ENTER)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 6.0) and not GameState.epilogue
+		and GameState.day_count() == 10, tag + "back to the title, the main days restored")
+	Engine.time_scale = keep_scale
 
 
 # --- 他ルートの人物の顔出し ----------------------------------------------------

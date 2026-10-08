@@ -9,6 +9,11 @@ const MENU_START := "はじめる"
 const MENU_QUIT := "おわる"
 ## 開発用（デバッグ実行のときだけ出る）：ルートと日を選んで、その日へとぶ
 const MENU_DEBUG := "デバッグ"
+## 4つのエンディングをすべて見ると、タイトルに出るエピローグ
+const MENU_EPILOGUE := "それから"
+## タイトルの、見たエンディングの数の印（読み上げ・説明用。どれが足りないかは出さない）
+const TITLE_SEEN_MARK := "●"
+const TITLE_UNSEEN_MARK := "○"
 const DEBUG_TITLE := "ルートと ひを えらぶ"
 const DEBUG_ROUTE := "ルート：%s"
 const DEBUG_HINT := "ひを えらぶと、その ひの はじめから はじまるよ"
@@ -76,6 +81,14 @@ const ENDING_COUNT := "たからもの %d / %d"
 const ENDING_FOUND_TITLE := "なつの たからもの"
 const ENDING_FOUND := "%dこ のうち %dこ みつけた。\nえらぶと くわしく みられるよ"
 const ENDING_RETRY := "もういちど"
+## エピローグ「それから」の最後の宝箱
+const EPILOGUE_TITLE := "それから"
+const EPILOGUE_FOUND := "ぜんぶで %dこ。\nえらぶと くわしく みられるよ"
+const EPILOGUE_TO_TITLE := "タイトルへ"
+## 宝箱のページ送り（1画面に入らないとき）
+const BOX_PAGE_PREV := "まえ"
+const BOX_PAGE_NEXT := "つぎ"
+const BOX_PAGE := "%d / %d"
 
 ## 秘密基地づくり（ミニゲーム）
 const BASE_PICK_TOUCH := "ピースを えらんでね。はめた ピースは タップで はずせる"

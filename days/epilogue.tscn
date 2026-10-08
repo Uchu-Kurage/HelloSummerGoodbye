@@ -1,0 +1,113 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="1"]
+[ext_resource type="Script" path="res://days/epilogue.gd" id="2"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="kprop"]
+[ext_resource type="Script" path="res://world/epilogue_prop.gd" id="eprop"]
+[ext_resource type="Script" path="res://world/epilogue_kids.gd" id="kids"]
+[ext_resource type="PackedScene" path="res://world/house.tscn" id="house"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/epilogue_man.tres" id="man"]
+[ext_resource type="Resource" path="res://data/npcs/epilogue_grandma.tres" id="grandma"]
+
+[node name="Epilogue" instance=ExtResource("1")]
+script = ExtResource("2")
+
+[node name="Sign" parent="." index="2"]
+position = Vector2(860, 604)
+
+[node name="BusStop" type="Node2D" parent="Props"]
+position = Vector2(60, 604)
+script = ExtResource("prop")
+kind = 20
+
+[node name="BusRust" type="Node2D" parent="Props"]
+position = Vector2(43, 604)
+script = ExtResource("eprop")
+
+[node name="Hokora" type="Node2D" parent="Props"]
+position = Vector2(590, 604)
+script = ExtResource("kprop")
+
+[node name="Shop" type="Node2D" parent="Props"]
+modulate = Color(0.84, 0.82, 0.78, 1)
+position = Vector2(1300, 604)
+script = ExtResource("prop")
+
+[node name="Shutter" type="Node2D" parent="Props"]
+position = Vector2(1300, 604)
+script = ExtResource("eprop")
+kind = 1
+
+[node name="Kominkan" type="Node2D" parent="Props"]
+position = Vector2(1850, 604)
+script = ExtResource("prop")
+kind = 24
+
+[node name="Poster" type="Node2D" parent="Props"]
+position = Vector2(2160, 604)
+script = ExtResource("eprop")
+kind = 2
+
+[node name="PosterTitle" type="PanelContainer" parent="Props/Poster"]
+offset_left = -96.0
+offset_top = -300.0
+offset_right = 96.0
+offset_bottom = -244.0
+mouse_filter = 2
+theme_type_variation = &"SignBoard"
+
+[node name="Label" type="Label" parent="Props/Poster/PosterTitle"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "なつやすみの おもいで"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Komainu" type="Node2D" parent="Props"]
+position = Vector2(2440, 604)
+script = ExtResource("kprop")
+kind = 2
+
+[node name="Steps" type="Node2D" parent="Props"]
+position = Vector2(2560, 604)
+script = ExtResource("eprop")
+kind = 3
+
+[node name="Torii" type="Node2D" parent="Props"]
+position = Vector2(2760, 534)
+script = ExtResource("prop")
+kind = 7
+
+[node name="Kids" type="Node2D" parent="Props"]
+position = Vector2(2560, 600)
+script = ExtResource("kids")
+
+[node name="BaseRuins" type="Node2D" parent="Props"]
+position = Vector2(3060, 604)
+script = ExtResource("eprop")
+kind = 4
+
+[node name="ManBack" type="Node2D" parent="Props"]
+position = Vector2(3140, 604)
+script = ExtResource("eprop")
+kind = 5
+
+[node name="Man" parent="Props" instance=ExtResource("npc")]
+position = Vector2(3140, 604)
+npc_data = ExtResource("man")
+face_player = false
+draw_body = false
+
+[node name="House" parent="Props" instance=ExtResource("house")]
+position = Vector2(3600, 604)
+
+[node name="HungHat" type="Node2D" parent="Props"]
+position = Vector2(3400, 604)
+script = ExtResource("eprop")
+kind = 6
+
+[node name="Grandma" parent="Props" instance=ExtResource("npc")]
+position = Vector2(3440, 604)
+npc_data = ExtResource("grandma")

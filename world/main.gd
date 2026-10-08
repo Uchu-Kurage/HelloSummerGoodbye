@@ -11,6 +11,8 @@ const START_X := 220.0
 const ENDING_SCENE := "res://ui/ending.tscn"
 const ENGAWA_SCENE := preload("res://ui/engawa.tscn")
 const TITLE_SCENE := "res://ui/title.tscn"
+## エピローグ「それから」の主人公（おとな）の背丈（子どもの何倍か）
+const ADULT_SCALE := 1.3
 
 @onready var player: Player = $Player
 @onready var camera: CameraController = $Camera
@@ -37,6 +39,8 @@ func _ready() -> void:
 	player.position = Vector2(x, Player.GROUND_Y)
 	camera.snap()
 	streamer.update_now()
+	if GameState.epilogue:
+		player.body_scale = ADULT_SCALE
 	hud.player = player
 	hud.box = box
 	hud.set_day(GameState.current_day())
@@ -90,6 +94,15 @@ func _change_day(next: int) -> void:
 	await Transition.play_day_change(GameState.day_date_text(d), GameState.day_title(d), on_dark, on_reveal, interlude)
 	player.locked = false
 	_changing_day = false
+
+
+## エピローグの終わり（おばあちゃんとの会話の @event epilogue_box）。会話を読み終えたら、最後の宝箱（エンディングの画面）へ
+func finish_epilogue() -> void:
+	if _ending:
+		return
+	if hud.is_talking():
+		await hud.talk_finished
+	_go_ending()
 
 
 func _go_ending() -> void:
