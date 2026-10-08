@@ -8,6 +8,8 @@ extends Interactable
 ## 話しかけられる範囲は道の高さのまま（主人公が近くを通れば話せる）
 @export var visual_scale := 1.0
 @export var visual_lift := 0.0
+## 話したことを記録するか（他ルートの人物の顔出しは記録しない。Cameo）
+@export var remember_talk := true
 
 ## 呼吸のようなごく小さな動き
 const BREATH_SPEED := 1.6
@@ -135,7 +137,8 @@ func interact(hud: Node) -> void:
 	var lines := npc_data.lines
 	if talked and not npc_data.repeat_lines.is_empty():
 		lines = npc_data.repeat_lines
-	GameState.mark_talked(npc_data.id)
+	if remember_talk:
+		GameState.mark_talked(npc_data.id)
 	hud.start_talk(npc_data, lines, self)
 
 

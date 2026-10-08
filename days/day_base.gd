@@ -8,6 +8,7 @@ extends Node2D
 
 const GROUND_Y := 600.0
 const PICKUP_SCENE := preload("res://world/item_pickup.tscn")
+const CAMEO_SCENE := preload("res://world/cameo.tscn")
 
 var day_data: DayData
 ## タイトル画面の背景として使うとき true（アイテムを置かない）
@@ -26,6 +27,7 @@ func _ready() -> void:
 		$Props.hide()
 	else:
 		_spawn_items()
+		_spawn_cameos()
 	queue_redraw()
 
 
@@ -45,6 +47,26 @@ func _spawn_items() -> void:
 		else:
 			p.position = Vector2(GameState.DAY_LENGTH_PX * (i + 1) / (n + 1), GROUND_Y)
 		$Items.add_child(p)
+
+
+## 他ルートの人物の顔出し（res://data/cameos/）。その日の分をぜんぶ置き、出すかどうかは Cameo がルートとフラグで決める
+func _spawn_cameos() -> void:
+	for d in CameoData.for_day(day_data.day_number):
+		var c: Cameo = CAMEO_SCENE.instantiate()
+		c.setup(d)
+		$Props.add_child(c)
+		# 遠くの姿は、手前の小物（家・送り火など）のうしろに描く
+		if d.depth > 0.0:
+			$Props.move_child(c, 0)
+
+
+## その日の顔出し（自動の動作確認からも使う）
+func cameos() -> Array[Cameo]:
+	var out: Array[Cameo] = []
+	for c in $Props.get_children():
+		if c is Cameo:
+			out.append(c)
+	return out
 
 
 ## アイテムを道に落とす（会話の @drop。走り去った人が落としていくものなど）。x はその日の中の位置

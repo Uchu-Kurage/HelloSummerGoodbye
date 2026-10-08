@@ -74,6 +74,16 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
+## 他ルートの人物の顔出しを足す
+
+`res://data/cameos/` に CameoData（`.tres`）を1つ足すだけで、その日の道に出ます（`world/cameo.tscn`。日のシーンの土台が置きます）。
+
+- `route`（`normal`／`shinyu`／`hatsukoi`／`kamikakushi`）・`day_number`・`x`（その日の中の位置）・`kind`（人物／お面の子／持ち物）
+- `line`：話しかけたときの一言（1行。ほかの人が言うときは `タケル：…`）。空なら立っているだけ。話しかけても、フラグ・好感度・話したかどうかは変わりません
+- 見た目は `npc` に各ルートの NpcData を入れて使い回す（`sprite` で絵だけ差し替え、`depth` で遠くへ、`tilt` でかたむける）。持ち物は `prop_kind`（`world/scenery_prop.gd` の Kind）
+- `appear_if`：追加の条件（ノーマル5日目のお面の子は、お面を選ぶ前だけ）
+- 5日目の夏祭りの境内は `world/festival_grounds.tscn` を全ルートで使います（型抜きの屋台は x=1300、金魚すくいの屋台は x=1950）
+
 ## エンディングの分岐を足す
 
 1. **フラグを立てる**：NpcData の `set_flags` にフラグ名を書くと、その人と話し終えたときに立つ。会話の途中で立てるときは、せりふに `@flag route_takeru` のように書く

@@ -190,7 +190,7 @@ func _run() -> void:
 		var target := hud.current_target()
 		# NPC に話しかけて、せりふを最後まで送る（なつみには話しかけない＝親友ルートへ）
 		# 向こうから声をかけてくる人（auto_talk）は、話しかけずに待つ
-		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) \
+		if target is Npc and not (target as Npc).get_parent() is Cameo and not GameState.has_talked((target as Npc).npc_data.id) \
 				and (target as Npc).npc_data.id != &"natsumi" and not (target as Npc).npc_data.auto_talk:
 			Input.action_release("move_right")
 			var npc_data: NpcData = (target as Npc).npc_data
@@ -466,6 +466,101 @@ func _run() -> void:
 	await _natsumi_declined_route("bell")
 	await _check_debug_jump()
 	await _check_grades()
+	await _check_cameos()
+
+
+# --- 他ルートの人物の顔出し ----------------------------------------------------
+
+## ルート（DebugJump の番号）と日の番号 -> そこに出る顔出しの id（ルート分岐表・各ルートの「他ルートの人物の顔出し」）
+const CAMEO_EXPECT := {
+	[1, 4]: [&"shinyu_d4_natsumi"], [1, 5]: [&"shinyu_d5_natsumi"], [1, 7]: [&"shinyu_d7_fox"],
+	[2, 5]: [&"hatsukoi_d5_takeru"], [2, 7]: [&"hatsukoi_d7_takeru", &"hatsukoi_d7_fox"],
+	[5, 5]: [&"kamikakushi_d5_natsumi", &"kamikakushi_d5_takeru"], [5, 6]: [&"kamikakushi_d6_natsumi", &"kamikakushi_d6_takeru"],
+	[5, 8]: [&"kamikakushi_d8_bicycle", &"kamikakushi_d8_gakuban"],
+	[0, 5]: [&"normal_d5_fox", &"normal_d5_natsumi", &"normal_d5_takeru"], [0, 7]: [&"normal_d7_boxes", &"normal_d7_takeru"],
+}
+## 話しかけると返す一言（ほかは話しかけられない）
+const CAMEO_LINES := {
+	&"shinyu_d4_natsumi": "……（えを かいている）", &"shinyu_d5_natsumi": "あいつ、なつみ。え ばっか かいてる。",
+	&"hatsukoi_d5_takeru": "あーっ！ われた！", &"hatsukoi_d7_takeru": "……ぐう",
+	&"normal_d5_takeru": "あーっ！ われた！", &"normal_d7_takeru": "よう。",
+}
+
+
+func _cameo_day(main: Node, day_number: int) -> DayBase:
+	for c in main.get_node("Days").get_children():
+		if c is DayBase and c.day_data and c.day_data.day_number == day_number:
+			return c
+	return null
+
+
+func _check_cameos() -> void:
+	var keep_scale := Engine.time_scale
+	Engine.time_scale = 1.0
+	# 1〜4日目（共通の日）と10日目には、顔出しを置かない（3日目の橋の上のなつみなどと重ならない）
+	for d in CameoData.all():
+		check(d.day_number >= 4 and d.day_number <= 8, "cameo %s: not on a shared day or day 10 (day %d)" % [d.id, d.day_number])
+	check(not CameoData.all().any(func(d): return d.day_number == 4 and d.route != &"shinyu"), "cameo: day 4 only in the takeru route (the others share day 4)")
+	for key in CAMEO_EXPECT:
+		var route: int = key[0]
+		var day: int = key[1]
+		DebugJump.apply(route, day - 1)
+		get_tree().change_scene_to_file("res://world/main.tscn")
+		await _wait(1.0)
+		var main := get_tree().current_scene
+		var hud: Hud = main.get_node("HUD")
+		var dn := _cameo_day(main, day)
+		if dn == null:
+			check(false, "cameo: day %d scene for route %d" % [day, route])
+			continue
+		var shown: Array = dn.cameos().filter(func(c): return c.is_shown()).map(func(c): return String(c.data.id))
+		shown.sort()
+		var want_ids: Array = CAMEO_EXPECT[key].map(func(i): return String(i))
+		want_ids.sort()
+		check(shown == want_ids, "cameo route %d day %d: %s" % [route, day, str(shown)])
+		# ほかの日・ほかのルートの顔出しは出ていない
+		for other in main.get_node("Days").get_children():
+			if other is DayBase and other != dn:
+				for c in other.cameos():
+					check(not c.is_shown() or CAMEO_EXPECT.get([route, other.day_data.day_number], []).has(c.data.id), "cameo %s hidden on route %d" % [c.data.id, route])
+		for c in dn.cameos():
+			if not c.is_shown():
+				continue
+			var want: String = CAMEO_LINES.get(c.data.id, "")
+			check(c.talkable() == (want != ""), "cameo %s: talkable only with a line" % c.data.id)
+			if want == "":
+				continue
+			# 話しかけても、フラグ・好感度・話したかどうか・ルート・エンディングは変わらない
+			var before := [GameState.flags.duplicate(), GameState.natsumi_heart, GameState.talked.duplicate(), GameState.current_route(),
+				GameState.current_ending().id, GameState.collected.duplicate(), GameState.game_grades.duplicate()]
+			c.npc().interact(hud)
+			var seen: Array[String] = []
+			var g := 0
+			while hud.is_talking() and g < 60:
+				g += 1
+				if hud.is_message_open():
+					seen.append(hud._msg_text.text)
+				hud.advance_message()
+				await _wait(0.05)
+			var after := [GameState.flags.duplicate(), GameState.natsumi_heart, GameState.talked.duplicate(), GameState.current_route(),
+				GameState.current_ending().id, GameState.collected.duplicate(), GameState.game_grades.duplicate()]
+			check(seen.has(want) and seen.filter(func(t): return t != want).is_empty(), "cameo %s: one line only %s" % [c.data.id, str(seen)])
+			check(before == after, "cameo %s: talking changes nothing" % c.data.id)
+		# お面の子：近づくと、ゆっくり消える（急に消えない）
+		for c in dn.cameos():
+			if c.is_shown() and c.data.kind == CameoData.Kind.GLIMPSE:
+				check(not c.talkable(), "cameo %s: the fox child cannot be talked to" % c.data.id)
+				var player: Node2D = main.get_node("Player")
+				player.global_position.x = c.global_position.x - Cameo.VANISH_FROM + 10.0
+				await _wait(0.15)
+				var mid := c.modulate.a
+				await _wait(UiTokens.TIME_GLIMPSE_VANISH + 0.3)
+				check(c.gone and mid > 0.05 and mid < 0.99 and c.modulate.a < 0.01, "cameo %s: fades out slowly when approached (%.2f -> %.2f)" % [c.data.id, mid, c.modulate.a])
+	# ノーマル5日目のお面の子は、お面を選んだあとは出ない
+	DebugJump.apply(0, 4)
+	GameState.set_mask(&"kitsune")
+	check(not CameoData.all().filter(func(d): return d.id == &"normal_d5_fox")[0].is_shown(), "cameo: the fox child is gone after choosing a mask")
+	Engine.time_scale = keep_scale
 
 
 # --- ミニゲームの結果（ふつう／よくできた） ------------------------------------------
@@ -950,7 +1045,7 @@ func _natsumi_route() -> void:
 			Input.action_press("move_right")
 			continue
 		var target := hud.current_target()
-		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk:
+		if target is Npc and not (target as Npc).get_parent() is Cameo and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk:
 			Input.action_release("move_right")
 			TouchControls.fire_action(&"interact")
 			await _wait(0.2)
@@ -1244,7 +1339,7 @@ func _kamikakushi_route() -> void:
 			Input.action_press("move_right")
 			continue
 		var target := hud.current_target()
-		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk \
+		if target is Npc and not (target as Npc).get_parent() is Cameo and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk \
 				and not (target as Npc).npc_data.id in [&"natsumi", &"takeru_river"]:
 			Input.action_release("move_right")
 			TouchControls.fire_action(&"interact")
@@ -1370,7 +1465,7 @@ func _normal_route() -> void:
 			Input.action_press("move_right")
 			continue
 		var target := hud.current_target()
-		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk \
+		if target is Npc and not (target as Npc).get_parent() is Cameo and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk \
 				and not (target as Npc).npc_data.id in [&"natsumi", &"takeru_river"]:
 			Input.action_release("move_right")
 			TouchControls.fire_action(&"interact")
@@ -1762,7 +1857,7 @@ func _natsumi_declined_route(mode: String) -> void:
 			Input.action_press("move_right")
 			continue
 		var target := hud.current_target()
-		if target is Npc and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk:
+		if target is Npc and not (target as Npc).get_parent() is Cameo and not GameState.has_talked((target as Npc).npc_data.id) and not (target as Npc).npc_data.auto_talk:
 			var id := (target as Npc).npc_data.id
 			if mode == "bell" and id == &"takeru_river":
 				continue

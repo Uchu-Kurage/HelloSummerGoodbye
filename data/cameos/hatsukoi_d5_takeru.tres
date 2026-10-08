@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CameoData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/cameo_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_river.tres" id="npc"]
+
+[resource]
+script = ExtResource("1")
+id = &"hatsukoi_d5_takeru"
+route = &"hatsukoi"
+day_number = 5
+x = 1420.0
+kind = 0
+line = "あーっ！ われた！"
+npc = ExtResource("npc")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_05.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="r1"]
@@ -10,92 +10,79 @@
 [ext_resource type="Resource" path="res://data/npcs/fox_market_bye.tres" id="r7"]
 [ext_resource type="Script" path="res://world/otherworld_zone.gd" id="r8"]
 [ext_resource type="Script" path="res://world/glow_layer.gd" id="r9"]
+[ext_resource type="PackedScene" path="res://world/festival_grounds.tscn" id="grounds"]
 
 [node name="Day05_kamikakushi" instance=ExtResource("base")]
 
-[node name="Torii" type="Node2D" parent="Props"]
-script = ExtResource("r1")
-position = Vector2(560, 604)
-kind = 7
-
-[node name="Lanterns" type="Node2D" parent="Props"]
-script = ExtResource("r1")
-position = Vector2(700, 604)
-kind = 8
-width = 1100
-
-[node name="Stall" type="Node2D" parent="Props"]
-script = ExtResource("r1")
-position = Vector2(1100, 604)
-kind = 10
+[node name="Festival" parent="Props" instance=ExtResource("grounds")]
 
 [node name="BellRings" type="Node2D" parent="Props"]
 script = ExtResource("r2")
-position = Vector2(1450, 604)
+position = Vector2(2150, 604)
 lines = Array[String](["@show rusty_bell", "（ちりん……）", "ぼく：……また、なった", "@flag kk_d5_bell"])
 sfx = "suzu"
 require_item = &"rusty_bell"
 
 [node name="Fox" parent="Props" instance=ExtResource("r3")]
-position = Vector2(1700, 604)
+position = Vector2(2330, 604)
 npc_data = ExtResource("r4")
 
 [node name="Torii2" type="Node2D" parent="Props"]
 script = ExtResource("r1")
-position = Vector2(1950, 604)
+position = Vector2(2500, 604)
 kind = 7
 
 [node name="BlueLanterns" type="Node2D" parent="Props"]
 script = ExtResource("r5")
-position = Vector2(2050, 604)
+position = Vector2(2580, 604)
 kind = 6
-width = 1050
+width = 840
 
 [node name="Stall1" type="Node2D" parent="Props"]
 script = ExtResource("r5")
-position = Vector2(2200, 604)
+position = Vector2(2700, 604)
 kind = 4
 
 [node name="Vendor1" type="Node2D" parent="Props"]
 script = ExtResource("r5")
-position = Vector2(2210, 604)
+position = Vector2(2708, 604)
 kind = 5
 flip = true
 
 [node name="FoxMarket" parent="Props" instance=ExtResource("r3")]
-position = Vector2(2480, 604)
+position = Vector2(2924, 604)
 npc_data = ExtResource("r6")
 
 [node name="Stall2" type="Node2D" parent="Props"]
 script = ExtResource("r5")
-position = Vector2(2780, 604)
+position = Vector2(3164, 604)
 kind = 4
 
 [node name="Vendor2" type="Node2D" parent="Props"]
 script = ExtResource("r5")
-position = Vector2(2800, 604)
+position = Vector2(3180, 604)
 kind = 5
 flip = true
 
 [node name="FoxBye" parent="Props" instance=ExtResource("r3")]
-position = Vector2(3040, 604)
+position = Vector2(3372, 604)
 npc_data = ExtResource("r7")
 
 [node name="Torii3" type="Node2D" parent="Props"]
 script = ExtResource("r1")
-position = Vector2(3180, 604)
+position = Vector2(3484, 604)
 kind = 7
 
 [node name="Lanterns2" type="Node2D" parent="Props"]
 script = ExtResource("r1")
-position = Vector2(3260, 604)
+position = Vector2(3548, 604)
 kind = 8
-width = 600
+width = 290
 
 [node name="Otherworld" type="Node2D" parent="Props"]
 script = ExtResource("r8")
-from_x = 1950
-to_x = 3180
+from_x = 2500
+to_x = 3484
 ramp = 160
 strength = 0.55
 ambient = "autumn_insects"
@@ -103,20 +90,14 @@ ambient = "autumn_insects"
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("r9")
 
-[node name="LanternsGlow" type="Node2D" parent="Props/Glow"]
-script = ExtResource("r1")
-position = Vector2(700, 604)
-kind = 9
-width = 1100
-
 [node name="BlueGlow" type="Node2D" parent="Props/Glow"]
 script = ExtResource("r5")
-position = Vector2(2050, 604)
+position = Vector2(2580, 604)
 kind = 7
-width = 1050
+width = 840
 
 [node name="Lanterns2Glow" type="Node2D" parent="Props/Glow"]
 script = ExtResource("r1")
-position = Vector2(3260, 604)
+position = Vector2(3548, 604)
 kind = 9
-width = 600
+width = 290

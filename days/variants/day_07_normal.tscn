@@ -55,10 +55,25 @@ position = Vector2(3000, 604)
 script = ExtResource("nprop")
 kind = 8
 
+[node name="TakeruHouse" type="Node2D" parent="Props"]
+position = Vector2(3520, 604)
+script = ExtResource("prop")
+kind = 13
+
+[node name="TakeruOkuribi" type="Node2D" parent="Props"]
+position = Vector2(3250, 604)
+script = ExtResource("prop")
+kind = 17
+
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("glow")
 
 [node name="OkuribiGlow" type="Node2D" parent="Props/Glow"]
 position = Vector2(1320, 604)
+script = ExtResource("prop")
+kind = 18
+
+[node name="TakeruOkuribiGlow" type="Node2D" parent="Props/Glow"]
+position = Vector2(3250, 604)
 script = ExtResource("prop")
 kind = 18

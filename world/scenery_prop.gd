@@ -43,6 +43,7 @@ enum Kind {
 	SHELLS,        ## 波打ちぎわの貝がら
 	BUCKET,        ## 水を入れたバケツ（線香花火の）
 	FAR_BRIDGE,    ## 川の向こうの遠くの木の橋（width の幅。3日目、橋の上で絵を描くなつみ）
+	BICYCLE,       ## スタンドで立てた自転車（神隠し8日目、駄菓子屋の前のタケルの自転車。絵が入るまでの仮の線画）
 }
 
 @export var kind: Kind = Kind.SHOP:
@@ -168,6 +169,7 @@ func _draw() -> void:
 		Kind.KOMINKAN_GLOW: _kominkan_glow()
 		Kind.RADIO_KIDS: _radio_kids()
 		Kind.GAKUBAN: _gakuban()
+		Kind.BICYCLE: _bicycle()
 		Kind.SHRINE: _shrine()
 		Kind.PUDDLES: _puddles()
 		Kind.SEA: _sea()
@@ -454,6 +456,32 @@ func _radio_kids() -> void:
 func _gakuban() -> void:
 	# あぜ道にななめに立てかけた画板（描きかけの絵）と、色えんぴつの缶
 	_art("prop_gakuban", Vector2(0, 8), 96.0)
+
+
+func _bicycle() -> void:
+	# 横から見た自転車。後輪が左、前かごが右
+	var r := 30.0
+	var back := Vector2(-48, -r)
+	var front := Vector2(48, -r)
+	_shadow(Vector2(0, -2), Vector2(90, 7))
+	for c in [back, front]:
+		draw_arc(c, r, 0, TAU, 28, P.BIKE_TIRE, 5.0)
+		draw_arc(c, r - 6, 0, TAU, 24, P.BIKE_METAL, 1.0)
+		for i in 6:
+			var a := TAU * i / 6.0
+			draw_line(c, c + Vector2(cos(a), sin(a)) * (r - 5), P.BIKE_METAL, 1.0)
+	var crank := Vector2(-4, -r)
+	var seat := Vector2(-22, -r - 50)
+	var head := Vector2(34, -r - 46)
+	for seg in [[back, crank], [crank, seat], [back, seat + Vector2(4, 8)], [crank, head + Vector2(-2, 10)], [seat + Vector2(4, 8), head], [head, front]]:
+		draw_line(seg[0], seg[1], P.BIKE_FRAME, 4.0)
+	draw_line(seat, seat + Vector2(0, -8), P.BIKE_METAL, 3.0)
+	draw_line(seat + Vector2(-12, -10), seat + Vector2(10, -10), P.BIKE_TIRE, 6.0)
+	draw_line(head, head + Vector2(-4, -16), P.BIKE_METAL, 3.0)
+	draw_line(head + Vector2(-16, -18), head + Vector2(6, -16), P.BIKE_TIRE, 4.0)
+	# 前かごと、スタンド
+	draw_rect(Rect2(head + Vector2(6, -14), Vector2(26, 18)), P.BIKE_METAL, false, 2.0)
+	draw_line(crank, crank + Vector2(-12, r - 2), P.BIKE_METAL, 2.0)
 
 
 func _shrine() -> void:
