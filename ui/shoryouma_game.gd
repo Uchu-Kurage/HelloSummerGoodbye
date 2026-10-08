@@ -1,9 +1,10 @@
 class_name ShoryoumaGame
-extends NatsumiScreen
+extends MinigameBase
 ## ミニゲーム「精霊馬づくり」（6日目、ノーマルルート）。会話の @game shoryouma で始まる。
 ## ちゃぶ台の上で、きゅうり（うま）となす（うし）に、割りばしの足を4本ずつさす。
-## 割りばしが野菜の下を左右に行き来する。足をさすところ（●）の上に来たらタップ（Space）でさす。
-## ずれても、少しななめの足になるだけ（失敗で止まらない）。8本のうち GOOD_LEGS 本以上まっすぐなら、よくできた（grade。HUD がフラグ shoryouma_good／ちがえば shoryouma_miss を立てる）。
+## 割りばし（印）が野菜の下を左右に行き来する。足をさすところ（●）の上に来たら決定（タップ）でさす。4本さしたら、なすも同じ。
+## ずれても、少しななめの足になるだけ（失敗で止まらない）。8本のうち GOOD_LEGS 本以上まっすぐなら「よくできた」
+## （馬も牛も、4本ともまっすぐ立つ。HUD がフラグ shoryouma_good／ちがえば shoryouma_miss を立てる）。
 
 enum Phase { INTRO, PLACE, STAND, END }
 
@@ -12,11 +13,12 @@ const LEG_AT := [0.2, 0.36, 0.64, 0.8]
 ## ●からこのくらい（野菜の長さに対する割合）までなら、まっすぐ
 const GOOD_TOL := 0.06
 ## 割りばしが野菜の左はしから右はしまで行く時間（秒）
-const SWEEP_TIME := 1.6
-const INTRO_TIME := 1.6
-const STAND_TIME := 1.8
-const GOOD_LEGS := 6
-## 出てすぐのタップは受けつけない（会話を送るつもりの連打で、さしてしまわないように）
+const SWEEP_TIME := 2.2
+const INTRO_TIME := 2.0
+const STAND_TIME := 2.4
+## 「よくできた」になる、まっすぐの足の数（8本のうち。仮の値）
+const GOOD_LEGS := 8
+## 出てすぐの決定は受けつけない（つづけて押して、さしてしまわないように）
 const TAP_GUARD := 0.3
 const P := preload("res://world/world_palette.gd")
 ## 背景の絵（お盆の夕方の座敷とちゃぶ台。窓の外は透明なので、うしろに夕方の空の色をぬる）と、残したいところ
@@ -40,7 +42,13 @@ var _sweep := 0.0
 var _dir := 1.0
 
 
-func _build() -> void:
+func _setup() -> void:
+	intro_text = Strings.SHORYOUMA_INTRO
+
+
+func _begin() -> void:
+	legs = [[], []]
+	good = 0
 	_start_veg(0)
 
 
@@ -76,16 +84,16 @@ func stick() -> void:
 	if ok:
 		good += 1
 	SfxPlayer.play("place_wood")
-	say(Strings.SHORYOUMA_GOOD if ok else Strings.SHORYOUMA_TILT)
+	caption(Strings.SHORYOUMA_GOOD if ok else Strings.SHORYOUMA_TILT)
 	if (legs[veg] as Array).size() >= LEG_AT.size():
 		phase = Phase.STAND
 		_t = 0.0
 		hide_hint()
-		say(Strings.SHORYOUMA_DONE_UMA if veg == 0 else Strings.SHORYOUMA_DONE_USHI)
+		caption(Strings.SHORYOUMA_DONE_UMA if veg == 0 else Strings.SHORYOUMA_DONE_USHI)
 
 
-func _process(delta: float) -> void:
-	_t += delta * speed
+func _process_game(delta: float) -> void:
+	_t += delta
 	match phase:
 		Phase.INTRO:
 			if _t >= INTRO_TIME:
@@ -107,19 +115,23 @@ func _process(delta: float) -> void:
 					_start_veg(1)
 				else:
 					phase = Phase.END
-					grade = GameState.Grade.GOOD if good >= GOOD_LEGS else GameState.Grade.NORMAL
-					finish()
-	queue_redraw()
+					end_game(good >= GOOD_LEGS, good)
 
 
-func _input(event: InputEvent) -> void:
-	if not is_tap(event):
-		return
+func _accept(_pos: Variant = null) -> void:
 	if phase == Phase.PLACE:
 		stick()
 	else:
 		speed = UiTokens.SKIP_SPEED
-	get_viewport().set_input_as_handled()
+
+
+func bot(want_good: bool) -> Dictionary:
+	if phase != Phase.PLACE or _t < TAP_GUARD:
+		return {}
+	# ふつう：1本目だけ、わざと ずらす
+	var off := absf(_sweep - target())
+	var hit := off <= GOOD_TOL * 0.4 if want_good or good + (legs[0] as Array).size() > 0 else off >= GOOD_TOL * 3.0
+	return {"key": KEY_SPACE, "tap": center_tap()} if hit else {}
 
 
 ## 野菜を描く場所（まん中の大きな野菜）：左はし・右はし・おなかの高さ

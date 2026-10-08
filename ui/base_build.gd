@@ -6,6 +6,8 @@ extends Control
 ## - タッチ／マウス：ピースをタップ → すき間をタップ（またはドラッグして落とす）。はめたピースをタップすると外れて手に戻る
 ## - キーボード：矢印でピース → 決定 → 矢印で場所 → 決定。R でまわす。Esc で選び直し
 ## 盤とピースは data/base_puzzle.tres（BasePuzzle）。記録は GameState.base_cells
+## ほかのミニゲームと同じく、始める前に1行の説明（MinigameFrame）を出し、Esc／「もどる」でいつでもやめられる。
+## 点数はない。やめたときは、残りのすき間をタケルが埋めてくれる（あとの日も、ふさがった基地として使う）
 
 signal finished
 
@@ -51,6 +53,9 @@ var _rotate: Button
 var _return: Button
 var _pause: Button
 var _status: Label
+var frame: MinigameFrame
+## やめた（Esc／もどる）か
+var quit_by_player := false
 
 
 func _ready() -> void:
@@ -73,8 +78,36 @@ func _ready() -> void:
 	InputMode.mode_changed.connect(func(_t):
 		_kb_board = _board.has_focus() and InputMode.keyboard
 		_refresh())
+
+
+## 説明を閉じて始める
+func _start() -> void:
+	if not frame.intro_visible():
+		return
+	frame.hide_intro()
 	if InputMode.keyboard:
 		_focus_tray()
+
+
+## やめる（Esc／もどる）：残りのすき間はタケルが埋める。記録は「ふつう」（点数なし）
+func quit() -> void:
+	if _done:
+		return
+	quit_by_player = true
+	frame.hide_intro()
+	_drop_held(false)
+	var guard := 0
+	while not GameState.base_done() and guard < 40:
+		guard += 1
+		var mv := next_move()
+		if mv.is_empty():
+			break
+		_rot[mv[0]] = mv[1]
+		_put(mv[0], mv[2])
+	_line.text = Strings.BASE_QUIT_FILL
+	_update_rain_sound()
+	_refresh()
+	_finish()
 
 
 func _build() -> void:
@@ -146,7 +179,7 @@ func _build() -> void:
 	_return = _button(Strings.BASE_RETURN, func(): _drop_held(true))
 	row.add_child(_return)
 	# 右上の「たからばこ」「ひとやすみ」はトレーと重なるので隠し、ひとやすみだけここに置く（タッチのときだけ）
-	_pause = _button(Strings.BUTTON_PAUSE, func(): TouchControls.fire_action(&"pause"))
+	_pause = _button(Strings.BACK, quit)
 	row.add_child(_pause)
 	get_tree().call_group("touch_controls", "set_suppressed", true)
 	_tray = GridContainer.new()
@@ -176,6 +209,11 @@ func _build() -> void:
 		b.add_child(mark)
 		_tray.add_child(b)
 		_slots.append(b)
+	frame = MinigameFrame.new()
+	frame.show_quit = false
+	add_child(frame)
+	frame.start_requested.connect(_start)
+	frame.show_intro.call_deferred(Strings.BASE_INTRO)
 
 
 func _button(text: String, cb: Callable) -> Button:
@@ -606,6 +644,19 @@ func _notification(what: int) -> void:
 
 func _input(event: InputEvent) -> void:
 	if _done or not is_visible_in_tree():
+		return
+	# 始める前の説明：決定・タップで始める（下の盤やピースには届かせない）
+	if frame and frame.intro_visible():
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+			quit()
+		elif NatsumiScreen.is_tap(event):
+			_start()
+		if event is InputEventKey or event is InputEventScreenTouch or event is InputEventMouseButton or event is InputEventAction:
+			get_viewport().set_input_as_handled()
+		return
+	if (event.is_action_pressed("ui_cancel") and _held < 0 and not _kb_board) or event.is_action_pressed("pause"):
+		quit()
+		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("rotate_piece"):
 		rotate_held()

@@ -123,11 +123,11 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - **10日目**：`world/natsumi_bus.gd`（親友ルートのバス `bus_departure.gd` を継承）。高：乗る直前になつみが走ってきて絵をくれ、走り出してから広げる（`@game drawing`）。中：窓の外の田んぼ道で、絵を描くなつみが小さく手をふる。低：田んぼ道に誰もいない
 - **場所の小物**：`world/scenery_prop.gd` に、公民館（`KOMINKAN`・夜の明かり `KOMINKAN_GLOW`）・ラジオ体操（`RADIO_KIDS`）・画板（`GAKUBAN`）・社（`SHRINE`）・水たまり（`PUDDLES`）・海（`SEA`・`SAND`・`SWIM_FLAG`・`SHELLS`）・バケツ（`BUCKET`）。どれも Gemini の水彩の絵（プロンプトは `tools/art/prompts_natsumi.md`）
 - **海辺の背景**：6日目の砂浜では、背景の山並み・田んぼ・電柱・木立ちが、水平線の空・太陽・灯台の手前の海・灯台にだんだん入れかわる。場所は日のシーンの `SeasideZone`（`world/seaside_zone.gd`）で決め、入れかえは `Background.set_seaside`。太陽と灯台は背景の層のくり返しに入れず、1つだけ見える
-- **ミニゲーム**：どれも `ui/natsumi_screen.gd`（NatsumiScreen）を継承。上になつみのひとこと、下に案内の小札。失敗で止まらない
-  - スケッチ（3日目、`ui/sketch_game.gd`）：そら・やま・かわ・いし を3つから選んで描く。見本と `GOOD_MATCHES`（3）か所以上同じなら高得点
-  - 金魚すくい（5日目、`ui/kingyo_game.gd`）：金魚がポイの上に来たらタップ。すくうたびに紙が弱り（`WEAR_SCOOP`・`WEAR_FISH`）、破れたらおしまい。`GOOD_COUNT`（3）匹以上で高得点
-  - 貝がら拾い（6日目、`ui/kaigara_game.gd`）：波が引いたすきに、貝がらを1つ拾う（`ROUNDS` 回）。どこかの回にまじる、さくら貝を見つければ高得点
-  - 線香花火（9日目、`ui/senko_game.gd`）：始める前に押しつづけの案内を出し、押すと火がつく。離すと手がぶれて `GRACE` 秒で落ちる。最後まで落とさなければ高得点（なつみのが先に落ちる）
+- **ミニゲーム**：共通の土台（下の「ミニゲームの共通の土台」）。失敗で止まらない。よくできたら好感度 +1
+  - スケッチ（3日目、`ui/sketch_game.gd`）：景色の4か所（そら・やま・かわ・いわ）を、3色から選んで塗る。景色の色と `GOOD_MATCHES`（3）か所以上合えば よくできた
+  - 金魚すくい（5日目、`ui/kingyo_game.gd`）：左右でポイを動かし、金魚の真上で決定。`BREAK_AT`（4）回目か `MAX_MISSES`（2）回外すと破れる。`GOOD_COUNT`（2）匹以上で よくできた
+  - 貝がら拾い（6日目、`ui/kaigara_game.gd`）：`TIME_LIMIT`（30 秒）。波が引いているあいだに左右で歩いて決定で拾う。さくら貝（1〜2回だけ出る）を拾えば よくできた
+  - 線香花火（9日目、`ui/senko_game.gd`）：揺れる火の玉を、端に寄りすぎる前に決定・タップで真ん中へ戻す（押し続けは使わない）。`BURN_TIME`（30 秒）。ちりぎくまで落とさなければ よくできた（なつみのが先に落ちる）
   - 映画会（7日目、`ui/movie_scene.gd`）は暗転と音（`Strings.MOVIE_SOUNDS`）だけ、絵を広げる場面（10日目・高、`ui/drawing_reveal.gd`）は見るだけ
 
 ### ノーマルルート（祖父母）
@@ -143,12 +143,12 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - **9日目**：星座さがしのあと、祖父が口笛を吹く。音素材（`audio/sfx/kuchibue.ogg`）が入るまでは「♪」（`NormalProp` の `WHISTLE`）とせりふで表す
 - **10日目**：祖母がおにぎりをくれる（`@give onigiri_wrap`）。バス（`world/normal_bus.gd`）が走り出すと、うしろの窓から手をふる祖父母が小さくなっていく（`@game bus_window`）。そのあと、おにぎりの包みを開く
 - **場所の小物**：`world/normal_prop.gd`（NormalProp。笹・笹舟・物干し・お面の屋台・座敷・親戚・精霊馬・親戚の車・ほおずき・蚊取り線香・口笛の♪）。Gemini の水彩の絵（プロンプトは `tools/art/prompts_normal.md`）。物干しの柱と竿、けむり、♪ は図形で描く
-- **画面**：どれも `NatsumiScreen` を継承（上に祖父母のひとことの小札、下に案内の小札）。失敗で止まらない。結果（ふつう／よくできた）で直後のせりふが変わる（`@if_good`。フラグ `<名前>_good` / `<名前>_miss` も立つ）
-  - 洗濯物の取り込み（4日目、`ui/sentaku_game.gd`）：洗濯物をタップで取り込む。`RAIN_TIME`（10 秒）で降りだすと、残りは少しぬれる
-  - 精霊馬づくり（6日目、`ui/shoryouma_game.gd`）：行き来する割りばしが ● の上に来たらタップでさす。きゅうりとなすに4本ずつ。ずれると少しななめの足になるだけ
-  - かくれんぼ（8日目、`ui/kakurenbo_game.gd` の `@game kakurenbo_jiji`）：夕方の境内。`MISS_HINT` 回はずすと、せきばらいをして、狛犬のうしろから自分で出てくる（ふつう）。それまでに見つけたら よくできた
-  - 星座さがし（9日目、`ui/seiza_game.gd`）：あかるい星のうち、夏の大三角の3つをタップでつなぐ。2回はずすと大三角の星が光る
-  - バスの窓（10日目、`ui/bus_window.gd`）：見るだけ。タップで手をふりかえす
+- **画面**：ミニゲームは共通の土台（`minigames/minigame_base.gd`。下の「ミニゲームの共通の土台」）。失敗で止まらない。結果（ふつう／よくできた）で直後のせりふが変わる（`@if_good`。フラグ `<名前>_good` / `<名前>_miss` も立つ）
+  - 洗濯物の取り込み（4日目、`ui/sentaku_game.gd`）：6枚（布団は2回押す）を、左右で動いて決定で取り込む。`RAIN_TIME`（20 秒）で降りだすと、残りは少しぬれる
+  - 精霊馬づくり（6日目、`ui/shoryouma_game.gd`）：行き来する割りばしが ● の上に来たら決定でさす。きゅうりとなすに4本ずつ。8本ともまっすぐなら よくできた
+  - かくれんぼ（8日目、`ui/kakurenbo_game.gd` の `@game kakurenbo_jiji`）：神隠しルートと同じ仕組み。手がかりは麦わら帽子の端。`GOOD_TRIES`（3）回以内に見つけたら よくできた。`MAX_MISSES`（5）回はずすと、おじいちゃんが狛犬のうしろから自分で出てくる
+  - 星座さがし（9日目、`ui/seiza_game.gd`）：おじいちゃんが言う星座（はくちょう座・こと座・わし座）を順につなぎ、最後に夏の大三角。1回もまちがえなければ よくできた
+  - バスの窓（10日目、`ui/bus_window.gd`）：点数なし
 
 ### 神隠しルート（お面の子）
 
@@ -164,12 +164,12 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - **10日目**：DayVariant の `date_label_override`（「8/16」）で送り火の夜の神社に目覚め、`world/time_skip.gd`（TimeSkip）で暗転して日付が 8/31 までぱらぱらめくれる（`Transition.play_date_riffle`）。時間帯は `time_keys` の同じ位置（0.36。TimeSkip の暗転の中）に置いた2つのキーで、夜（0.90）から朝（0.00）へ飛ぶ。バスは `world/kamikakushi_bus.gd`（走り出してから、鈴を振る）
 - **お面を外す**：NpcData の `alt_sprite` / `alt_sprite_event`（会話の `@event unmask` で絵がかわる）
 - **場所の小物**：`world/kamikakushi_prop.gd`（祠・灯籠・狛犬・大木・夜市の屋台・顔の見えない店の人・青い提灯・ひまわり・知らない村の明かり）。お面の子・小物・ミニゲームの背景は Gemini の水彩の絵（`world/scenery/painted/`・`ui/minigame_bg/`。プロンプトは `tools/art/prompts_kamikakushi.md`）。アイテム6つも Gemini の絵（`data/items/icons/*.png`）。知らない村の明かりと山の上の草だけ図形で描く
-- **画面**：どれも `NatsumiScreen` を継承（上にひとことの小札、下に案内の小札）。失敗で止まらない
-  - かくれんぼ（4日目、`ui/kakurenbo_game.gd`）：灯籠・おおきな き・こまいぬ・さいせんばこ から探す。`MISS_HINT`（2）回はずすと、隠れているところで鈴が鳴って光る
-  - 夜市の物々交換（5日目、`ui/yomise_game.gd`）：どんぐり → かざぐるま → あおい りんごあめ → あおい あめだま。ちがう店は首を横にふる。終わると `@give yomise_ame`
-  - 鈴の音で道探し（6日目、`ui/suzu_michi_game.gd`）：分かれ道（`FORKS` = 4）で、鈴の鳴ったほうへ。音が出せなくても、鳴ったほうで小さな光がゆれる
-  - 鬼ごっこ（8日目、`ui/onigokko_game.gd`）：押しつづけて走って追いつく → こんどはお面の子が鬼（最後はつかまる）
-  - 鈴を振る（10日目のバス、`ui/suzu_furu.gd`）：いちどめだけ鳴る
+- **画面**：ミニゲームは共通の土台（下の「ミニゲームの共通の土台」）。失敗で止まらない
+  - かくれんぼ（4日目、`ui/kakurenbo_game.gd`）：隠れ場所6つ（`Strings.KAKURENBO_SPOTS`）を左右で選んで決定で調べる。お面の子（狛犬のうしろ、`HIDING`）の近く（`NEAR`）を選ぶと、鈴の音と「♪ ちりん」。`GOOD_TRIES`（3）回以内で よくできた、`MAX_MISSES`（5）回はずすと自分から出てくる
+  - 夜市の物々交換（5日目、`ui/yomise_game.gd`）：屋台4つ（`STALLS`：ほしい物 → くれる物）。てもとは ふうりん・かざぐるま・ほおずき。決定で聞いて、もう一度決定で交換（`MAX_TRADES` = 5 回まで）。あめ玉をもらったらおしまい（ふつうの青いあめ玉／いちばん きれいな あめ玉）。終わると `@give yomise_ame`
+  - 鈴の音で道探し（6日目、`ui/suzu_michi_game.gd`）：分かれ道（`FORKS` = 5）で、鈴の鳴ったほうへ左右で進む。音が出せなくても、鳴ったほうで光がゆれる。まちがいが `GOOD_WRONG`（1）回以内で よくできた
+  - 鬼ごっこ（8日目、`ui/onigokko_game.gd`）：走るのは自動。塀や水たまりの前で決定を押して飛び越え、距離のゲージを0にする。`GOOD_TIME`（45 秒）以内で よくできた。間に合わなければ、お面の子が止まって振り返る
+  - 鈴を振る（10日目、`ui/suzu_furu.gd`）：点数なし
 
 ### 親友ルート（タケル）
 
@@ -178,27 +178,33 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 場面の小物は `world/scenery_prop.gd`（駄菓子屋・川原・秘密基地・夏祭り・バス停など）、夕立は `world/rain_zone.gd`、
 夜の灯り（提灯・街灯・送り火・星・懐中電灯）は `world/glow_layer.gd` の下に置くと暗くなりません。10日目のバスの場面は `world/bus_departure.gd` です。
 
+### ミニゲームの共通の土台
+
+- 点数のある16種類は `minigames/minigame_base.gd`（MinigameBase）を継承する。枠の部品（始める前の説明・「もどる」・← →・「つぎへ」「もういちど」）は `minigames/minigame_frame.gd`
+- 書き方：`_setup()` で `intro_text`（1行の説明）と `arrows`（← → を出すか）を決め、`_begin()` で1回ぶんを始める（もういちど でも呼ばれる）。入力は `_left()` / `_right()` / `_accept(pos)`（キーボードの決定なら `pos` は null、タッチはタップした位置）。毎フレームは `_process_game(delta)`。おわったら `end_game(よくできたか, 記録する値)`
+- やめる（Esc／「もどる」）と「ふつう」。`_on_quit()` で、会話に使う記録（石切りの回数など）を「ふつう」にそろえる
+- 何度やり直しても、記録するのは最初の1回（画面の `grade` / `grade_value`。HUD は記録のあるミニゲームを記録しなおさない）
+- 自動の動作確認（`tools/smoke_test.gd` の `_check_minigames`）は、`bot(good)` が返す入力をキーボードだけ・タッチだけで送って、16種類を最後まで遊ぶ
+
 ### ミニゲームの結果（ふつう／よくできた）
 
-- 点数のあるミニゲームは、終わる前に画面の `grade` に `GameState.Grade.NORMAL` か `GOOD` を入れる。HUD が `GameState.record_grade` で記録する（フラグ `<名前>_good` / `<名前>_miss` も立つ。初恋ルートは よくできたら好感度 +1）
+- 点数のあるミニゲームは、`end_game` で結果を返す（画面の `grade` に `GameState.Grade.NORMAL` か `GOOD`）。HUD が `GameState.record_grade` で記録する（フラグ `<名前>_good` / `<名前>_miss` も立つ。初恋ルートは よくできたら好感度 +1）
 - 新しいミニゲームを足すときは、`GameState.GRADED_GAMES` に `@game` の名前を足す。「よくできた」の条件は、画面のスクリプトの `GOOD_` で始まる定数（仮の値）
-- アイテムの一言を変える：ItemData の `grade_game` にミニゲームの名前、`description_good` に よくできたときの一言（空ならふつうの一言）。ルートで一言を変えるもの（`alt_if`）は `alt_description_good`
+- アイテムの一言を変える：ItemData の `grade_game` にミニゲームの名前、`description_good` に よくできたときの一言（空ならふつうの一言）。ルートで一言を変えるもの（`alt_if`）は `alt_description_good`。一言に `%d` があれば、`end_game` に渡した値（`GameState.game_value`）が入る（記録がないときは `grade_value_default`）
 - 直後のせりふを変える：会話に `@if_good 目印` を書く
 - 一覧は DESIGN.md「8.698 ミニゲームの結果」
 
 ### ミニゲーム：石切り（3日目）
 
-- 画面：`ui/ishikiri_game.gd`（会話の `@game ishikiri`。「お、きたな。」のあと、ビー玉の選択肢の前）。タケルのお手本（5回）→ 足もとの石を選ぶ → 押しつづけて腕を引き、離して投げる。3回
-- 石：`data/skip_stones/*.tres`（SkipStone：名前・いちばんうまいときの回数・選んだときのタケルの一言・仮の絵）
-- 跳ねる回数 ＝ 石の回数 ×「ちょうどいいところ」への近さ。ちょうどいいところは `SWEET_SPOT`（0.8 秒）、幅は `SWEET_WINDOW`（前後 0.12 秒）、ずれたときの減り方は `FALLOFF`
-- 結果（`GameState.ishikiri_best`・`ishikiri_result`、フラグ `ishikiri_win` / `ishikiri_draw` / `ishikiri_lose`）でタケルの一言が変わる。せりふは `data/npcs/takeru_river.tres`
-- 入力は `HoldInput`。「えらびなおす」ボタンの上のタッチは、押しつづけに数えない（`HoldInput.exclude`）
+- 画面：`ui/ishikiri_game.gd`（会話の `@game ishikiri`。「お、きたな。」のあと、ビー玉の選択肢の前）。タケルのお手本（5回）→ 角度のゲージ（縦。低いほど良い）→ 力のゲージ（横。まん中ほど良い）を決定で止める。`THROWS`（3）回
+- 跳ねる回数（1〜9）は `IshikiriGame.skips_for`（角度は `ANGLE_BEST`、力は `POWER_BEST` の内なら満点）
+- 結果（`GameState.ishikiri_best`・`ishikiri_result`、フラグ `ishikiri_win` / `ishikiri_draw` / `ishikiri_lose`）でタケルの一言が変わる。せりふは `data/npcs/takeru_river.tres`。川のきれいな石の一言は実際の回数（`data/items/river_stone.tres` の `%d`）
 
 ### ミニゲーム：秘密基地づくり（4日目）
 
 ペントミノ式の型はめ。基地に寄った専用の画面に切り替わり、いろいろな形と材料のピースを選んで、屋根と壁のすき間を埋めます。
 
-- 画面：`ui/base_build.gd`。基地の絵：`world/secret_base.gd`（4・8・9日目で使い回す。`mode` が BUILD／QUIET／NIGHT）。どちらも `world/base_art.gd` で盤を描く
+- 画面：`ui/base_build.gd`。共通の枠（MinigameFrame）で、始める前の説明と「もどる」（Esc）だけそろえた。やめると残りはタケルが埋める。基地の絵：`world/secret_base.gd`（4・8・9日目で使い回す。`mode` が BUILD／QUIET／NIGHT）。どちらも `world/base_art.gd` で盤を描く
 - 盤とピース：`data/base_puzzle.tres`（BasePuzzle）
   - `layout` は文字で書いた盤（`A`〜`C` 屋根のすき間、`D` `E` 壁のすき間、`#` 骨組み、`o` 入口）
   - `pieces` は BasePiece（形 `"###/#.."`・材料・タケルが最初に置いておくか）
@@ -209,25 +215,21 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 ### ミニゲーム：型抜き（5日目）
 
-- 画面：`ui/katanuki_game.gd`（会話の `@game katanuki`）。押しつづけると削れ、離すと手を休める。ひよこの型を 頭 → くちばし → 背中 → しっぽ → 足 → おなか の順に削る
-- 押しているあいだ「ひび」がたまり、離すとゆっくり落ち着く。いっぱいで割れる。ひびはゲージで出さず、ひびの線・手元のふるえ・音（`katanuki_scrape` / `katanuki_creak` / `katanuki_break`）で伝える
-- 入力は飛び込みと同じ `HoldInput`。主人公が「しっぽ」に入ると、となりのタケルの型が割れる（先に割ったときは、少しおくれてタケルも割る）
+- 画面：`ui/katanuki_game.gd`（会話の `@game katanuki`）。針がひよこの輪郭の6つの点を順に進み、点ごとに揺れるゲージを緑の範囲で止める（`PARTS`：部分ごとの緑の幅と速さ）。外すとひび、`MAX_CRACKS`（3）で割れる
+- 主人公が「しっぽ」（`TAKERU_BREAK_PART`）に入ると、となりのタケルの型が割れる
 - 結果（`GameState.katanuki_result`、フラグ `katanuki_clean` / `katanuki_broken`）でタケルの一言が変わる。せりふは `data/npcs/takeru_festival.tres`
-- 部分ごとの「削る時間」「割れるまでの時間」は `KatanukiGame.PARTS`、ひびの落ち着く速さは `RELAX`
 
 ### ミニゲーム：カブトムシとり（6日目）
 
-- 画面：`ui/kabuto_game.gd`（会話の `@game kabuto`。罠の木でタケルが見つけたあと）。押しつづけると、そっと前へ進み、離すと止まる。手が届いたら「つかむ」
-- カブトムシの様子：食べている（`EAT_MIN`〜`EAT_MAX` 秒でばらつく）→ 気づきかけ（`NOTICE_TIME`）→ 気にしている（`WARY_TIME`）→ 食べている。気にしているときに動くと落ちる（落ちても木をのぼって元の場所へもどる）
-- 木までの距離は `APPROACH_TIME`（押しつづけて合計 6 秒）
-- 結果（`GameState.kabuto_drops`、フラグ `kabuto_clean` / `kabuto_dropped`）でタケルの一言が変わる。せりふは `data/npcs/takeru_trap.tres`
+- 画面：`ui/kabuto_game.gd`（会話の `@game kabuto`）。左右で懐中電灯を動かし（`SPOTS` か所）、照らした虫を決定で捕まえる。チャンスは `CHANCES`（3）回、`TIME_LIMIT`（45 秒）
+- 虫は `BUGS`（カナブン・クワガタ・小さいカブトムシ・大きいオス）。大きいオスは `BIG_FIRST` 秒後から `BIG_EVERY` 秒ごとに出る
+- 結果のフラグ `kabuto_clean`（大きいオス）／`kabuto_dropped`（それいがい）でタケルの一言が変わる。せりふは `data/npcs/takeru_trap.tres`
 
 ### ミニゲーム：飛び込み（7日目）
 
-- 画面：`ui/dive_game.gd`（会話の `@game dive`）。押しつづけて、タケルの「の！」で離す
-- 「押しつづけて離す」の入力は `ui/components/hold_input.gd`（HoldInput）。キーボードは Space / Enter / E、タッチ・マウスは画面のどこか
-- 結果（`GameState.dive_result`、フラグ `dive_perfect` / `dive_early` / `dive_late`）でタケルの一言が変わる。せりふは `data/npcs/takeru_dive.tres`
-- 間の長さと判定の幅は `DiveGame` の `COUNT_NO`・`PERFECT_WINDOW`
+- 画面：`ui/dive_game.gd`（会話の `@game dive`）。踏み切りのゲージを決定で止め、水面に近づいたら決定で膝を抱える。`JUMPS`（3）回飛んで、いちばん大きいしぶきで決まる
+- 結果（`GameState.dive_result`、フラグ `dive_perfect`（大）/ `dive_late`（中）/ `dive_early`（小））でタケルの一言が変わる。せりふは `data/npcs/takeru_dive.tres`
+- 判定の幅は `JUMP_BEST`・`TUCK_BEST`
 
 ### ミニゲーム：タイムカプセル埋め（9日目）
 

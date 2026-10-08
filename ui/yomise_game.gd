@@ -1,181 +1,270 @@
 class_name YomiseGame
-extends NatsumiScreen
+extends MinigameBase
 ## ミニゲーム「夜市の物々交換」（5日目、神隠しルート）。会話の @game yomise で始まる。
-## 青い提灯の夜市。顔の見えない店の人たちが、ほしいものと、自分の品物をとりかえてくれる。
-## てもとの物（はじめは どんぐり）を、それをほしがる店で交換していく：どんぐり → かざぐるま → あおい りんごあめ → あおい あめだま。
-## ちがう店を選ぶと、首を横にふられるだけ（失敗はない）。食べ物は交換できても、食べてはいけない。
-## あめだまを手に入れたらおしまい（会話の @give yomise_ame で、宝箱に入る）。
+## 青い提灯の夜市に、顔の見えない店の人の屋台が4つ。てもとは「夜市の品」3つ（ふうりん・かざぐるま・ほおずき。宝箱のアイテムは使わない）。
+## 左右で屋台を選び、決定でほしい物を聞く（屋台の上に「ほしい物 → くれる物」が出る）。もう一度決定で、持っていれば交換する。
+## 交換をつないでいく（MAX_TRADES 回まで）。あめ玉を手に入れたらおしまい：
+## - あめや：ほおずき → ふつうの青いあめ玉（すぐ手に入る）
+## - かざぐるま → ガラスの おはじき → 青い ちょうちん → いちばん きれいな あめ玉
+## いちばん きれいな あめ玉までたどり着いたら「よくできた」。どちらのあめ玉も、会話の @give yomise_ame で宝箱に入る。
 
-enum Phase { TRADE, END }
+enum Phase { CHOOSE, TRADE, END }
 
-## 交換のならび（Strings.YOMISE_GOODS の番号）。店 i は品物 i をほしがり、品物 i+1 をくれる
-const FOOD := 2
-const GOAL := 3
-## 首を横にふられたのがこれ以下なら「よくできた」（仮の値）
-const GOOD_REFUSALS := 0
-const END_TIME := 1.8
-const CHOICE_SIZE := Vector2(208, 150)
+## 品物（Strings.YOMISE_GOODS の番号）
+enum Goods { FURIN, KAZAGURUMA, HOOZUKI, OHAJIKI, CHOCHIN, AME, AME_BEST }
+## 「よくできた」になる品物（いちばん きれいな あめ玉）
+const GOOD_GOODS := Goods.AME_BEST
+const START_GOODS := [Goods.FURIN, Goods.KAZAGURUMA, Goods.HOOZUKI]
+## 屋台ごとの交換（[ほしい物, くれる物]）。あめ玉をもらったら、おしまい
+const STALLS := [
+	[Goods.HOOZUKI, Goods.AME],
+	[Goods.KAZAGURUMA, Goods.OHAJIKI],
+	[Goods.OHAJIKI, Goods.CHOCHIN],
+	[Goods.CHOCHIN, Goods.AME_BEST],
+]
+const MAX_TRADES := 5
+## 交換の動きの時間と、おわってから見せる時間
+const TRADE_TIME := 1.3
+const END_TIME := 2.0
 const P := preload("res://world/world_palette.gd")
 const K := preload("res://world/kamikakushi_prop.gd")
 ## 背景の絵（青い提灯の夜市）と、切り取るとき残したいところ
 const BG: Texture2D = preload("res://ui/minigame_bg/yomise.jpg")
 const BG_FOCUS := Vector2(0.5, 0.3)
 
-var phase := Phase.TRADE
-## てもとの品物（Strings.YOMISE_GOODS の番号）
-var held := 0
+var phase := Phase.CHOOSE
+var cursor := 0
+## てもとの品物
+var held: Array[int] = []
 var trades := 0
 var refusals := 0
+var got := -1
 var rng := RandomNumberGenerator.new()
-## 並んでいる店の順（店の番号）
+## 並んでいる屋台の順（STALLS の番号）と、聞いたか・交換したか
 var order: Array[int] = []
-var _sold: Array[bool] = []
+var _asked: Array[bool] = []
+var _done_stall: Array[bool] = []
 var _t := 0.0
-var _row: HBoxContainer
-var _buttons: Array[Button] = []
-var _hand: Label
 
 
-func _build() -> void:
-	rng.randomize()
+func _setup() -> void:
+	intro_text = Strings.YOMISE_INTRO
+	arrows = true
 	set_ambient(WorldPalette.OTHERWORLD_AMBIENT)
-	order = [0, 1, 2]
-	# 並びは毎回かえる（ほしいものを見て選ぶ）
+
+
+func _begin() -> void:
+	rng.seed = 55 + round_count
+	phase = Phase.CHOOSE
+	cursor = 0
+	held.assign(START_GOODS)
+	trades = 0
+	refusals = 0
+	got = -1
+	order.assign([0, 1, 2, 3])
 	for i in range(order.size() - 1, 0, -1):
 		var j := rng.randi_range(0, i)
 		var tmp := order[i]
 		order[i] = order[j]
 		order[j] = tmp
-	_hand = Label.new()
-	_hand.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var chip := PanelContainer.new()
-	chip.theme_type_variation = &"PaperChip"
-	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	chip.add_child(_hand)
-	bottom.add_child(chip)
-	_row = HBoxContainer.new()
-	_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_row.add_theme_constant_override("separation", UiTokens.TOUCH_GAP * 2)
-	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bottom.add_child(_row)
-	for i in order.size():
-		_sold.append(false)
-		var b := make_choice(i, CHOICE_SIZE, _draw_stall, _on_choice)
-		_row.add_child(b)
-		_buttons.append(b)
-	link_row(_buttons)
-	_refresh_hand()
-	say(Strings.YOMISE_START)
+	_asked.assign([false, false, false, false])
+	_done_stall.assign([false, false, false, false])
+	_hand_caption()
 	show_hint(Strings.YOMISE_HINT_TOUCH, Strings.YOMISE_HINT_KEY)
-	if InputMode.keyboard:
-		_buttons[0].grab_focus.call_deferred()
 
 
-func _refresh_hand() -> void:
-	_hand.text = Strings.YOMISE_HAND % Strings.YOMISE_GOODS[held]
+func _hand_caption() -> void:
+	var names: PackedStringArray = []
+	for g in held:
+		names.append(Strings.YOMISE_GOODS[g])
+	caption(Strings.YOMISE_HAND % ["、".join(names), MAX_TRADES - trades])
 
 
-func _on_choice(i: int) -> void:
-	trade(i)
+func _process_game(delta: float) -> void:
+	_t += delta
+	match phase:
+		Phase.TRADE:
+			if _t >= TRADE_TIME:
+				speed = 1.0
+				if got >= 0 or trades >= MAX_TRADES:
+					_end()
+				else:
+					phase = Phase.CHOOSE
+					_hand_caption()
+		Phase.END:
+			if _t >= END_TIME:
+				end_game(got == GOOD_GOODS, got)
 
 
-## いま交換できる店の場所（並びの番号。自動の動作確認から使う）
-func good_slot() -> int:
-	return order.find(held)
+func _end() -> void:
+	phase = Phase.END
+	_t = 0.0
+	hide_hint()
+	if got < 0:
+		# 交換しきれなかったときも、あめやは ふつうの あめ玉をくれる（会話の @give yomise_ame とそろえる）
+		got = Goods.AME
+	caption(Strings.YOMISE_GOT % Strings.YOMISE_GOODS[got])
 
 
-## その店と交換する（並びの番号。自動の動作確認からも呼べる）
-func trade(slot: int) -> void:
-	if phase != Phase.TRADE or slot < 0 or slot >= order.size() or _sold[slot]:
+func _left() -> void:
+	if phase == Phase.CHOOSE and cursor > 0:
+		cursor -= 1
+		SfxPlayer.play("cursor")
+
+
+func _right() -> void:
+	if phase == Phase.CHOOSE and cursor < order.size() - 1:
+		cursor += 1
+		SfxPlayer.play("cursor")
+
+
+func _accept(pos: Variant = null) -> void:
+	if phase != Phase.CHOOSE:
+		speed = UiTokens.SKIP_SPEED
 		return
-	var stall := order[slot]
-	if stall != held:
+	if pos is Vector2:
+		var hit := _stall_at(pos)
+		if hit < 0:
+			return
+		# タッチ：タップした屋台に、そのまま聞く（聞いたあとなら交換する）
+		cursor = hit
+	act(cursor)
+
+
+## 屋台に、聞く（はじめて）／交換する（自動の動作確認からも呼べる）
+func act(slot: int) -> void:
+	if phase != Phase.CHOOSE or slot < 0 or slot >= order.size() or _done_stall[slot]:
+		return
+	cursor = slot
+	var st: Array = STALLS[order[slot]]
+	if not _asked[slot]:
+		_asked[slot] = true
+		SfxPlayer.play("accept")
+		caption(Strings.YOMISE_WANTS % [Strings.YOMISE_GOODS[st[0]], Strings.YOMISE_GOODS[st[1]]])
+		return
+	if not held.has(st[0]):
 		refusals += 1
 		SfxPlayer.play("cancel")
-		caption(Strings.YOMISE_NO)
+		caption(Strings.YOMISE_NO % Strings.YOMISE_GOODS[st[0]])
 		return
-	held = stall + 1
+	held.erase(st[0])
+	held.append(st[1])
 	trades += 1
-	_sold[slot] = true
-	_buttons[slot].disabled = true
+	_done_stall[slot] = true
 	SfxPlayer.play("pickup")
-	_refresh_hand()
-	if held == GOAL:
-		phase = Phase.END
-		_t = 0.0
-		grade = GameState.Grade.GOOD if refusals <= GOOD_REFUSALS else GameState.Grade.NORMAL
-		say(Strings.YOMISE_DONE)
-		hide_hint()
-	elif held == FOOD:
-		say(Strings.YOMISE_FOOD)
-	else:
-		caption(Strings.YOMISE_TRADED)
-	if InputMode.keyboard and phase == Phase.TRADE:
-		for b in _buttons:
-			if not b.disabled:
-				b.grab_focus()
+	caption(Strings.YOMISE_TRADED % Strings.YOMISE_GOODS[st[1]])
+	if st[1] in [Goods.AME, Goods.AME_BEST]:
+		got = st[1]
+	phase = Phase.TRADE
+	_t = 0.0
+
+
+func bot(good: bool) -> Dictionary:
+	if phase != Phase.CHOOSE:
+		return {}
+	# よくできた：かざぐるま → おはじき → ちょうちん → いちばん きれいな あめ玉。ふつう：あめやで ほおずき
+	var want_stall := 0
+	if good:
+		for s in [1, 2, 3]:
+			if held.has(STALLS[s][0]):
+				want_stall = s
 				break
-	for b in _buttons:
-		for c in b.get_children():
-			if c is Control:
-				(c as Control).queue_redraw()
+	var want := order.find(want_stall)
+	if want < cursor:
+		return {"key": KEY_LEFT, "tap": _stall_tap(want)}
+	if want > cursor:
+		return {"key": KEY_RIGHT, "tap": _stall_tap(want)}
+	return {"key": KEY_SPACE, "tap": _stall_tap(want)}
 
 
-func _process(delta: float) -> void:
-	_t += delta * speed
-	if phase == Phase.END and _t >= END_TIME and not done:
-		finish()
-	queue_redraw()
+# --- 絵 -----------------------------------------------------------------------
+
+func _stall_foot(slot: int) -> Vector2:
+	return Vector2(size.x * (0.17 + 0.22 * slot), size.y * 0.66)
 
 
-func _input(event: InputEvent) -> void:
-	if phase == Phase.END and is_tap(event):
-		speed = UiTokens.SKIP_SPEED
-		get_viewport().set_input_as_handled()
+func _stall_tap(slot: int) -> Vector2:
+	return global_position + _stall_foot(slot) + Vector2(0, -60)
+
+
+func _stall_at(pos: Vector2) -> int:
+	var local: Vector2 = pos - global_position
+	for i in order.size():
+		var f := _stall_foot(i)
+		if Rect2(f + Vector2(-size.x * 0.1, -size.y * 0.42), Vector2(size.x * 0.2, size.y * 0.46)).has_point(local):
+			return i
+	return -1
 
 
 func _draw() -> void:
 	var s := size
-	# 並べ終わる前（大きさ 0）は描かない
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	# 青い提灯の夜市（水彩の絵）
 	MinigameBg.draw_cover(self, BG, Rect2(Vector2.ZERO, s), BG_FOCUS)
-
-func _draw_stall(a: Control, slot: int) -> void:
-	var stall := order[slot]
-	var mid := a.size / 2.0 + Vector2(0, 14)
-	K.draw_vendor(a, Vector2(a.size.x / 2.0, 52), 46.0)
-	if _sold[slot]:
-		draw_goods(a, stall, mid, 1.0)
+	draw_rect(Rect2(Vector2.ZERO, s), Color(0.02, 0.04, 0.1, 0.25))
+	if order.is_empty():
 		return
-	draw_goods(a, stall, mid + Vector2(-54, 0), 0.8)
-	a.draw_line(mid + Vector2(-20, 0), mid + Vector2(16, 0), UiTokens.INK_SOFT, 3.0)
-	a.draw_colored_polygon(PackedVector2Array([mid + Vector2(24, 0), mid + Vector2(12, -8), mid + Vector2(12, 8)]), UiTokens.INK_SOFT)
-	draw_goods(a, stall + 1, mid + Vector2(58, 0), 0.8)
+	var h := s.y * 0.22
+	for i in order.size():
+		var f := _stall_foot(i)
+		# 屋台の台と、顔の見えない店の人
+		draw_rect(Rect2(f + Vector2(-h * 0.55, -h * 0.35), Vector2(h * 1.1, h * 0.35)), P.WOOD_DARK)
+		draw_rect(Rect2(f + Vector2(-h * 0.6, -h * 0.4), Vector2(h * 1.2, h * 0.08)), P.WOOD)
+		K.draw_vendor(self, f + Vector2(0, -h * 0.3), h * 0.9)
+		var st: Array = STALLS[order[i]]
+		var sign_c := f + Vector2(0, -h * 1.45)
+		if _done_stall[i]:
+			draw_goods(self, st[0], sign_c, 0.9)
+		elif _asked[i]:
+			# ほしい物 → くれる物
+			draw_rect(Rect2(sign_c + Vector2(-h * 0.62, -h * 0.22), Vector2(h * 1.24, h * 0.44)), Color(UiTokens.PAPER, 0.92))
+			draw_goods(self, st[0], sign_c + Vector2(-h * 0.36, 0), 0.75)
+			draw_line(sign_c + Vector2(-h * 0.1, 0), sign_c + Vector2(h * 0.08, 0), UiTokens.INK_SOFT, 3.0)
+			draw_colored_polygon(PackedVector2Array([sign_c + Vector2(h * 0.14, 0), sign_c + Vector2(h * 0.06, -7), sign_c + Vector2(h * 0.06, 7)]), UiTokens.INK_SOFT)
+			draw_goods(self, st[1], sign_c + Vector2(h * 0.36, 0), 0.75)
+		else:
+			draw_string(get_theme_default_font(), sign_c + Vector2(-8, 10), "？", HORIZONTAL_ALIGNMENT_LEFT, -1, UiTokens.FONT_HEADING, Color(1, 1, 1, 0.8))
+		if i == cursor and phase == Phase.CHOOSE:
+			draw_arc(f + Vector2(0, 8), h * 0.5, 0.15 * PI, 0.85 * PI, 18, UiTokens.ACCENT, 4.0)
+	# てもと（下に並べる）
+	var x := s.x * 0.5 - held.size() * 34.0
+	for g in held:
+		draw_circle(Vector2(x + 34, s.y * 0.84), 30, Color(UiTokens.PAPER, 0.9))
+		draw_goods(self, g, Vector2(x + 34, s.y * 0.84), 0.8)
+		x += 68.0
 
 
-## 品物の小さな絵（Strings.YOMISE_GOODS の番号）
+## 品物の小さな絵（Goods の番号）
 static func draw_goods(ci: CanvasItem, i: int, c: Vector2, k: float) -> void:
 	match i:
-		0:
-			ci.draw_circle(c + Vector2(0, 6) * k, 14 * k, P.WOOD)
-			ci.draw_rect(Rect2(c + Vector2(-14, -12) * k, Vector2(28, 12) * k), P.WOOD_DARK)
-			ci.draw_line(c + Vector2(0, -12) * k, c + Vector2(0, -20) * k, P.WOOD_DARK, 3.0 * k)
-		1:
-			ci.draw_line(c + Vector2(0, 0), c + Vector2(0, 34) * k, P.WOOD, 3.0 * k)
+		Goods.FURIN:
+			ci.draw_arc(c + Vector2(0, -2) * k, 14 * k, PI, TAU, 12, Color("#BFE3F2"), 10.0 * k)
+			ci.draw_line(c + Vector2(0, 0), c + Vector2(0, 16) * k, UiTokens.INK_SOFT, 2.0 * k)
+			ci.draw_rect(Rect2(c + Vector2(-5, 16) * k, Vector2(10, 12) * k), Color("#E9DCC0"))
+		Goods.KAZAGURUMA:
+			ci.draw_line(c, c + Vector2(0, 24) * k, P.WOOD, 3.0 * k)
 			for j in 4:
 				var a := TAU * j / 4.0 + 0.4
-				ci.draw_colored_polygon(PackedVector2Array([c, c + Vector2(cos(a), sin(a)) * 24 * k, c + Vector2(cos(a + 0.7), sin(a + 0.7)) * 16 * k]),
+				ci.draw_colored_polygon(PackedVector2Array([c, c + Vector2(cos(a), sin(a)) * 20 * k, c + Vector2(cos(a + 0.7), sin(a + 0.7)) * 13 * k]),
 					[Color("#C8462E"), Color("#E8B83A"), Color("#4F78A8"), Color("#6F8A4E")][j])
-		2:
-			ci.draw_line(c + Vector2(0, 8) * k, c + Vector2(0, 34) * k, P.WOOD, 3.0 * k)
-			ci.draw_circle(c, 17 * k, P.BLUE_LANTERN)
-			ci.draw_circle(c + Vector2(-5, -6) * k, 5 * k, Color(1, 1, 1, 0.6))
-		3:
-			ci.draw_circle(c, 15 * k, Color("#8FC0EA"))
-			ci.draw_circle(c, 7 * k, Color("#E4F2FF"))
-			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-14, 0) * k, c + Vector2(-28, -10) * k, c + Vector2(-28, 10) * k]), Color("#E9F0F4"))
-			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(14, 0) * k, c + Vector2(28, -10) * k, c + Vector2(28, 10) * k]), Color("#E9F0F4"))
+		Goods.HOOZUKI:
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -16) * k, c + Vector2(13, 2) * k, c + Vector2(0, 16) * k, c + Vector2(-13, 2) * k]), Color("#E0703A"))
+			ci.draw_line(c + Vector2(0, -16) * k, c + Vector2(0, -22) * k, P.WOOD_DARK, 2.0 * k)
+		Goods.OHAJIKI:
+			for j in 3:
+				ci.draw_circle(c + Vector2(-10 + j * 10, (j % 2) * 6 - 3) * k, 7 * k, [Color("#9FD3C7"), Color("#F2B8C6"), Color("#B9C8F0")][j])
+		Goods.CHOCHIN:
+			ci.draw_rect(Rect2(c + Vector2(-8, -18) * k, Vector2(16, 4) * k), P.WOOD_DARK)
+			ci.draw_circle(c, 14 * k, P.BLUE_LANTERN)
+			ci.draw_rect(Rect2(c + Vector2(-8, 14) * k, Vector2(16, 4) * k), P.WOOD_DARK)
+		Goods.AME, Goods.AME_BEST:
+			var best := i == Goods.AME_BEST
+			var col := Color("#B48DE8") if best else Color("#8FC0EA")
+			ci.draw_circle(c, 13 * k, col)
+			ci.draw_circle(c + Vector2(-4, -4) * k, 5 * k, Color(1, 1, 1, 0.7))
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-12, 0) * k, c + Vector2(-24, -9) * k, c + Vector2(-24, 9) * k]), Color("#E9F0F4"))
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(12, 0) * k, c + Vector2(24, -9) * k, c + Vector2(24, 9) * k]), Color("#E9F0F4"))
+			if best:
+				for j in 4:
+					var a := TAU * j / 4.0 + 0.8
+					ci.draw_line(c + Vector2(cos(a), sin(a)) * 16 * k, c + Vector2(cos(a), sin(a)) * 22 * k, Color(1, 0.95, 0.7), 2.0 * k)

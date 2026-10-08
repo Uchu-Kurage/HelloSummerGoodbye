@@ -113,6 +113,14 @@ func _panels(theme: Theme) -> void:
 	chip.content_margin_left = T.SPACE_S
 	chip.content_margin_right = T.SPACE_S
 	_panel(theme, "PaperChip", "PanelContainer", chip)
+	# ミニゲームの始める前の、操作の絵（キーの形。「Space」「タップ」）
+	var cap := flat(T.PAPER, T.INK_SOFT, T.PANEL_BORDER, T.SMALL_RADIUS, 0)
+	cap.border_width_bottom = T.PANEL_BORDER * 3
+	cap.content_margin_left = T.SPACE_M
+	cap.content_margin_right = T.SPACE_M
+	cap.content_margin_top = T.SPACE_XS
+	cap.content_margin_bottom = T.SPACE_XS
+	_panel(theme, "KeyCap", "PanelContainer", cap)
 
 
 func _button_colors(theme: Theme, name: String, color: Color, disabled: Color = T.INK_SOFT) -> void:

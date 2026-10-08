@@ -4,12 +4,6 @@ extends Node
 
 var _log: Array[String] = []
 var _fail := false
-## 型抜きでタケルの型が割れたとき、主人公が削っていた部分
-var _katanuki_takeru_broke_at := -1
-## 石切りのお手本で、タケルが数えたことば
-var _ishikiri_demo_count := ""
-## カブトムシが落ちて、また木にもどったのを見たか
-var _kabuto_saw_fall_recover := false
 ## タイムカプセル埋めで、掘りながら出た話の数と、星の場面を見たか
 var _capsule_lines := 0
 var _capsule_stars_seen := false
@@ -252,7 +246,7 @@ func _run() -> void:
 	check(GameState.holds(&"river_stone") and GameState.was_received(&"river_stone"), "river stone received from takeru")
 	check(GameState.find_item(&"river_stone").text().begins_with("タケルがくれた"), "river stone text changes on the route")
 	# ミニゲームの結果：親友ルートはどれも「よくできた」をねらったので、アイテムの一言が よくできた のほうになる
-	for pair in [[&"ishikiri", &"river_stone", "タケルがくれた。つめたくて、すべすべ。7かい はねた。"],
+	for pair in [[&"ishikiri", &"river_stone", "タケルがくれた。つめたくて、すべすべ。%dかい はねた。" % GameState.game_value(&"ishikiri")],
 			[&"katanuki", &"broken_katanuki", "タケルのぶん。ひよこが まっぷたつ。ぼくのは きれいに ぬけた。"],
 			[&"kabuto", &"bug_cage", "なかで ごそごそ いってる。ツノが いちばん でかいやつ。"],
 			[&"dive", &"ramune_bottle", "ふたりで のんだ。からっぽ。ぼくの しぶきの ほうが でかかった。"]]:
@@ -295,26 +289,13 @@ func _run() -> void:
 		check(buried.size() == 1 and notes.get(buried[0], "") == Strings.BURIED_NOTE, "ending slot: buried item")
 		check(end_box._slots[-1].item.id == &"takeru_hat" and end_box._slots[-1].collected, "hat appears last")
 
-	# 石切り：ひらたい石を、ちょうどいいところで3回投げて、タケルに勝つ
-	check(GameState.ishikiri_best == 7 and GameState.ishikiri_result == &"win" and GameState.has_flag(&"ishikiri_win"),
-		"ishikiri: flat stone at the sweet spot beats takeru (%d)" % GameState.ishikiri_best)
-	check(_ishikiri_demo_count.contains("いち、にー、さん、しー、ご！"), "ishikiri: takeru counts his demo (%s)" % _ishikiri_demo_count)
-	check(IshikiriGame.skips_for(IshikiriGame.STONES[0], IshikiriGame.SWEET_SPOT + 0.1) == 7 \
-		and IshikiriGame.skips_for(IshikiriGame.STONES[0], 0.1) < 3 and IshikiriGame.skips_for(IshikiriGame.STONES[0], IshikiriGame.PULL_MAX) < 3,
-		"ishikiri: too early or pulled too far skips less")
+	# 石切り：よくできた（7回以上）。跳ねた回数はアイテムの一言になる
+	check(GameState.ishikiri_best >= IshikiriGame.GOOD_SKIPS and GameState.ishikiri_result == &"win" and GameState.has_flag(&"ishikiri_win"),
+		"ishikiri: good throw beats takeru (%d)" % GameState.ishikiri_best)
+	check(GameState.game_value(&"ishikiri") == GameState.ishikiri_best, "ishikiri: skip count recorded (%d)" % GameState.game_value(&"ishikiri"))
+	var stone: ItemData = GameState.find_item(&"river_stone")
+	check(stone == null or not stone.text().contains("%d"), "ishikiri: item text has the count")
 	check(IshikiriGame.result_for(5) == &"draw" and IshikiriGame.result_for(4) == &"lose", "ishikiri: draw at 5, lose at 4")
-	# まるい石・おおきい石（石切りの画面だけで確かめる）。0回なら「ぽちゃん！」
-	var keep_ishi := GameState.flags.duplicate()
-	var ishi := IshikiriGame.new()
-	get_tree().root.add_child(ishi)
-	await _play_ishikiri(ishi, [&"round", &"big", &"round"], [0.0, IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT])
-	check(ishi.throws == [0, 3, 1] and ishi.has_meta("plop"), "ishikiri: round 0 (plop), big 3, round 1 -> %s" % str(ishi.throws))
-	check(GameState.ishikiri_result == &"lose", "ishikiri: best 3 loses")
-	check(ishi.grade == GameState.Grade.NORMAL and IshikiriGame.GOOD_SKIPS == 7, "ishikiri: best 3 is ふつう (good at 7)")
-	ishi.queue_free()
-	GameState.flags = keep_ishi
-	GameState.ishikiri_best = 7
-	GameState.ishikiri_result = &"win"
 
 	# 帽子を受け止める：窓を開け、帽子をタップして受け止め、3回さけび返す。石切りで勝ったので、タケルの最後の一言は「つぎは まけねーぞー！」
 	check(GameState.hat_caught and GameState.has_flag(&"hat_caught"), "hat: caught by tapping the hat")
@@ -342,67 +323,13 @@ func _run() -> void:
 		"capsule: the map's X is next to the chosen spot")
 	check(GameState.was_received(&"capsule_map"), "capsule: map after the stars")
 
-	# カブトムシとり：気づきかけたら止まり、一度も落とさずにつかむ
-	check(GameState.kabuto_drops == 0 and GameState.has_flag(&"kabuto_clean"), "kabuto: caught without dropping (%d)" % GameState.kabuto_drops)
+	# カブトムシとり・型抜き・飛び込み：よくできたで遊んだ
+	check(GameState.has_flag(&"kabuto_clean"), "kabuto: big male caught")
 	check(GameState.was_received(&"bug_cage"), "kabuto: bug cage after catching")
-	# 押しっぱなしだと落ちる。落ちても元にもどり、最後はつかめる（カブトムシとりの画面だけで確かめる）
-	var keep_kabuto := GameState.flags.duplicate()
-	var greedy_k := KabutoGame.new()
-	greedy_k.rng.seed = 6
-	get_tree().root.add_child(greedy_k)
-	await _play_kabuto(greedy_k, false)
-	check(greedy_k.drops >= 1 and _kabuto_saw_fall_recover, "kabuto: moving while it is wary drops it, and it climbs back (%d)" % greedy_k.drops)
-	check(GameState.kabuto_drops >= 1 and GameState.has_flag(&"kabuto_dropped"), "kabuto: still caught after dropping")
-	check(greedy_k.grade == GameState.Grade.NORMAL, "kabuto: dropping it is ふつう")
-	greedy_k.queue_free()
-	GameState.flags = keep_kabuto
-	GameState.kabuto_drops = 0
-
-	# 型抜き：少し削っては離して、きれいに抜く。とちゅうでタケルの型が割れる
 	check(GameState.katanuki_result == &"clean" and GameState.has_flag(&"katanuki_clean"), "katanuki: carved out cleanly (%s)" % GameState.katanuki_result)
-	check(_katanuki_takeru_broke_at == KatanukiGame.TAKERU_BREAK_PART, "katanuki: takeru breaks his when we reach the tail (%d)" % _katanuki_takeru_broke_at)
-	# 押しつづけると割れる（型抜きの画面だけで確かめる）。そのあとタケルも割る
-	var keep_kata := GameState.flags.duplicate()
-	var greedy := KatanukiGame.new()
-	get_tree().root.add_child(greedy)
-	await _play_katanuki(greedy, false)
-	check(GameState.katanuki_result == &"broken" and greedy.part <= 1, "katanuki: holding on breaks it (part %d)" % greedy.part)
-	check(greedy.takeru_broken, "katanuki: takeru breaks his too when we break first")
-	check(greedy.grade == GameState.Grade.NORMAL, "katanuki: breaking it is ふつう")
-	greedy.queue_free()
-	GameState.flags = keep_kata
-	GameState.katanuki_result = &"clean"
-
-	# 飛び込み：ぴったりで跳び、タケルの一言とラムネ
-	check(GameState.dive_result == &"perfect" and GameState.has_flag(&"dive_perfect"), "dive: jumped together (%s)" % GameState.dive_result)
+	check(GameState.dive_result == &"perfect" and GameState.has_flag(&"dive_perfect"), "dive: big splash (%s)" % GameState.dive_result)
 	check(GameState.was_received(&"ramune_bottle"), "dive: ramune after the dive")
-	# はやすぎ・おそいは、飛び込みの画面だけで確かめる
-	var keep_dive := GameState.flags.duplicate()
-	var early := DiveGame.new()
-	get_tree().root.add_child(early)
-	await _play_dive(early, false)
-	check(GameState.dive_result == &"early" and early.grade == GameState.Grade.NORMAL, "dive: released too early -> early (ふつう)")
-	early.queue_free()
-	var late := DiveGame.new()
-	get_tree().root.add_child(late)
-	var n2 := 0
-	while late.phase != DiveGame.Phase.WAIT and n2 < 100:
-		await get_tree().process_frame
-		n2 += 1
-	late._hold.press()
-	n2 = 0
-	while not late._called and n2 < 2000:
-		await get_tree().process_frame
-		n2 += 1
-	check(late.result == &"late" and late._called, "dive: holding too long -> takeru jumps first and calls")
-	late._hold.release()
-	n2 = 0
-	while late.phase != DiveGame.Phase.DONE and n2 < 2000:
-		await get_tree().process_frame
-		n2 += 1
-	check(GameState.dive_result == &"late", "dive: still jumps when released late")
-	late.queue_free()
-	GameState.flags = keep_dive
+
 
 	# なつみの分岐とふつうのエンディングは、データの上で確かめる
 	var keep_flags := GameState.flags.duplicate()
@@ -471,6 +398,179 @@ func _run() -> void:
 	await _check_grades()
 	await _check_cameos()
 	await _check_epilogue()
+	await _check_minigames()
+
+
+# --- ミニゲーム（共通の土台）-------------------------------------------------------
+
+## 作り直したミニゲーム（共通の土台 MinigameBase）
+const MINI_NAMES := ["ishikiri", "katanuki", "kabuto", "dive", "sketch", "kingyo", "kaigara", "senko",
+	"kakurenbo", "yomise", "suzu_michi", "onigokko", "sentaku", "shoryouma", "kakurenbo_jiji", "seiza"]
+## ルートを通すとき「ふつう」で遊ぶミニゲーム（せりふ・一言の差分を両方確かめるため）。ほかは「よくできた」をねらう
+const ROUTE_NORMAL_GAMES := ["kakurenbo", "yomise", "suzu_michi", "kakurenbo_jiji", "seiza"]
+## ミニゲームの記録（_play_mini が入れる）：名前 -> [ふつう／よくできた, 遊んだ秒数]
+var _mini := {}
+
+
+## ミニゲームを、キーボードだけ（touch = false）かタッチだけで、最後まで遊ぶ。good：よくできたをねらう。
+## 始める前の説明は決定（タップ）で閉じ、遊んでいるあいだは game.bot() の入力を送り、おわったら「つぎへ」
+func _play_mini(game: MinigameBase, good: bool, touch: bool, retry := false) -> void:
+	var played := 0.0
+	var g := 0
+	var retried := false
+	while is_instance_valid(game) and not game.done and g < 6000:
+		g += 1
+		await get_tree().process_frame
+		if not is_instance_valid(game):
+			break
+		match game.state:
+			MinigameBase.State.INTRO:
+				if touch:
+					await _touch(_to_screen(game.center_tap()))
+				else:
+					await _key(KEY_SPACE)
+			MinigameBase.State.PLAY:
+				played += get_process_delta_time()
+				var b: Dictionary = game.bot(good)
+				if b.is_empty():
+					continue
+				if touch:
+					if b.get("key") == KEY_LEFT and game.arrows and not b.has("tap_only"):
+						await _touch(_to_screen(game.frame._left.get_global_rect().get_center()))
+					elif b.get("key") == KEY_RIGHT and game.arrows and not b.has("tap_only"):
+						await _touch(_to_screen(game.frame._right.get_global_rect().get_center()))
+					else:
+						await _touch(_to_screen(b["tap"]))
+				else:
+					await _key(b["key"])
+				await get_tree().process_frame
+			MinigameBase.State.RESULT:
+				await _wait(0.3)
+				var items := game.frame.result_items()
+				if items.size() < 2:
+					continue
+				var pick: Control = items[1] if retry and not retried else items[0]
+				retried = retried or (retry and pick == items[1])
+				if touch:
+					await _touch(_to_screen(pick.get_global_rect().get_center()))
+				else:
+					if pick == items[1]:
+						await _key(KEY_RIGHT)
+					await _key(KEY_ENTER)
+	_mini[game.game_name] = [game.grade, played]
+
+
+func _check_minigames() -> void:
+	# 前の確かめ（タイトル画面など）が決定キーを取らないよう、シーンを外してから遊ぶ
+	get_tree().unload_current_scene()
+	get_tree().paused = false
+	await get_tree().process_frame
+	var keep_scale := Engine.time_scale
+	Engine.time_scale = 4.0
+	for n in MINI_NAMES:
+		for run in [[true, false], [false, true]]:
+			var good: bool = run[0]
+			var touch: bool = run[1]
+			var tag := "minigame %s (%s, %s): " % [n, "touch" if touch else "keyboard", "good" if good else "normal"]
+			InputMode._apply(touch, not touch)
+			var game: MinigameBase = Hud.MINIGAMES[n].new()
+			game.game_name = n
+			get_tree().root.add_child(game)
+			await get_tree().process_frame
+			check(game.state == MinigameBase.State.INTRO and game.intro_text != "", tag + "starts with a one-line intro")
+			if touch:
+				# 「もどる」と左右のボタンが画面の中にあり、72px 以上で、はしから 40px 以上はなれている
+				var vr := get_viewport().get_visible_rect().grow(-UiTokens.SCREEN_MARGIN + 1)
+				var btns: Array[Control] = [game.frame._quit]
+				if game.arrows:
+					btns.append_array([game.frame._left, game.frame._right] as Array[Control])
+				await get_tree().process_frame
+				game.frame.set_arrows(game.arrows)
+				var inside := btns.all(func(b): return b.visible and vr.encloses(b.get_global_rect()) and b.size.x >= UiTokens.TOUCH_MIN and b.size.y >= UiTokens.TOUCH_MIN)
+				check(inside, tag + "touch buttons on screen %s" % str(btns.map(func(b): return b.get_global_rect())))
+				game.frame.set_arrows(false)
+			await _play_mini(game, good, touch)
+			var rec: Array = _mini.get(n, [-1, 0.0])
+			check(rec[0] == (GameState.Grade.GOOD if good else GameState.Grade.NORMAL), tag + "grade %d" % rec[0])
+			check(rec[1] > 0.5 and rec[1] <= 60.0, tag + "ends within a minute (%.1fs)" % rec[1])
+			if is_instance_valid(game):
+				game.queue_free()
+			await get_tree().process_frame
+		# やめる（Esc）と「ふつう」。もういちど遊んでも、記録は最初の回
+		InputMode._apply(false, true)
+		var q: MinigameBase = Hud.MINIGAMES[n].new()
+		q.game_name = n
+		get_tree().root.add_child(q)
+		await _wait(0.3)
+		await _key(KEY_SPACE)
+		await _wait(0.3)
+		await _key(KEY_ESCAPE)
+		await _until(func(): return q.done, 3.0)
+		check(q.done and q.quit_by_player and q.grade == GameState.Grade.NORMAL, "minigame %s: Esc quits as ふつう" % n)
+		q.queue_free()
+		# タッチ：「もどる」をタップしてやめる
+		InputMode._apply(true, false)
+		var qt: MinigameBase = Hud.MINIGAMES[n].new()
+		qt.game_name = n
+		get_tree().root.add_child(qt)
+		await _wait(0.3)
+		await _touch(_to_screen(qt.center_tap()))
+		await _wait(0.3)
+		await _touch(_to_screen(qt.frame._quit.get_global_rect().get_center()))
+		await _until(func(): return qt.done, 3.0)
+		check(qt.done and qt.quit_by_player and qt.grade == GameState.Grade.NORMAL, "minigame %s: もどる (touch) quits as ふつう" % n)
+		qt.queue_free()
+		InputMode._apply(false, true)
+		var r: MinigameBase = Hud.MINIGAMES[n].new()
+		r.game_name = n
+		get_tree().root.add_child(r)
+		await _play_mini(r, false, false, true)
+		check(r.round_count == 2 and r.grade == GameState.Grade.NORMAL, "minigame %s: もういちど keeps the first result (%d rounds)" % [n, r.round_count])
+		if is_instance_valid(r):
+			r.queue_free()
+		await get_tree().process_frame
+	# 会話の中でやめる：Esc で「ふつう」になり、会話はそのまま「ふつう」のせりふへ進む（進行が止まらない）
+	GameState.reset()
+	var qhud: Hud = load("res://ui/hud.tscn").instantiate()
+	get_tree().root.add_child(qhud)
+	await _wait(0.3)
+	var npc: NpcData = load("res://data/npcs/grandma_laundry.tres")
+	qhud.start_talk(npc, npc.lines)
+	var seen: Array[String] = []
+	var quit_sent := false
+	var guard := 0
+	while qhud.is_talking() and guard < 400:
+		guard += 1
+		if qhud.minigame():
+			if not quit_sent:
+				quit_sent = true
+				await _wait(0.4)
+				await _key(KEY_ESCAPE)
+		elif qhud.is_message_open():
+			var t: String = qhud._msg_text.text
+			if seen.is_empty() or seen[-1] != t:
+				seen.append(t)
+			qhud.advance_message()
+		await _wait(0.05)
+	check(quit_sent and not qhud.is_talking() and GameState.game_grade(&"sentaku") == GameState.Grade.NORMAL
+		and seen.has("ちょっと ぬれちゃったね。まあ いいさ。"), "minigame quit in a talk: ふつう, and the talk goes on %s" % str(seen))
+	qhud.queue_free()
+	await get_tree().process_frame
+	# 秘密基地づくり：Esc でやめると、残りのすき間をタケルが埋めて、先へ進む
+	var keep_cells := GameState.base_cells.duplicate()
+	GameState.base_cells.clear()
+	var bb: BaseBuild = Hud.MINIGAMES["base_build"].new()
+	get_tree().root.add_child(bb)
+	await _wait(0.6)
+	await _key(KEY_SPACE)
+	await _key(KEY_ESCAPE)
+	var ended := [false]
+	bb.finished.connect(func(): ended[0] = true)
+	await _until(func(): return ended[0], 5.0)
+	check(ended[0] and bb.quit_by_player and GameState.base_done(), "base build: Esc quits, takeru fills the rest (%d cells)" % GameState.base_cells.size())
+	bb.queue_free()
+	GameState.base_cells = keep_cells
+	Engine.time_scale = keep_scale
 
 
 # --- エピローグ「それから」 ----------------------------------------------------
@@ -1017,102 +1117,12 @@ func _play_capsule(game: CapsuleGame) -> void:
 		n += 1
 
 
-## カブトムシとり：careful なら、食べているときだけ進み、気づきかけたら止まる。そうでなければ押しっぱなし
-func _play_kabuto(game: KabutoGame, careful: bool) -> void:
-	var n := 0
-	var fell := false
-	while game.phase == KabutoGame.Phase.APPROACH and n < 6000:
-		n += 1
-		var go := not careful or game.bug == KabutoGame.Bug.EAT
-		if go and not game._hold.is_down:
-			game._hold.press()
-		elif not go and game._hold.is_down:
-			game._hold.release()
-		if game.bug == KabutoGame.Bug.FALLEN:
-			fell = true
-		elif fell and game.bug == KabutoGame.Bug.EAT:
-			_kabuto_saw_fall_recover = true
-		await get_tree().process_frame
-	if game._hold.is_down:
-		game._hold.release()
-	game.grab()
-	n = 0
-	while is_instance_valid(game) and game.phase != KabutoGame.Phase.DONE and n < 2000:
-		await get_tree().process_frame
-		n += 1
 
 
-## 石切り：お手本を見て、石を選び、held 秒押して離す（3回）
-func _play_ishikiri(game: IshikiriGame, ids: Array, helds: Array) -> void:
-	var n := 0
-	while game.phase == IshikiriGame.Phase.DEMO or (game.phase == IshikiriGame.Phase.SHOW and game._demo):
-		if game._line.text.contains("ご！"):
-			_ishikiri_demo_count = game._line.text
-		await get_tree().process_frame
-		n += 1
-		if n > 2000:
-			return
-	for i in ids.size():
-		n = 0
-		while game.phase != IshikiriGame.Phase.PICK and n < 2000:
-			await get_tree().process_frame
-			n += 1
-		game.choose_id(ids[i])
-		await get_tree().process_frame
-		game._hold.press()
-		game._hold.held_time = helds[i]
-		game._hold.release()
-		n = 0
-		while game.phase in [IshikiriGame.Phase.FLY, IshikiriGame.Phase.SHOW] and n < 2000:
-			if game._line.text.contains(Strings.ISHI_PLOP):
-				game.set_meta("plop", true)
-			await get_tree().process_frame
-			n += 1
-	n = 0
-	while is_instance_valid(game) and game.phase != IshikiriGame.Phase.DONE and n < 2000:
-		await get_tree().process_frame
-		n += 1
 
 
-## 型抜き：careful なら、ひびが「多め」になったら離して落ち着くのを待つ。そうでなければ押しつづける
-func _play_katanuki(game: KatanukiGame, careful: bool) -> void:
-	var n := 0
-	while game.phase != KatanukiGame.Phase.CARVE and n < 100:
-		await get_tree().process_frame
-		n += 1
-	n = 0
-	while game.phase == KatanukiGame.Phase.CARVE and n < 6000:
-		n += 1
-		if not game._hold.is_down:
-			if not careful or game.crack <= 0.05:
-				game._hold.press()
-		elif careful and game.crack >= KatanukiGame.CRACK_SOME:
-			game._hold.release()
-		if game.takeru_broken and _katanuki_takeru_broke_at < 0:
-			_katanuki_takeru_broke_at = game.part
-		await get_tree().process_frame
-	n = 0
-	while is_instance_valid(game) and game.phase != KatanukiGame.Phase.DONE and n < 2000:
-		await get_tree().process_frame
-		n += 1
 
 
-## 飛び込み：押しつづけて、タケルの「の！」で離す（perfect = false なら、すぐ離す）
-func _play_dive(game: DiveGame, perfect: bool) -> void:
-	var n := 0
-	while game.phase != DiveGame.Phase.WAIT and n < 100:
-		await get_tree().process_frame
-		n += 1
-	game._hold.press()
-	n = 0
-	while perfect and not game._said_no and n < 600:
-		await get_tree().process_frame
-		n += 1
-	game._hold.release()
-	n = 0
-	while is_instance_valid(game) and game.phase != DiveGame.Phase.DONE and n < 2000:
-		await get_tree().process_frame
-		n += 1
 
 
 ## 秘密基地づくり：ためしに置けない場所を押し、はめたピースを外してから、ヒントの一手どおりに最後まで埋める
@@ -1120,6 +1130,10 @@ func _play_base_build(hud: Hud) -> void:
 	var game: BaseBuild = hud.minigame()
 	var pz := GameState.base_puzzle()
 	await _wait(0.6)
+	check(game.frame.intro_visible(), "base build: starts with a one-line intro")
+	await _key(KEY_SPACE)
+	await _wait(0.5)
+	check(not game.frame.intro_visible(), "base build: Space closes the intro")
 	check(GameState.base_cells.size() == 5, "takeru places the first piece (%d cells)" % GameState.base_cells.size())
 	var touch: TouchControls = hud.get_parent().get_node("TouchControls")
 	check(touch._suppressed, "top-right touch buttons hidden during the minigame")
@@ -1159,18 +1173,13 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		guard += 1
 		if hud.is_message_open():
 			_seen_lines.append(hud._msg_text.text)
-		if hud.minigame() is DiveGame:
-			await _play_dive(hud.minigame(), true)
+		if hud.minigame() is MinigameBase:
+			var mg: MinigameBase = hud.minigame()
+			await _play_mini(mg, not ROUTE_NORMAL_GAMES.has(mg.game_name), false)
 		elif hud.minigame() is HatGame:
 			await _play_hat(hud.minigame(), true)
 		elif hud.minigame() is CapsuleGame:
 			await _play_capsule(hud.minigame())
-		elif hud.minigame() is KabutoGame:
-			await _play_kabuto(hud.minigame(), true)
-		elif hud.minigame() is IshikiriGame:
-			await _play_ishikiri(hud.minigame(), [&"flat", &"flat", &"flat"], [IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT, IshikiriGame.SWEET_SPOT])
-		elif hud.minigame() is KatanukiGame:
-			await _play_katanuki(hud.minigame(), true)
 		elif hud.minigame() is NatsumiScreen:
 			await _play_natsumi(hud.minigame())
 		elif hud.is_in_minigame():
@@ -1269,29 +1278,21 @@ func _natsumi_route() -> void:
 		# 1日目の鈴の枠も入れて、全部見つけた（返した色えんぴつは数えない）
 		var slots := GameState.all_items().filter(func(it): return not GameState.is_extra(it)).size()
 		check(end_box._found == [slots, slots] and slots == GameState.day_count() + 1, "natsumi: every treasure found %s" % str(end_box._found))
-	# 線香花火：とちゅうで離すと、ぼくのが先に落ちる（線香花火の画面だけで確かめる）
+	# 線香花火：戻さないでいると、ぼくのが先に落ちる（線香花火の画面だけで確かめる）
 	var keep := GameState.flags.duplicate()
 	var keep_heart := GameState.natsumi_heart
 	var keep_grades := [GameState.game_grades.duplicate(), GameState.item_grades.duplicate()]
 	GameState.flags.clear()
-	var senko := SenkoGame.new()
+	var senko: SenkoGame = Hud.MINIGAMES["senko"].new()
+	senko.game_name = "senko"
 	get_tree().root.add_child(senko)
-	await get_tree().process_frame
-	senko._hold.press()
-	var n := 0
-	while senko.burn < 2.0 and n < 2000:
-		await get_tree().process_frame
-		n += 1
-	senko._hold.release()
-	n = 0
-	while senko.phase != SenkoGame.Phase.DONE and n < 3000:
-		await get_tree().process_frame
-		n += 1
+	await _play_mini(senko, false, false)
 	# 画面だけで遊んだので、HUD のかわりに結果を記録する
-	check(senko.mine_fell and not senko.hers_fell and senko.grade == GameState.Grade.NORMAL, "senko: letting go drops mine first (ふつう)")
+	check(senko.mine_fell and not senko.hers_fell and senko.grade == GameState.Grade.NORMAL, "senko: not centering drops mine first (ふつう)")
 	GameState.record_grade(&"senko", senko.grade)
 	check(GameState.has_flag(&"senko_miss") and GameState.find_item(&"senko_ash").text() == "ぼくのが さきに おちた。", "senko: ash text when mine fell first")
-	senko.queue_free()
+	if is_instance_valid(senko):
+		senko.queue_free()
 	GameState.flags = keep
 	GameState.game_grades = keep_grades[0]
 	GameState.item_grades = keep_grades[1]
@@ -1307,75 +1308,7 @@ var _drawing_opened := false
 ## なつみの画面：それぞれ高得点になるように遊ぶ（映画会と絵は見届ける）
 func _play_natsumi(game: NatsumiScreen) -> void:
 	var n := 0
-	if game is SketchGame:
-		var sk := game as SketchGame
-		while sk.step < SketchGame.STEPS and n < 2000:
-			if sk.phase == SketchGame.Phase.CHOOSE:
-				sk.choose(sk.correct_index())
-			await get_tree().process_frame
-			n += 1
-	elif game is KingyoGame:
-		var kg := game as KingyoGame
-		while kg.phase != KingyoGame.Phase.BROKEN and kg.phase != KingyoGame.Phase.DONE and n < 20000:
-			if kg.phase == KingyoGame.Phase.PLAY and kg.fish_under_poi().size() > 0:
-				kg.scoop()
-			await get_tree().process_frame
-			n += 1
-	elif game is KaigaraGame:
-		var kc := game as KaigaraGame
-		while kc.phase != KaigaraGame.Phase.END and n < 20000:
-			if kc.can_pick():
-				kc.pick(kc.sakura_slot() if kc.sakura_slot() >= 0 else 0)
-			await get_tree().process_frame
-			n += 1
-	elif game is SenkoGame:
-		var sg := game as SenkoGame
-		await get_tree().process_frame
-		sg._hold.press()
-		while sg.phase == SenkoGame.Phase.BURN or sg.phase == SenkoGame.Phase.GUIDE:
-			await get_tree().process_frame
-			n += 1
-			if n > 20000:
-				break
-		sg._hold.release()
-	elif game is KakurenboGame:
-		# かくれんぼ：はしから順に調べる（隠れているのは、お面の子もおじいちゃんも こまいぬ。2回はずすとヒント）
-		var kk := game as KakurenboGame
-		var key := "jiji_" if kk.jiji else ""
-		_kk[key + "hiding"] = kk.hiding
-		for i in Strings.KAKURENBO_SPOTS.size():
-			kk.check_spot(i)
-			_kk[key + "kakurenbo_tries"] = kk.tries
-			if kk.tries == KakurenboGame.MISS_HINT:
-				_kk[key + "hint"] = kk._hint_t >= 0.0
-			if kk.phase != KakurenboGame.Phase.SEEK:
-				break
-			await _wait(0.2)
-	elif game is SentakuGame:
-		# 洗濯物の取り込み：左から順に、ぜんぶ取り込む
-		var st := game as SentakuGame
-		for i in Strings.SENTAKU_CLOTHES.size():
-			st.take(i)
-			await _wait(0.1)
-		_kk["sentaku"] = st.taken_count()
-	elif game is ShoryoumaGame:
-		# 精霊馬づくり：割りばしが ● の上に来たら さす（8本）
-		var sy := game as ShoryoumaGame
-		while sy.phase != ShoryoumaGame.Phase.END and n < 40000:
-			if sy.phase == ShoryoumaGame.Phase.PLACE and absf(sy.sweep() - sy.target()) < ShoryoumaGame.GOOD_TOL * 0.5:
-				sy.stick()
-			await get_tree().process_frame
-			n += 1
-		_kk["shoryouma"] = [sy.good, (sy.legs[0] as Array).size() + (sy.legs[1] as Array).size()]
-	elif game is SeizaGame:
-		# 星座さがし：まず わざと ちがう星を選び、そのあと大三角の3つをつなぐ
-		var sz := game as SeizaGame
-		sz.pick(3)
-		for i in SeizaGame.triangle():
-			await _wait(0.2)
-			sz.pick(i)
-		_kk["seiza"] = [sz.linked.size(), sz.misses]
-	elif game is BusWindow:
+	if game is BusWindow:
 		# バスの窓：2回 手をふりかえし、見えなくなったら まえを向く
 		var bw := game as BusWindow
 		bw.wave()
@@ -1385,42 +1318,6 @@ func _play_natsumi(game: NatsumiScreen) -> void:
 			n += 1
 		_kk["buswin"] = bw.waves
 		bw.close_view()
-	elif game is YomiseGame:
-		# 物々交換：まずわざとちがう店を選んで断られ、そのあと順に交換する
-		var yg := game as YomiseGame
-		yg.trade((yg.good_slot() + 1) % yg.order.size())
-		while yg.phase == YomiseGame.Phase.TRADE and n < 100:
-			yg.trade(yg.good_slot())
-			await _wait(0.1)
-			n += 1
-		_kk["yomise"] = [yg.held, yg.trades, yg.refusals]
-	elif game is SuzuMichiGame:
-		# 鈴の音で道探し：光がゆれたほうへ。1か所目だけ、わざと反対へ行ってもどされる
-		var sm := game as SuzuMichiGame
-		var missed := false
-		while sm.phase != SuzuMichiGame.Phase.END and n < 20000:
-			if sm.phase == SuzuMichiGame.Phase.LISTEN and sm.heard_side() >= 0:
-				if not missed:
-					missed = true
-					sm.choose(1 - sm.heard_side())
-				else:
-					sm.choose(sm.heard_side())
-			await get_tree().process_frame
-			n += 1
-		_kk["suzu_michi"] = [sm.fork, sm.wrong]
-	elif game is OnigokkoGame:
-		# 鬼ごっこ：押しつづけて追いつき、そのあとは押しつづけて逃げる（最後はつかまる）
-		var og := game as OnigokkoGame
-		while og.phase != OnigokkoGame.Phase.END and n < 20000:
-			if og.phase in [OnigokkoGame.Phase.CHASE, OnigokkoGame.Phase.FLEE] and not og.hold().is_down:
-				og.hold().press()
-			if og.phase == OnigokkoGame.Phase.CHASE:
-				_kk["oni_chase"] = og._t
-			if og.phase == OnigokkoGame.Phase.FLEE:
-				_kk["oni_swapped"] = true
-			await get_tree().process_frame
-			n += 1
-		_kk["oni_end"] = og.phase == OnigokkoGame.Phase.END
 	elif game is SuzuFuru:
 		# 鈴を振る：いちどめだけ鳴る。2回目は鳴らない。とじられるまで待って、とじる
 		var sf := game as SuzuFuru
@@ -1444,8 +1341,6 @@ func _play_natsumi(game: NatsumiScreen) -> void:
 		Input.parse_input_event(ev)
 	n = 0
 	while is_instance_valid(game) and not game.done and n < 4000:
-		if game is KakurenboGame and (game as KakurenboGame).come_out_k() >= 1.0:
-			_kk["jiji_came_out"] = true
 		await get_tree().process_frame
 		n += 1
 	while is_instance_valid(game) and game.is_inside_tree() and n < 6000:
@@ -1546,22 +1441,18 @@ func _kamikakushi_route() -> void:
 		check(GameState.was_received(id), "kamikakushi: received %s" % id)
 	for id in [&"ogara_ember", &"blue_hozuki", &"gray_sunflower", &"onigiri_wrap"]:
 		check(GameState.is_collected(id), "kamikakushi: picked %s" % id)
-	check(_kk.get("hint", false) and _kk.get("kakurenbo_tries", 0) == KakurenboGame.HIDING + 1 and _kk.get("hiding", -1) == KakurenboGame.HIDING,
-		"kakurenbo: found him behind the komainu (bell hint after misses) %s" % str(_kk))
-	check(_kk.get("sentaku", 0) == Strings.SENTAKU_CLOTHES.size(), "kamikakushi day 4: the laundry with grandma comes first (shared day 4)")
-	check(_kk.get("yomise", []) == [YomiseGame.GOAL, 3, 1], "yomise: refused once, 3 trades to the candy %s" % str(_kk.get("yomise")))
-	check(_kk.get("suzu_michi", []) == [SuzuMichiGame.FORKS, 1], "suzu michi: through the forest, sent back once %s" % str(_kk.get("suzu_michi")))
-	check(_kk.get("oni_swapped", false) and _kk.get("oni_end", false), "onigokko: caught him, then got caught")
-	# ミニゲームの結果：かくれんぼ（ヒントのあと）・物々交換（1回ことわられた）・道探し（1回もどされた）は ふつう
+	# ミニゲーム（ROUTE_NORMAL_GAMES は ふつう、ほかは よくできた で遊んだ）
+	for g in ["kakurenbo", "sentaku", "yomise", "suzu_michi", "onigokko"]:
+		check(_mini.has(g), "kamikakushi: played %s %s" % [g, str(_mini.get(g))])
+	# ミニゲームの結果：かくれんぼ（お面の子が自分から出てきた）・物々交換（ふつうの あめ玉）・道探し（2回もどされた）は ふつう
 	check(GameState.has_flag(&"kakurenbo_miss") and _seen_lines.has("みつかっちゃった。") and not _seen_lines.has("……はやいね。みつかっちゃった。"),
 		"kakurenbo ふつう: みつかっちゃった。")
 	check(GameState.has_flag(&"yomise_miss") and GameState.find_item(&"yomise_ame").text() == "あおくて つめたい。たべちゃ だめって いわれた。", "yomise ふつう: candy text")
 	# おがらのもえさしは、道探しの前に拾う（森の入口）。あとで遊んだ結果も記録される
 	check(GameState.has_flag(&"suzu_michi_miss") and GameState.item_grade(&"ogara_ember") == GameState.Grade.NORMAL
 		and GameState.find_item(&"ogara_ember").text() == "むかえびの あと。まだ すこし あったかい。", "suzu michi ふつう: ember text")
-	var oni_good := GameState.game_grade(&"onigokko") == GameState.Grade.GOOD
-	check(GameState.find_item(&"gray_sunflower").text() == ("いろが ない。でも、さいてる。つかまえたら、わらってた。" if oni_good else "いろが ない。でも、さいてる。"),
-		"onigokko %s: sunflower text (chase %.1fs)" % ["よくできた" if oni_good else "ふつう", _kk.get("oni_chase", -1.0)])
+	check(GameState.game_grade(&"onigokko") == GameState.Grade.GOOD and GameState.find_item(&"gray_sunflower").text() == "いろが ない。でも、さいてる。つかまえたら、わらってた。",
+		"onigokko よくできた: sunflower text %s" % GameState.find_item(&"gray_sunflower").text())
 	check(_kk.get("bell", []) == [true, 2], "bus: the bell rings only once %s" % str(_kk.get("bell")))
 	var unknown := Strings.DATE_MONTH % Strings.DATE_UNKNOWN + " " + Strings.DATE_DAY % Strings.DATE_UNKNOWN
 	check(not d7_card_before.contains(Strings.DATE_UNKNOWN) and cards.get("d7_end", "") == unknown,
@@ -1673,19 +1564,16 @@ func _normal_route() -> void:
 			&"grandpa_stars", &"grandpa_farewell_normal", &"grandma_farewell_normal"]:
 		check(GameState.has_talked(id), "normal talks: %s" % id)
 	check(sasabune_seen, "normal day 3: the sasabune with the sail floats down the river")
-	check(_kk.get("sentaku", 0) == Strings.SENTAKU_CLOTHES.size() and GameState.has_flag(&"sentaku_good"), "sentaku: all the laundry in before the rain")
+	check(GameState.has_flag(&"sentaku_good"), "sentaku: all the laundry in before the rain")
 	check(max_rain > 0.9 and rain_end == 0.0, "normal day 4: rain on the engawa and the shrine, then it clears (max %.2f, after %.2f)" % [max_rain, rain_end])
 	check(GameState.mask_kind == &"kitsune" and GameState.has_flag(&"mask_kitsune") and GameState.find_item(&"festival_mask").icon.resource_path.ends_with("mask_kitsune.png"),
 		"festival: the fox mask (icon %s)" % GameState.find_item(&"festival_mask").icon.resource_path)
 	check(_seen_lines.has("……きつね、か。"), "festival: grandpa reacts to the fox mask")
 	check(_seen_lines.has("……なんだったかな。") and _seen_lines.has(Strings.WHISTLE_NOTE + "　～　" + Strings.WHISTLE_NOTE), "normal day 9: the whistle and \"……なんだったかな。\"")
 	check(_seen_lines.has("またらいねん　タケル"), "normal day 8: the letter reads またらいねん")
-	check(_kk.get("shoryouma", [0, 0]) == [8, 8] and GameState.has_flag(&"shoryouma_good"), "shoryouma: 8 straight legs %s" % str(_kk.get("shoryouma")))
+	check(GameState.has_flag(&"shoryouma_good"), "shoryouma: 8 straight legs")
 	check(cars_gone, "normal day 7: the relatives' cars drive away")
-	check(_kk.get("jiji_hiding", -1) == KakurenboGame.HIDING and _kk.get("jiji_hint", false) and _kk.get("jiji_kakurenbo_tries", 0) == KakurenboGame.MISS_HINT,
-		"kakurenbo with grandpa: not found in time, he coughs and comes out %s" % str(_kk))
-	check(_kk.get("jiji_came_out", false), "kakurenbo with grandpa: he steps out from behind the komainu")
-	check(_kk.get("seiza", []) == [3, 1] and GameState.has_flag(&"seiza_miss"), "seiza: summer triangle after one wrong star %s" % str(_kk.get("seiza")))
+	check(GameState.has_flag(&"kakurenbo_jiji_miss") and GameState.has_flag(&"seiza_miss"), "kakurenbo with grandpa / seiza: played as ふつう")
 	# ミニゲームの結果で、直後のせりふが変わる（洗濯物・精霊馬は よくできた、かくれんぼ・星座は ふつう）
 	check(_seen_lines.has("ぜんぶ まにあったねえ。ありがとね。") and not _seen_lines.has("ちょっと ぬれちゃったね。まあ いいさ。"), "sentaku よくできた: ぜんぶ まにあった")
 	check(_seen_lines.has("りっぱな うまだねえ。") and not _seen_lines.has("ちょっと かたむいてるけど、だいじょうぶ。"), "shoryouma よくできた: りっぱな うま")
@@ -2152,6 +2040,8 @@ func _check_missed() -> void:
 	await _wait(0.8)
 	var main := get_tree().current_scene
 	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	# タッチで開く（キーボードのときは最初の枠が選ばれた見た目になるので、ここではタッチにそろえる）
+	InputMode._apply(true, false)
 	TouchControls.fire_action(&"open_box")
 	await _wait(1.0)
 	check(box.is_open, "missed: box opens")
