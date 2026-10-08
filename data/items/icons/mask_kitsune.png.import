@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b63dtpd17d6sw"
-path="res://.godot/imported/river_stone.svg-c5e41e1a873a3e24c0ecf04253839325.ctex"
+uid="uid://3u6hmaewnixw"
+path="res://.godot/imported/mask_kitsune.png-c9dc6fc9155a50c5b39daacf3a93b07f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/river_stone.svg"
-dest_files=["res://.godot/imported/river_stone.svg-c5e41e1a873a3e24c0ecf04253839325.ctex"]
+source_file="res://data/items/icons/mask_kitsune.png"
+dest_files=["res://.godot/imported/mask_kitsune.png-c9dc6fc9155a50c5b39daacf3a93b07f.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

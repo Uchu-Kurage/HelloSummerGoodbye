@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
 [ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
-[ext_resource type="Texture2D" path="res://data/items/icons/river_stone.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://data/items/icons/river_stone.png" id="icon"]
 
 [sub_resource type="Resource" id="alt"]
 script = ExtResource("2")

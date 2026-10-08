@@ -1241,7 +1241,7 @@ func _normal_route() -> void:
 	check(sasabune_seen, "normal day 3: the sasabune with the sail floats down the river")
 	check(_kk.get("sentaku", 0) == Strings.SENTAKU_CLOTHES.size() and GameState.has_flag(&"sentaku_good"), "sentaku: all the laundry in before the rain")
 	check(max_rain > 0.9 and rain_end == 0.0, "normal day 4: rain on the engawa and the shrine, then it clears (max %.2f, after %.2f)" % [max_rain, rain_end])
-	check(GameState.mask_kind == &"kitsune" and GameState.has_flag(&"mask_kitsune") and GameState.find_item(&"festival_mask").icon.resource_path.ends_with("mask_kitsune.svg"),
+	check(GameState.mask_kind == &"kitsune" and GameState.has_flag(&"mask_kitsune") and GameState.find_item(&"festival_mask").icon.resource_path.ends_with("mask_kitsune.png"),
 		"festival: the fox mask (icon %s)" % GameState.find_item(&"festival_mask").icon.resource_path)
 	check(_seen_lines.has("……きつね、か。"), "festival: grandpa reacts to the fox mask")
 	check(_seen_lines.has("……なんだったかな。") and _seen_lines.has(Strings.WHISTLE_NOTE + "　～　" + Strings.WHISTLE_NOTE), "normal day 9: the whistle and \"……なんだったかな。\"")

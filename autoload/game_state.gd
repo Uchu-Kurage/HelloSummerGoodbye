@@ -59,7 +59,7 @@ var natsumi_heart := 0
 ## アイテムは1つ（festival_mask）で、見た目（icon）だけを種類でかえる
 var mask_kind := &""
 const MASK_KINDS := [&"kitsune", &"hyottoko", &"okame"]
-const MASK_ICON := "res://data/items/icons/mask_%s.svg"
+const MASK_ICON := "res://data/items/icons/mask_%s.png"
 var _mask_default_icon: Texture2D
 
 ## 好感度の最大（会話の選択肢 9 か所＋ミニゲーム 4 種）と、エンディングの段階のしきい値（遊んでみて調整する）

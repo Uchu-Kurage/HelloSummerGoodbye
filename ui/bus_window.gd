@@ -17,6 +17,9 @@ const GRANDMA_TEX: Texture2D = preload("res://world/scenery/painted/grandma_mg1_
 ## 窓の外の景色の絵（田んぼのあいだの一本道）と、道が消える点の高さ（絵の高さに対する割合）
 const VIEW: Texture2D = preload("res://ui/minigame_bg/bus_window.png")
 const VIEW_HORIZON := 0.26
+## バスのいちばん後ろの席から見た車内の絵（窓ガラスのところは透明）と、その中のうしろの窓の場所（絵の中の px）
+const FRAME: Texture2D = preload("res://world/scenery/painted/bus_rear_frame.png")
+const FRAME_WINDOW := Rect2(160, 24, 712, 298)
 const BUS_STOP_TEX: Texture2D = preload("res://world/scenery/painted/prop_busstop.png")
 
 var phase := Phase.LOOK
@@ -93,9 +96,9 @@ func _draw() -> void:
 	var s := size
 	if s.x < 1.0 or s.y < 1.0:
 		return
-	# 車内（窓のまわり）
-	draw_rect(Rect2(Vector2.ZERO, s), P.BUSWIN_FRAME)
-	var win := Rect2(s.x * 0.12, s.y * 0.16, s.x * 0.76, s.y * 0.56)
+	# 横の窓から見える朝の空（車内の絵の、窓ガラスのところから見える）
+	draw_rect(Rect2(Vector2.ZERO, s), P.BUSWIN_SKY)
+	var win := _frame_rect(FRAME_WINDOW)
 	# 窓の外：田んぼのあいだの一本道の絵（道が消える点は窓の上のほう）
 	MinigameBg.draw_cover(self, VIEW, win)
 	var horizon := win.position.y + win.size.y * VIEW_HORIZON
@@ -110,15 +113,23 @@ func _draw() -> void:
 		var bob := 0.0 if UiAnim.reduced() else sin(clock() * 6.0) * h * 0.03
 		_art(GRANDPA_TEX, foot + Vector2(-h * 0.2, bob), h)
 		_art(GRANDMA_TEX, foot + Vector2(h * 0.22, -bob), h * 0.84)
-	# 窓ガラスの反射と、窓わく
+	# 窓ガラスの反射と、車内（窓わく・壁・座席の背もたれ）
 	draw_rect(win, Color(P.BUS_WINDOW, 0.18))
-	draw_rect(win, P.BUSWIN_FRAME.darkened(0.2), false, 10.0)
+	MinigameBg.draw_cover(self, FRAME, Rect2(Vector2.ZERO, s))
 	# 手をふりかえす、ぼくの手（窓の下から）
 	if _wave_t >= 0.0:
 		var a := sin(_wave_t / WAVE_TIME * PI)
 		var hand := Vector2(win.position.x + win.size.x * 0.3 + sin(_wave_t * 18.0) * 14.0, win.end.y - 70.0 * a)
 		draw_circle(hand, 26, P.PLAYER_SKIN)
 		draw_rect(Rect2(hand.x - 16, hand.y, 32, s.y), P.PLAYER_BODY)
+
+
+## 車内の絵の中の四角（px）が、画面のどこに来るか（MinigameBg.draw_cover と同じ切り取り方）
+func _frame_rect(r: Rect2) -> Rect2:
+	var ts := FRAME.get_size()
+	var k := maxf(size.x / ts.x, size.y / ts.y)
+	var src_pos := (ts - size / k) * 0.5
+	return Rect2((r.position - src_pos) * k, r.size * k)
 
 
 func _art(tex: Texture2D, foot: Vector2, h: float, tint := Color.WHITE) -> void:

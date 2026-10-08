@@ -119,7 +119,7 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 - **1〜3日目（全ルート共通）**：バス停で祖父母が待っている（`grandma_arrive`・`grandpa`）、祖母と村を歩く（`grandma_walk`）、祖父と川で帆つきの笹舟を流す（`grandpa_river`。初恋ルートではいない）
 - **4日目**：庭で洗濯物の取り込み → 縁側で雨 → また降りだして神社の軒下で雨宿り → 雨上がりの境内の木で抜け殻。神隠しルートの4日目（`day_04_kamikakushi.tscn`）は、この場面を継承して鈴とお面の子を足したもの
-- **5日目**：お面を3種から選ぶ（会話の `@mask kitsune` など）。種類は `GameState.mask_kind`、お面のアイテムは1つ（`festival_mask`）で、絵（`data/items/icons/mask_*.svg`）だけかわる。きつねを選ぶと祖父が「……きつね、か。」
+- **5日目**：お面を3種から選ぶ（会話の `@mask kitsune` など）。種類は `GameState.mask_kind`、お面のアイテムは1つ（`festival_mask`）で、絵（`data/items/icons/mask_*.png`）だけかわる。きつねを選ぶと祖父が「……きつね、か。」
 - **8日目**：置き手紙は拾うと中身「またらいねん　タケル」を読む（ItemData の `read_text`）。祖父に話しかけると（フラグ `jiji_play`）、神社でかくれんぼ。かけ声と隠れ場所（狛犬のうしろ）は、神隠しルート4日目のお面の子と同じ
 - **9日目**：星座さがしのあと、祖父が口笛を吹く。音素材（`audio/sfx/kuchibue.ogg`）が入るまでは「♪」（`NormalProp` の `WHISTLE`）とせりふで表す
 - **10日目**：祖母がおにぎりをくれる（`@give onigiri_wrap`）。バス（`world/normal_bus.gd`）が走り出すと、うしろの窓から手をふる祖父母が小さくなっていく（`@game bus_window`）。そのあと、おにぎりの包みを開く

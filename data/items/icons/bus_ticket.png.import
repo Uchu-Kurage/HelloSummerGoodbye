@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bsl1ujn27ehyy"
-path="res://.godot/imported/mask_hyottoko.svg-66f78ede5710271b623ce9b53d6e903d.ctex"
+uid="uid://dcykryhuxvf2s"
+path="res://.godot/imported/bus_ticket.png-7f2ee98924a62fb223d375ae2175cd10.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://data/items/icons/mask_hyottoko.svg"
-dest_files=["res://.godot/imported/mask_hyottoko.svg-66f78ede5710271b623ce9b53d6e903d.ctex"]
+source_file="res://data/items/icons/bus_ticket.png"
+dest_files=["res://.godot/imported/bus_ticket.png-7f2ee98924a62fb223d375ae2175cd10.ctex"]
 
 [params]
 
@@ -32,6 +32,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
