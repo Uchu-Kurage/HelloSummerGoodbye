@@ -76,6 +76,8 @@ var _choosing := false
 var _choice_at := 0
 var _burying := false
 var _minigame: Control
+## この会話で、すぐ前に遊んだミニゲームの結果（GameState.Grade）。点数のないもの・まだなら -1
+var _last_grade := -1
 var _auto_pending: Array[Npc] = []
 var _msg: MessagePanel
 var _msg_swatch: ColorRect
@@ -318,6 +320,7 @@ func start_talk(data: NpcData, lines: Array[String], npc: Npc = null) -> void:
 	_talk_npc = npc
 	_talk_lines = lines
 	_talk_index = 0
+	_last_grade = -1
 	_next_show = null
 	if player:
 		player.talking = true
@@ -382,6 +385,10 @@ func _run_command(e: String) -> _Step:
 		"if_flag":
 			if GameState.has_flag(StringName(a)):
 				_jump(b)
+		"if_good":
+			# この会話で、すぐ前に遊んだミニゲームが「よくできた」なら
+			if _last_grade == GameState.Grade.GOOD:
+				_jump(a)
 		"flag":
 			GameState.set_flag(StringName(a))
 		"heart":
@@ -551,6 +558,11 @@ func _run_minigame(game_name: String) -> void:
 	UiAnim.panel_out(_msg)
 	_root.add_child(g)
 	await g.finished
+	# 点数のあるミニゲームは、結果（ふつう／よくできた）を記録する。直後のせりふは @if_good で分ける
+	_last_grade = -1
+	if GameState.GRADED_GAMES.has(StringName(game_name)):
+		_last_grade = int(g.get("grade"))
+		GameState.record_grade(StringName(game_name), _last_grade as GameState.Grade)
 	g.queue_free()
 	_minigame = null
 	UiAnim.panel_in(_msg)

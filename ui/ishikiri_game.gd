@@ -1,12 +1,13 @@
 class_name IshikiriGame
 extends Control
 ## ミニゲーム「石切り」（3日目、親友ルート）。会話の @game ishikiri で始まる。
-## ビー玉と川の石を交換したあと、川原でタケルと石切りで勝負する。
+## タケルの「お、きたな。」のあと、ビー玉の選択肢の前に、川原でタケルと石切りで勝負する。
 ## 1. タケルがお手本を見せる（5回跳ねる。「いち、にー、さん、しー、ご！」）
 ## 2. 足もとの3つの石から1つ選ぶ（タケルの一言だけが、正解を教える）
 ## 3. 押しつづけて腕を引き、ちょうどいいところで離す。腕はちょうどいいところを通りすぎて、さらに引きすぎる
 ## 4. 跳ねるたびに水の輪が広がり、タケルが数える。0回なら「ぽちゃん！」
-## これを3回。いちばんよかった回数を GameState.ishikiri_best に入れ、結果のフラグ ishikiri_win / ishikiri_draw / ishikiri_lose も立てる
+## これを3回。いちばんよかった回数を GameState.ishikiri_best に入れ、結果のフラグ ishikiri_win / ishikiri_draw / ishikiri_lose も立てる。
+## GOOD_SKIPS 回以上なら「よくできた」（grade）
 
 signal finished
 
@@ -30,6 +31,8 @@ const DEMO_SKIPS := 5
 ## 勝ち負けの境目（いちばんよかった回数がこれ以上なら かち、ちょうど DRAW_AT なら ひきわけ）
 const WIN_AT := 6
 const DRAW_AT := 5
+## いちばんよかった回数がこれ以上なら「よくできた」（仮の値。アイテムの一言「7かい はねた。」と合わせる）
+const GOOD_SKIPS := 7
 ## 最初に水面に着くまでの時間と、跳ねるごとの時間（だんだん短く）
 const FIRST_HOP := 0.6
 const HOP := 0.4
@@ -76,6 +79,8 @@ const P := preload("res://world/world_palette.gd")
 const COUNT := ["いち", "にー", "さん", "しー", "ご", "ろく", "なな", "はち", "きゅう", "じゅう"]
 
 var hud: Hud
+## ミニゲームの結果（ふつう／よくできた）。終わったら HUD が GameState.record_grade で記録する
+var grade := GameState.Grade.NORMAL
 var phase := Phase.DEMO
 ## 投げた回数と、それぞれ跳ねた回数
 var throws: Array[int] = []
@@ -408,6 +413,7 @@ func _finish() -> void:
 		return
 	result = result_for(best)
 	GameState.set_ishikiri_best(best, result)
+	grade = GameState.Grade.GOOD if best >= GOOD_SKIPS else GameState.Grade.NORMAL
 	phase = Phase.DONE
 	var tw := UiAnim.fade(self, 0.0, UiTokens.TIME_FADE)
 	await tw.finished

@@ -33,6 +33,8 @@ const HEART_DB_NEAR := -4.0
 const STEP_EVERY := 0.55
 ## つかんだあと、夜が明けて蝉が鳴き出すのを見せる時間（決定キー・タップで早送り）
 const CAUGHT_TIME := 2.4
+## 落とした回数がこれ以下なら「よくできた」（仮の値）
+const GOOD_MAX_DROPS := 0
 ## つかんだ瞬間に鳴き出す蝉（環境音）
 const DAWN_CICADA_AMBIENT := "cicada_dawn_burst"
 ## 背景の水彩の絵と、横長の画面で残すところ（下の地面と、右寄りの大きなクヌギ）
@@ -64,6 +66,8 @@ const KID_SHADE := Color(0.7, 0.75, 0.9)
 const P := preload("res://world/world_palette.gd")
 
 var hud: Hud
+## ミニゲームの結果（ふつう／よくできた）。終わったら HUD が GameState.record_grade で記録する
+var grade := GameState.Grade.NORMAL
 var phase := Phase.APPROACH
 var bug := Bug.EAT
 ## 近づいた割合（0〜1）
@@ -276,6 +280,7 @@ func grab() -> void:
 	# つかんだ瞬間に、静かだった音が戻り、蝉が一斉に鳴き出す（夜が明ける）
 	SfxPlayer.set_ambient(DAWN_CICADA_AMBIENT)
 	GameState.set_kabuto_result(drops)
+	grade = GameState.Grade.GOOD if drops <= GOOD_MAX_DROPS else GameState.Grade.NORMAL
 
 
 func _on_pressed() -> void:

@@ -5,7 +5,7 @@ extends NatsumiScreen
 ## 1. はじめる前に、押しつづける操作を必ず案内する（押すと火がつく）
 ## 2. 押しつづけているあいだは手が止まっていて、火の玉が保たれる。離すと手がぶれて、少しで落ちる（GRACE 秒）
 ## 3. つぼみ → ぼたん → まつば → やなぎ → ちりぎく と移っていく。とちゅうで風が吹くと火の玉がゆれる（見た目だけ）
-## 4. なつみのほうが先に落ちる。最後まで落とさなければ高得点（好感度 +1、フラグ senko_good。落ちたら senko_miss）
+## 4. なつみのほうが先に落ちる。最後まで落とさなければ「よくできた」（grade。好感度 +1、フラグ senko_good。落ちたら senko_miss）
 ## 入力は HoldInput（キーボードは Space / Enter / E、タッチ・マウスは画面のどこか）
 
 enum Phase { GUIDE, BURN, OUTRO, DONE }
@@ -106,7 +106,7 @@ func _process(delta: float) -> void:
 		Phase.OUTRO:
 			if _t >= OUTRO_TIME and not done:
 				phase = Phase.DONE
-				GameState.set_natsumi_game(&"senko", held_to_end)
+				grade = GameState.Grade.GOOD if held_to_end else GameState.Grade.NORMAL
 				finish()
 	queue_redraw()
 

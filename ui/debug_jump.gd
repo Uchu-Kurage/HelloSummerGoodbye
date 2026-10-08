@@ -12,36 +12,34 @@ const DAY_COLUMNS := 5
 const ISHIKIRI_BEST := {&"win": 7, &"draw": 5, &"lose": 3}
 ## 初恋ルートで、なつみから「もらう」アイテム
 const NATSUMI_RECEIVED := [&"river_sketch", &"handkerchief", &"goldfish_bag", &"sakura_shell", &"movie_flyer", &"senko_ash", &"natsumi_drawing"]
-## 初恋ルートのミニゲーム（結果のフラグの頭）
-const NATSUMI_GAMES := ["sketch_", "kingyo_", "kaigara_", "senko_"]
 ## ルートごとの、その日を終えたときに立っているフラグ（キーは日の番号 day_number）。
+## <ミニゲーム>_good ／ <ミニゲーム>_miss（GameState.GRADED_GAMES のもの）は、ミニゲームの結果（よくできた／ふつう）として
+## その日のアイテムを拾う前に記録する（GameState.record_grade。アイテムの一言が結果で変わるため。初恋ルートは _good なら好感度 +1）。
 ## dive_ で始まるものは飛び込みの結果、katanuki_ で始まるものは型抜きの結果、kabuto_ で始まるものはカブトムシとりの結果、capsule_ で始まるものはタイムカプセルを埋めた場所、ishikiri_ で始まるものは石切りの結果として記録する
 ## （GameState.set_dive_result／set_katanuki_result／set_kabuto_result／set_capsule_spot／set_ishikiri_best）。
 ## received はルートの中で人から「もらった」アイテム、given は手ばなしたアイテム（id -> 宝箱に出すひとこと）
 const ROUTES := [
 	# ノーマルルート：祖父母と過ごす。mask_ で始まるものは5日目に選んだお面（GameState.set_mask）。
-	# sentaku_ / shoryouma_ / kakurenbo_ / seiza_ で始まるものはミニゲームの結果（GameState.set_game_result）
 	{
 		"name": "ふつう",
-		"flags": {4: [&"sentaku_good"], 5: [&"mask_kitsune"], 6: [&"shoryouma_good"], 8: [&"jiji_play", &"kakurenbo_good"], 9: [&"seiza_good"]},
+		"flags": {4: [&"sentaku_good"], 5: [&"mask_kitsune"], 6: [&"shoryouma_good"], 8: [&"jiji_play", &"kakurenbo_jiji_good"], 9: [&"seiza_good"]},
 		"received": [&"festival_mask", &"senko_hanabi", &"straw_hat", &"onigiri_wrap"],
 		"given": {},
 	},
 	{
 		"name": "タケル",
 		"flags": {
-			3: [&"route_takeru", &"ishikiri_lose"],
-			5: [&"takeru_d5_stall", &"katanuki_broken"],
-			6: [&"takeru_d6_go", &"kabuto_clean"],
-			7: [&"takeru_d7_jump", &"dive_perfect"],
+			3: [&"route_takeru", &"ishikiri_lose", &"ishikiri_miss"],
+			5: [&"takeru_d5_stall", &"katanuki_broken", &"katanuki_miss"],
+			6: [&"takeru_d6_go", &"kabuto_clean", &"kabuto_good"],
+			7: [&"takeru_d7_jump", &"dive_perfect", &"dive_good"],
 			9: [&"capsule_1"],
 		},
 		"received": [&"river_stone", &"base_plaque", &"broken_katanuki", &"bug_cage", &"ramune_bottle", &"capsule_map"],
 		"given": {3: {&"marble": "タケルに あげた"}},
 	},
 	# 初恋ルート：好感度の段階ごと（エンディングが 高／中／低 でかわる）。
-	# hearts は、その日の会話で好みの選択肢を選んだ数。sketch_ / kingyo_ / kaigara_ / senko_ で始まるものはミニゲームの結果
-	# （GameState.set_natsumi_game。_good なら好感度 +1）。picked はその日に拾った、宝箱の枠に数えないもの
+	# hearts は、その日の会話で好みの選択肢を選んだ数。picked はその日に拾った、宝箱の枠に数えないもの
 	{
 		"name": "なつみ高",
 		"flags": {2: [&"route_natsumi"], 3: [&"sketch_good"], 5: [&"kingyo_good", &"natsumi_promise"], 6: [&"kaigara_good"], 9: [&"senko_good"]},
@@ -70,7 +68,7 @@ const ROUTES := [
 	# kk_d5_bell / kk_d6_bell は、その日に鈴が鳴った（お面の子が現れる）しるし
 	{
 		"name": "かみかくし",
-		"flags": {4: [&"bell_rang", &"route_kamikakushi"], 5: [&"kk_d5_bell"], 6: [&"kk_d6_bell"]},
+		"flags": {4: [&"bell_rang", &"route_kamikakushi", &"kakurenbo_good"], 5: [&"kk_d5_bell", &"yomise_good"], 6: [&"kk_d6_bell", &"suzu_michi_miss"], 8: [&"onigokko_good"]},
 		"received": [&"yomise_ame", &"fox_mask"],
 		"given": {},
 	},
@@ -99,6 +97,15 @@ static func _url_has_debug() -> bool:
 	return JavaScriptBridge.eval("new URLSearchParams(window.location.search).has('debug') ? 1 : 0", true) == 1
 
 
+## <ミニゲーム>_good ／ <ミニゲーム>_miss なら、そのミニゲームの名前（ちがえば空）
+static func grade_game_of(f: StringName) -> StringName:
+	var s := String(f)
+	for suffix in ["_good", "_miss"]:
+		if s.ends_with(suffix) and GameState.GRADED_GAMES.has(StringName(s.trim_suffix(suffix))):
+			return StringName(s.trim_suffix(suffix))
+	return &""
+
+
 ## そのルートで day_index の日のはじめに来たときの状態を作る（GameState はいったん空にする）
 static func apply(route: int, day_index: int) -> void:
 	var r: Dictionary = ROUTES[clampi(route, 0, ROUTES.size() - 1)]
@@ -106,12 +113,20 @@ static func apply(route: int, day_index: int) -> void:
 	day_index = clampi(day_index, 0, GameState.day_count() - 1)
 	for i in day_index:
 		var d := GameState.get_day(i)
+		var day_flags: Array = r.flags.get(d.day_number, [])
+		# ミニゲームの結果は、アイテムと一緒に記録するので、拾う前に入れる
+		for f in day_flags:
+			var game := grade_game_of(f)
+			if game != &"":
+				GameState.record_grade(game, GameState.Grade.GOOD if String(f).ends_with("_good") else GameState.Grade.NORMAL)
 		# その日のアイテムはルートのフラグで変わるので、前の日までのフラグを立ててから拾う
 		for item in GameState.day_items(d):
 			if item:
 				GameState.collect(item, r.received.has(item.id))
-		for f in r.flags.get(d.day_number, []):
+		for f in day_flags:
 			var s := String(f)
+			if grade_game_of(f) != &"":
+				continue
 			if s.begins_with("dive_"):
 				GameState.set_dive_result(StringName(s.trim_prefix("dive_")))
 			elif s.begins_with("ishikiri_"):
@@ -125,8 +140,6 @@ static func apply(route: int, day_index: int) -> void:
 				GameState.set_mask(StringName(s.trim_prefix("mask_")))
 			elif s.begins_with("katanuki_"):
 				GameState.set_katanuki_result(StringName(s.trim_prefix("katanuki_")))
-			elif NATSUMI_GAMES.any(func(g): return s.begins_with(g)):
-				GameState.set_natsumi_game(StringName(s.get_slice("_", 0)), s.ends_with("_good"))
 			else:
 				GameState.set_flag(f)
 		GameState.add_heart(r.get("hearts", {}).get(d.day_number, 0))

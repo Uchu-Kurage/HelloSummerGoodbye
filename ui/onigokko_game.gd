@@ -19,6 +19,8 @@ const TOUCH_GAP := 0.06
 const CHASER := 0.32
 const FLEE_SLOW := 0.6
 const SWAP_TIME := 1.4
+## ぼくが鬼のとき、この秒数までに追いついたら「よくできた」（仮の値）
+const GOOD_CHASE_TIME := 7.0
 const END_TIME := 1.8
 ## 走るお面の子（水彩の絵。右向き）
 const FOX_TEX: Texture2D = preload("res://world/scenery/painted/fox_mg1_1.png")
@@ -87,6 +89,7 @@ func _process(delta: float) -> void:
 				_scroll += d * 400.0
 			if gap <= TOUCH_GAP:
 				phase = Phase.SWAP
+				grade = GameState.Grade.GOOD if _t <= GOOD_CHASE_TIME else GameState.Grade.NORMAL
 				_t = 0.0
 				_hold.release()
 				SfxPlayer.play("pat")

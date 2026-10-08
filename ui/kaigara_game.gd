@@ -2,7 +2,7 @@ class_name KaigaraGame
 extends NatsumiScreen
 ## ミニゲーム「貝がら拾い」（6日目、初恋ルート）。会話の @game kaigara で始まる。
 ## 波打ちぎわ。波が寄せているあいだは待ち、引いたすきに、砂に残った貝がらを1つ拾う（ROUNDS 回）。
-## どこかの回に、小さなさくら貝がまじっている。見つけて拾えたら高得点（好感度 +1、フラグ kaigara_good）。
+## どこかの回に、小さなさくら貝がまじっている。見つけて拾えたら「よくできた」（grade。好感度 +1、フラグ kaigara_good）。
 ## 拾わないうちに波がもどると、貝がらは持っていかれる。失敗はない。
 
 enum Phase { IN, OUT, END }
@@ -153,7 +153,7 @@ func _process(delta: float) -> void:
 					_new_shells()
 		Phase.END:
 			if _t >= END_TIME and not done:
-				GameState.set_natsumi_game(&"kaigara", found)
+				grade = GameState.Grade.GOOD if found else GameState.Grade.NORMAL
 				finish()
 	queue_redraw()
 

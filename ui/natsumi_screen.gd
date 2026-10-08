@@ -11,6 +11,8 @@ signal finished
 
 var hud: Hud
 var game_name := ""
+## ミニゲームの結果（ふつう／よくできた）。点数のあるミニゲームが終わる前に入れ、HUD が GameState.record_grade で記録する
+var grade := GameState.Grade.NORMAL
 ## 演出の速さ。早送りのときは UiTokens.SKIP_SPEED
 var speed := 1.0
 var done := false

@@ -3,7 +3,7 @@ extends NatsumiScreen
 ## ミニゲーム「精霊馬づくり」（6日目、ノーマルルート）。会話の @game shoryouma で始まる。
 ## ちゃぶ台の上で、きゅうり（うま）となす（うし）に、割りばしの足を4本ずつさす。
 ## 割りばしが野菜の下を左右に行き来する。足をさすところ（●）の上に来たらタップ（Space）でさす。
-## ずれても、少しななめの足になるだけ（失敗で止まらない）。8本のうち GOOD_LEGS 本以上まっすぐなら、フラグ shoryouma_good（ちがえば shoryouma_miss）。
+## ずれても、少しななめの足になるだけ（失敗で止まらない）。8本のうち GOOD_LEGS 本以上まっすぐなら、よくできた（grade。HUD がフラグ shoryouma_good／ちがえば shoryouma_miss を立てる）。
 
 enum Phase { INTRO, PLACE, STAND, END }
 
@@ -107,7 +107,7 @@ func _process(delta: float) -> void:
 					_start_veg(1)
 				else:
 					phase = Phase.END
-					GameState.set_game_result(&"shoryouma", good >= GOOD_LEGS)
+					grade = GameState.Grade.GOOD if good >= GOOD_LEGS else GameState.Grade.NORMAL
 					finish()
 	queue_redraw()
 

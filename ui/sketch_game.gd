@@ -3,7 +3,7 @@ extends NatsumiScreen
 ## ミニゲーム「スケッチ」（3日目、初恋ルート）。会話の @game sketch で始まる。
 ## 川原で、なつみと並んで絵を描く。背景の景色が見本で、右の岩の上に自分の画用紙。
 ## そら（いろ）→ やま（かたち）→ かわ（いろ）→ いし（かたち）の順に、3つから選んで描いていく。
-## 失敗も時間制限もない。見本との一致が GOOD_MATCHES 以上なら高得点（好感度 +1、フラグ sketch_good）。
+## 失敗も時間制限もない。見本との一致が GOOD_MATCHES 以上なら「よくできた」（grade。好感度 +1、フラグ sketch_good）。
 
 enum Phase { CHOOSE, WAIT, SHOW }
 
@@ -114,7 +114,7 @@ func _process(delta: float) -> void:
 		Phase.SHOW:
 			_wait -= d
 			if _wait <= 0.0 and not done:
-				GameState.set_natsumi_game(&"sketch", matches >= GOOD_MATCHES)
+				grade = GameState.Grade.GOOD if matches >= GOOD_MATCHES else GameState.Grade.NORMAL
 				finish()
 
 

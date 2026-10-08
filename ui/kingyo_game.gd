@@ -3,7 +3,7 @@ extends NatsumiScreen
 ## ミニゲーム「金魚すくい」（5日目、初恋ルート）。会話の @game kingyo で始まる。
 ## 夜店の水槽を上から見る。ポイは水槽のまん中にかまえている。金魚がポイの上に来たら、タップ（Space）ですくう。
 ## すくうたびにポイの紙が弱り、金魚の重さでも弱る。破れたらおしまい。失敗はない。
-## GOOD_COUNT 匹以上すくえたら高得点（好感度 +1、フラグ kingyo_good）。
+## GOOD_COUNT 匹以上すくえたら「よくできた」（grade。好感度 +1、フラグ kingyo_good）。
 
 enum Phase { READY, PLAY, SCOOP, BROKEN, DONE }
 
@@ -70,7 +70,7 @@ func _process(delta: float) -> void:
 			_scoop_t -= d
 			if _scoop_t <= 0.0 and not done:
 				phase = Phase.DONE
-				GameState.set_natsumi_game(&"kingyo", caught >= GOOD_COUNT)
+				grade = GameState.Grade.GOOD if caught >= GOOD_COUNT else GameState.Grade.NORMAL
 				finish()
 	queue_redraw()
 

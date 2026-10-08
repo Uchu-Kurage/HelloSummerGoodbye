@@ -7,7 +7,7 @@
 script = ExtResource("1")
 id = &"grandma_laundry"
 display_name = "おばあちゃん"
-lines = Array[String](["たいへん！ せんたくもの！", "@game sentaku", "@event sentaku_done", "@if_flag sentaku_good dry", "すこし ぬれたけど、", "#dry", "まにあったねえ。ありがとね。"])
+lines = Array[String](["たいへん！ せんたくもの！", "@game sentaku", "@event sentaku_done", "@if_good dry", "ちょっと ぬれちゃったね。まあ いいさ。", "@end", "#dry", "ぜんぶ まにあったねえ。ありがとね。"])
 repeat_lines = Array[String](["ゆうだちは、すぐ やむからね。"])
 auto_talk = true
 sprite = ExtResource("sprite")

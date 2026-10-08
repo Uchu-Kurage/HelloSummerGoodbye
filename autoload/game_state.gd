@@ -55,6 +55,22 @@ var katanuki_result := &""
 ## なつみの好感度（初恋ルート）。エンディングの差分だけに使う（ルートから外れる条件にはしない）
 var natsumi_heart := 0
 
+## ミニゲームの結果（ふつう／よくできた）。失敗で損はせず、よくできるとアイテムの一言か、直後のせりふが変わる
+enum Grade { NORMAL, GOOD }
+## 結果を記録するミニゲーム（@game の名前）。点数のないもの（秘密基地づくりなど）は入れない
+const GRADED_GAMES: Array[StringName] = [
+	&"ishikiri", &"katanuki", &"kabuto", &"dive",
+	&"sketch", &"kingyo", &"kaigara", &"senko",
+	&"kakurenbo", &"yomise", &"suzu_michi", &"onigokko",
+	&"sentaku", &"shoryouma", &"kakurenbo_jiji", &"seiza",
+]
+## 初恋ルートのミニゲーム。よくできたら好感度 +1
+const NATSUMI_GAMES: Array[StringName] = [&"sketch", &"kingyo", &"kaigara", &"senko"]
+## ミニゲームの名前 -> 結果（Grade）
+var game_grades: Dictionary = {}
+## アイテムの id -> 手に入れたときのミニゲームの結果（Grade）。ItemData.grade_game のあるものだけ。一言を選ぶのに使う
+var item_grades: Dictionary = {}
+
 ## 5日目に祖父に買ってもらったお面の種類（&"kitsune"／&"hyottoko"／&"okame"。ノーマルルート）。空ならまだ。
 ## アイテムは1つ（festival_mask）で、見た目（icon）だけを種類でかえる
 var mask_kind := &""
@@ -81,6 +97,8 @@ func reset() -> void:
 	gone.clear()
 	talked.clear()
 	flags.clear()
+	game_grades.clear()
+	item_grades.clear()
 	base_cells.clear()
 	base_cell_piece.clear()
 	dive_result = &""
@@ -129,6 +147,9 @@ func collect(item: ItemData, from_someone := false) -> void:
 	if is_collected(item.id):
 		return
 	collected[item.id] = collected.size()
+	# そのときのミニゲームの結果も、アイテムと一緒に記録する（宝箱・エンディング・縁側で同じ一言を出すため）
+	if item.grade_game != &"" and game_grades.has(item.grade_game):
+		item_grades[item.id] = game_grades[item.grade_game]
 	if from_someone:
 		received[item.id] = true
 	if item.collect_flag != &"":
@@ -277,21 +298,32 @@ func add_heart(n := 1) -> void:
 		set_flag(&"natsumi_heart_high")
 
 
-## なつみルートのミニゲーム（スケッチ・金魚すくい・貝がら拾い・線香花火）の結果。
-## 会話で分けられるよう、フラグ <name>_good（高得点）／ <name>_miss を立てる。高得点なら好感度 +1
-func set_natsumi_game(game: StringName, good: bool) -> void:
-	var f := StringName(String(game) + ("_good" if good else "_miss"))
-	if has_flag(f):
-		return
-	set_flag(f)
-	if good:
+## ミニゲームの結果を記録する（ミニゲームが終わったとき、HUD が呼ぶ）。
+## そのミニゲームと結びつくアイテム（ItemData.grade_game）を、もう拾ってあれば、その結果も記録する。
+## 会話で分けられるよう、フラグ <name>_good（よくできた）／ <name>_miss（ふつう）も立てる。どちらでも話は進む。
+## 初恋ルートのミニゲームは、よくできたら好感度 +1（同じミニゲームで二度は上げない）
+func record_grade(game: StringName, g: Grade) -> void:
+	var first := not game_grades.has(game)
+	game_grades[game] = g
+	flags.erase(StringName(String(game) + "_good"))
+	flags.erase(StringName(String(game) + "_miss"))
+	set_flag(StringName(String(game) + ("_good" if g == Grade.GOOD else "_miss")))
+	if first and g == Grade.GOOD and NATSUMI_GAMES.has(game):
 		add_heart()
+	# ミニゲームの前に拾ってあったもの（道に落ちていて、先に拾えるもの）にも、結果を記録する
+	for id in collected:
+		var it := find_item(id)
+		if it and it.grade_game == game:
+			item_grades[id] = g
 
 
-## ノーマルルートのミニゲーム（洗濯物の取り込み・精霊馬づくり・星座さがし・かくれんぼ）の結果。
-## 会話で分けられるよう、フラグ <name>_good（うまくいった）／ <name>_miss を立てる。どちらでも話は進む
-func set_game_result(game: StringName, good: bool) -> void:
-	set_flag(StringName(String(game) + ("_good" if good else "_miss")))
+func game_grade(game: StringName) -> Grade:
+	return game_grades.get(game, Grade.NORMAL)
+
+
+## 手に入れたアイテムの結果（ミニゲームと結びつかないもの、まだのものは NORMAL）
+func item_grade(id: StringName) -> Grade:
+	return item_grades.get(id, Grade.NORMAL)
 
 
 ## 5日目のお面の種類を記録し、お面のアイテムの絵をその種類にする。フラグ mask_<種類> も立てる（祖父の一言を分けるため）

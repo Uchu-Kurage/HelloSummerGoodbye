@@ -17,6 +17,8 @@ enum Phase { LOOK, WAIT, CHARGE, AIR, UNDER, SURFACE, DONE }
 const COUNT_NO := 1.3
 ## 「の！」の前後、この秒数以内に離すと「ぴったり」
 const PERFECT_WINDOW := 0.15
+## 「よくできた」になる結果（ぴったり。PERFECT_WINDOW で調整する）
+const GOOD_RESULT := &"perfect"
 ## 下をのぞきこむ時間
 const LOOK_TIME := 1.2
 ## 空中（まん中で一瞬スローになる）
@@ -66,6 +68,8 @@ const SURFACE_ZOOM := 1.5
 const SURFACE_HEAD := 2.0
 
 var hud: Hud
+## ミニゲームの結果（ふつう／よくできた）。終わったら HUD が GameState.record_grade で記録する
+var grade := GameState.Grade.NORMAL
 var phase := Phase.LOOK
 var result := &""
 var _t := 0.0
@@ -232,6 +236,7 @@ func _on_released(_held: float) -> void:
 		_takeru_jump = 0.0
 		_air_t = 0.0
 	GameState.set_dive_result(result)
+	grade = GameState.Grade.GOOD if result == GOOD_RESULT else GameState.Grade.NORMAL
 	SfxPlayer.play("jump")
 	_chip.modulate.a = 0.0
 	phase = Phase.AIR

@@ -3,7 +3,7 @@ extends NatsumiScreen
 ## ミニゲーム「洗濯物の取り込み」（4日目、ノーマルルート）。会話の @game sentaku で始まる。
 ## 祖父母の家の庭。物干しの洗濯物を、夕立が来る前に1つずつタップして取り込む。
 ## 左から夕立の雲が近づいてきて、RAIN_TIME 秒で降りだす。降りだしたら、残りは少しぬれて、おばあちゃんが取り込んでくれる。
-## 失敗で止まらない。全部取り込めたら、フラグ sentaku_good（ちがえば sentaku_miss）。
+## 失敗で止まらない。雨（RAIN_TIME）の前に全部取り込めたら、よくできた（grade。HUD がフラグ sentaku_good／ちがえば sentaku_miss を立てる）。
 
 enum Phase { PICK, RAIN, END }
 
@@ -104,7 +104,7 @@ func _end(all_dry: bool) -> void:
 			wet[i] = not taken[i]
 		caption(Strings.SENTAKU_RAIN)
 		set_ambient(WorldPalette.RAIN_AMBIENT)
-	GameState.set_game_result(&"sentaku", all_dry)
+	grade = GameState.Grade.GOOD if all_dry else GameState.Grade.NORMAL
 	_redraw_choices()
 
 

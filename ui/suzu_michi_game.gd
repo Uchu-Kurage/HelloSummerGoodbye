@@ -8,6 +8,8 @@ extends NatsumiScreen
 enum Phase { LISTEN, WALK, END }
 
 const FORKS := 4
+## ちがうほうを選んだのがこれ以下なら「よくできた」（仮の値）
+const GOOD_WRONG := 0
 ## 鈴が鳴る間隔と、光がゆれている時間
 const RING_EVERY := 2.4
 const GLOW_TIME := 1.2
@@ -118,6 +120,7 @@ func _process(delta: float) -> void:
 				_t = 0.0
 				if fork >= FORKS:
 					phase = Phase.END
+					grade = GameState.Grade.GOOD if wrong <= GOOD_WRONG else GameState.Grade.NORMAL
 				else:
 					phase = Phase.LISTEN
 					_new_fork()

@@ -65,6 +65,8 @@ const ENGAWA_NOTHING := "なんにも"
 const ENGAWA_SKIP := "とばす"
 const ENGAWA_PICK_KEY := "やじるしで えらんで、けっていで みせる"
 const ENGAWA_PICK_TOUCH := "みせる ものを タップ"
+## 見せたものの名前と一言（返事のあいだ、下の小札に出す）
+const ENGAWA_ITEM_NOTE := "%s「%s」"
 ## 会話の話し手の名前（顔の絵と色を選ぶため）
 const GRANDMA := "おばあちゃん"
 const GRANDPA := "おじいちゃん"
@@ -215,8 +217,9 @@ const KAKURENBO_BELL := "（どこかで、すずが ちりんと なった）"
 const KAKURENBO_FOUND := "（いた！）"
 ## おじいちゃんとのかくれんぼ（8日目、ノーマルルート）
 const KAKURENBO_JIJI_READY := "……もう いいぞ。"
-## なんどか外すと、隠れているところで、せきばらい
+## なんどか外すと、せきばらいをして、狛犬のうしろから自分で出てくる（見つけられなかった）
 const KAKURENBO_JIJI_COUGH := "（どこかで、こほんと せきばらいが きこえた）"
+const KAKURENBO_JIJI_CAME_OUT := "（こまいぬの うしろから、でてきた）"
 ## 夜市の物々交換（5日目）：持っている物を、店の品物と交換していく
 const YOMISE_GOODS := ["どんぐり", "かざぐるま", "あおい りんごあめ", "あおい あめだま"]
 const YOMISE_HINT_TOUCH := "とりかえっこ する みせを タップ"
