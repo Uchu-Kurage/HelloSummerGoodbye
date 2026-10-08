@@ -4,6 +4,8 @@ extends Control
 ## ゲーム中（ending_mode = false）：開いている間はゲームを止める。Tab / Esc / もどる で閉じる。
 ## エンディング（ending_mode = true）：ふたが開き、拾ったアイテムが1つずつ順に現れる。
 ## えらぶとき（pick）：手もとにあるものを1つ選ぶ。会話の @bury（タイムカプセルに入れる）で使う。
+## ぜんぶ見せるとき（show_all。エピローグ「それから」の最後）：渡したアイテムを、そろった状態で並べる（影・「うめた」などは出さない）。
+## 1画面に入らなければページ送りにする（「まえ」「つぎ」のボタン。キーボードは、行のはしで左右を押すと となりのページへ）。
 
 signal closed
 signal reveal_finished
@@ -15,6 +17,8 @@ const MAX_COLUMNS := 5
 const MIN_COLUMNS := 3
 const VISIBLE_ROWS := 2
 const DETAIL_WIDTH := 300
+## ページ送りのときの、1ページの行の数のいちばん多いとき
+const MAX_PAGE_ROWS := 3
 
 @export var ending_mode := false
 
@@ -45,6 +49,15 @@ var header_caption: Label
 var _pick_mode := false
 var _pick_hint := ""
 var _pick_result: ItemData
+## show_all で並べるもの（空ならいまのルートの宝箱）
+var _all: Array[ItemData] = []
+var _paged := false
+var page := 0
+var _per_page := 0
+var _pager: HBoxContainer
+var _prev: Button
+var _next: Button
+var _page_label: Label
 
 
 func _ready() -> void:
@@ -116,18 +129,36 @@ func _build_tin() -> void:
 	footer.visible = ending_mode
 	head.add_child(footer)
 
+	# ページ送り（show_all で、1画面に入らないとき）
+	_pager = HBoxContainer.new()
+	_pager.alignment = BoxContainer.ALIGNMENT_CENTER
+	_pager.add_theme_constant_override("separation", UiTokens.SPACE_M)
+	_pager.visible = false
+	_prev = _page_button(Strings.BOX_PAGE_PREV, -1)
+	_pager.add_child(_prev)
+	_page_label = Label.new()
+	_page_label.theme_type_variation = &"OnTinSmallLabel"
+	_page_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_pager.add_child(_page_label)
+	_next = _page_button(Strings.BOX_PAGE_NEXT, 1)
+	_pager.add_child(_next)
+
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", UiTokens.SPACE_M)
 	v.add_child(body)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", UiTokens.SPACE_S)
+	body.add_child(left)
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.follow_focus = true
-	body.add_child(_scroll)
+	left.add_child(_scroll)
 	_grid = GridContainer.new()
 	_grid.columns = _cols
 	_grid.add_theme_constant_override("h_separation", UiTokens.TOUCH_GAP)
 	_grid.add_theme_constant_override("v_separation", UiTokens.TOUCH_GAP)
 	_scroll.add_child(_grid)
+	left.add_child(_pager)
 
 	var detail := PanelContainer.new()
 	detail.theme_type_variation = &"TinLiner"
@@ -149,22 +180,34 @@ func _build_tin() -> void:
 	dv.add_child(_detail_text)
 
 
+## 渡したアイテムを、ぜんぶそろった状態で並べる（エピローグ「それから」の最後の宝箱）。1画面に入らなければページ送り
+func show_all(items: Array[ItemData]) -> void:
+	_all = items
+	_paged = true
+
+
 func _rebuild_slots() -> void:
 	for s in _slots:
 		s.queue_free()
 	_slots.clear()
 	_selected = null
-	var items := GameState.all_items()
+	var items := _all if not _all.is_empty() else GameState.all_items()
 	var got := 0
 	var total := 0
 	for it in items:
 		var s := ItemSlot.new()
-		# 人に返すもの（色えんぴつなど）は、たからものの数に入れない
-		if not GameState.is_extra(it):
+		if not _all.is_empty():
+			# ぜんぶ見せるとき：影・「うめた」「タケルにあげた」は出さない
 			total += 1
-			got += 1 if GameState.is_collected(it.id) else 0
-		# 手ばなしたもの（あげた・うめた）は、枠にそのひとことを出す。拾い逃したもの（その日を越えた）は影で出す
-		s.setup(it, GameState.holds(it.id), GameState.gone_note(it.id), GameState.is_missed(it))
+			got += 1
+			s.setup(it, true, "", false)
+		else:
+			# 人に返すもの（色えんぴつなど）は、たからものの数に入れない
+			if not GameState.is_extra(it):
+				total += 1
+				got += 1 if GameState.is_collected(it.id) else 0
+			# 手ばなしたもの（あげた・うめた）は、枠にそのひとことを出す。拾い逃したもの（その日を越えた）は影で出す
+			s.setup(it, GameState.holds(it.id), GameState.gone_note(it.id), GameState.is_missed(it))
 		s.pressed.connect(_on_slot_pressed.bind(s))
 		s.focus_entered.connect(_on_slot_focused.bind(s))
 		_grid.add_child(s)
@@ -172,6 +215,8 @@ func _rebuild_slots() -> void:
 	_count.text = Strings.ENDING_COUNT % [got, total]
 	_found = [got, total]
 	_fit_grid(items.size())
+	page = 0
+	_show_page()
 	await get_tree().process_frame
 	_link_focus()
 	_show_detail(null)
@@ -188,19 +233,80 @@ func _fit_grid(count: int) -> void:
 	var head_h := UiTokens.FONT_ENDING_TITLE * UiTokens.LINE_HEIGHT_RATIO if ending_mode else float(UiTokens.TOUCH_MIN)
 	var avail_h := vs.y - chrome - head_h - UiTokens.SPACE_S + UiTokens.TOUCH_GAP
 	var rows := clampi(floori(avail_h / cell.y), 1, VISIBLE_ROWS)
+	if _paged:
+		# ページ送りのときは、ページの数とボタンのぶんの高さをあけて、入るだけの行を見せる
+		rows = clampi(floori((avail_h - UiTokens.TOUCH_MIN - UiTokens.SPACE_S) / cell.y), 1, MAX_PAGE_ROWS)
+		_per_page = _cols * rows
+		_pager.visible = count > _per_page
+		_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	rows = mini(rows, ceili(count / float(_cols)))
 	_scroll.custom_minimum_size = Vector2(_cols * cell.x - UiTokens.TOUCH_GAP, rows * cell.y - UiTokens.TOUCH_GAP)
 
 
+# --- ページ送り -----------------------------------------------------------------
+
+func _page_button(text: String, step: int) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.theme_type_variation = &"TouchButton"
+	b.custom_minimum_size = Vector2(UiTokens.TOUCH_MIN * 1.25, UiTokens.TOUCH_MIN)
+	# キーボードは、行のはしで左右を押してページをめくる（ボタンにはフォーカスを渡さない）
+	b.focus_mode = Control.FOCUS_NONE
+	b.pressed.connect(func(): turn_page(step))
+	UiAnim.add_press_feedback(b)
+	return b
+
+
+func page_count() -> int:
+	if not _paged or _per_page <= 0:
+		return 1
+	return maxi(1, ceili(_slots.size() / float(_per_page)))
+
+
+## ページをめくる（step は +1 / -1）。めくれたら true
+func turn_page(step: int) -> bool:
+	var p := clampi(page + step, 0, page_count() - 1)
+	if p == page:
+		return false
+	page = p
+	SfxPlayer.play("cursor")
+	_show_page()
+	_link_focus()
+	if _selected and is_instance_valid(_selected) and not _selected.visible:
+		_selected.set_selected(false)
+		_selected = null
+		_show_detail(null)
+	return true
+
+
+## いまのページの枠だけを出す
+func _show_page() -> void:
+	for i in _slots.size():
+		_slots[i].visible = not _paged or _per_page <= 0 or i / _per_page == page
+	_page_label.text = Strings.BOX_PAGE % [page + 1, page_count()]
+	_prev.disabled = page <= 0
+	_next.disabled = page >= page_count() - 1
+
+
+## いまのページの枠
+func page_slots() -> Array[ItemSlot]:
+	var out: Array[ItemSlot] = []
+	for s in _slots:
+		if s.visible:
+			out.append(s)
+	return out
+
+
 func _link_focus() -> void:
-	var n := _slots.size()
+	var page_list := page_slots()
+	var n := page_list.size()
 	for i in n:
-		var s := _slots[i]
+		var s := page_list[i]
 		var col := i % _cols
-		var left := _slots[i - 1] if col > 0 else s
-		var right := _slots[i + 1] if col < _cols - 1 and i + 1 < n else s
-		var up: Control = _slots[i - _cols] if i - _cols >= 0 else s
-		var down := _slots[i + _cols] if i + _cols < n else s
+		var left := page_list[i - 1] if col > 0 else s
+		var right := page_list[i + 1] if col < _cols - 1 and i + 1 < n else s
+		var up: Control = page_list[i - _cols] if i - _cols >= 0 else s
+		var down := page_list[i + _cols] if i + _cols < n else s
 		# 「もういちど」は見出しの右（上）にあるので、いちばん上の行から上へ移動すると届く
 		var above := _footer_first()
 		if i - _cols < 0 and above:
@@ -225,13 +331,15 @@ func _footer_first(node: Node = null) -> Control:
 
 
 func first_slot() -> ItemSlot:
-	return _slots[0] if _slots.size() > 0 else null
+	var list := page_slots()
+	return list[0] if list.size() > 0 else null
 
 
 func last_row_slot() -> ItemSlot:
-	if _slots.is_empty():
+	var list := page_slots()
+	if list.is_empty():
 		return null
-	return _slots[(_slots.size() - 1) / _cols * _cols]
+	return list[(list.size() - 1) / _cols * _cols]
 
 
 func _on_slot_pressed(s: ItemSlot) -> void:
@@ -272,7 +380,11 @@ func _select(s: ItemSlot) -> void:
 
 
 func _show_detail(s: ItemSlot) -> void:
-	if s == null and ending_mode:
+	if s == null and ending_mode and not _all.is_empty():
+		_detail_name.text = Strings.ENDING_FOUND_TITLE
+		_detail_date.text = ""
+		_detail_text.text = Strings.EPILOGUE_FOUND % _found[1]
+	elif s == null and ending_mode:
 		_detail_name.text = Strings.ENDING_FOUND_TITLE
 		if ending_message != "":
 			# しめくくりの一言を本文に、集めた数は見出しの下の小さい行に
@@ -285,6 +397,11 @@ func _show_detail(s: ItemSlot) -> void:
 		_detail_name.text = _title.text
 		_detail_date.text = ""
 		_detail_text.text = _pick_hint if _pick_mode else Strings.BOX_HINT_SELECT
+	elif not _all.is_empty():
+		# ぜんぶ見せるとき：日付だけ（「7/27」。異界の日は「？？/？？」）
+		_detail_name.text = s.item.display_name
+		_detail_date.text = Strings.BOX_MISSED_DATE % GameState.main_item_date(s.item)
+		_detail_text.text = s.item.text()
 	elif s.collected or s.note != "":
 		var d := GameState.day_for_item(s.item)
 		var fmt := Strings.BOX_RECEIVED_ON if GameState.was_received(s.item.id) else Strings.BOX_PICKED_ON
@@ -341,12 +458,13 @@ func open() -> void:
 		_tween.tween_property(_lid, "rotation", -0.05, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
 	_tween.tween_property(_lid, "modulate:a", 0.0, UiTokens.TIME_LID).set_delay(UiTokens.TIME_PANEL * 0.5)
 	if ending_mode:
+		# 1つずつ現れるのは、いま見えているページの枠だけ（ほかのページは、めくったときには並んでいる）
 		for s in _slots:
-			if s.shows_content():
+			if s.shows_content() and s.visible:
 				s.content.modulate.a = 0.0
 		var t := UiTokens.TIME_PANEL * 0.5 + UiTokens.TIME_LID
 		for s in _slots:
-			if not s.shows_content():
+			if not s.shows_content() or not s.visible:
 				continue
 			s.content.pivot_offset = s.content.size / 2.0
 			s.content.scale = Vector2.ONE if still else Vector2.ONE * UiTokens.PANEL_SCALE_FROM
@@ -411,6 +529,23 @@ func _input(event: InputEvent) -> void:
 		_tween.set_speed_scale(UiTokens.SKIP_SPEED)
 		get_viewport().set_input_as_handled()
 		return
+	# ページ送り：行のはしで左右を押すと、となりのページへ（フォーカスは同じ行のはしに）
+	if _paged and page_count() > 1 and (event.is_action_pressed("ui_right") or event.is_action_pressed("ui_left")):
+		var f := get_viewport().gui_get_focus_owner()
+		var list := page_slots()
+		if f is ItemSlot and list.has(f):
+			var i := list.find(f)
+			var col := i % _cols
+			var row := i / _cols
+			var right := event.is_action_pressed("ui_right")
+			if (right and (col == _cols - 1 or i == list.size() - 1)) or (not right and col == 0):
+				if turn_page(1 if right else -1):
+					var now := page_slots()
+					var j := mini(row * _cols + (0 if right else _cols - 1), now.size() - 1)
+					now[j].grab_focus()
+					_select(now[j])
+					get_viewport().set_input_as_handled()
+					return
 	if ending_mode:
 		return
 	# Tab は GUI のフォーカス移動に取られないよう _input で受ける

@@ -8,6 +8,10 @@ extends Interactable
 ## 話しかけられる範囲は道の高さのまま（主人公が近くを通れば話せる）
 @export var visual_scale := 1.0
 @export var visual_lift := 0.0
+## 近くに来た主人公のほうを向くか（エピローグの、背中を向けたままの男は向かない）
+@export var face_player := true
+## 姿を描くか（姿は別の小物で描くとき false。エピローグのしゃがむ男）
+@export var draw_body := true
 ## 話したことを記録するか（他ルートの人物の顔出しは記録しない。Cameo）
 @export var remember_talk := true
 
@@ -45,7 +49,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	# 近くにプレイヤーがいたら、そちらを向く
-	if _player and is_instance_valid(_player):
+	if face_player and _player and is_instance_valid(_player):
 		_facing = signf(_player.global_position.x - global_position.x)
 		if _facing == 0.0:
 			_facing = 1.0
@@ -145,7 +149,7 @@ func interact(hud: Node) -> void:
 ## 姿。足もとが原点、+x が向いている方向（絵は右向きに描いてある）。
 ## 絵（sprite）があれば、高さ height にそろえて足もとに立たせる。なければ仮の姿を描く
 func _draw_body() -> void:
-	if npc_data == null:
+	if npc_data == null or not draw_body:
 		return
 	var tex := current_sprite()
 	if tex:

@@ -74,6 +74,14 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 
 例は `data/npcs/takeru_river.tres`（ビー玉をわたすかどうか）と `takeru_capsule.tres`（タイムカプセル）。
 
+## エピローグ「それから」
+
+4つのエンディングをすべて見ると、タイトル画面に「それから」が出ます（タイトルの4つの丸が、見たエンディングの数）。
+
+- 見たエンディングは `user://endings.cfg`（`data/ending_record.gd`）に記録します。Web 版ではブラウザに残ります（シークレットウィンドウやサイトデータの削除で消えます）。消すときは、そのファイル（Web 版はサイトデータ）を消してください
+- シーンは `days/epilogue.tscn`、日のデータは `data/days/epilogue.tres`（`day_list` には入っていません）。年月がたった差分の仮の図形は `world/epilogue_prop.gd`
+- 最後の宝箱は全ルートのアイテムを並べ、ページ送り（「まえ」「つぎ」、キーボードは行のはしで左右）で見ます
+
 ## 他ルートの人物の顔出しを足す
 
 `res://data/cameos/` に CameoData（`.tres`）を1つ足すだけで、その日の道に出ます（`world/cameo.tscn`。日のシーンの土台が置きます）。

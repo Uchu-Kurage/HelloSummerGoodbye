@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DayData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/day_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+day_number = 11
+month = 8
+day = 31
+scene_path = "res://days/epilogue.tscn"
+time_keys = Array[Vector2]([Vector2(0, 0.45), Vector2(1, 0.85)])

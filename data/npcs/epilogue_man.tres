@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"epilogue_man"
+lines = Array[String](["……おそいぞ、とかいもん。"])
+auto_talk = true
+placeholder_color = Color(0.306, 0.333, 0.376, 1)
+height = 130.0

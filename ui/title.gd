@@ -1,6 +1,7 @@
 extends Node2D
 ## タイトル画面。背景は1日目の景色をゆっくり横に流す。
 ## ブラウザは最初の操作まで音を鳴らせないので「タップして はじめる」を挟み、そのあとで音を有効にする。
+## タイトルの下に、見たエンディングの数の印（4つの丸）。4つすべて見たら、メニューに「それから」（エピローグ）が増える。
 
 const SCROLL_SPEED := 36.0
 const MAIN_SCENE := "res://world/main.tscn"
@@ -17,6 +18,8 @@ var _list: MenuList
 var _started := false
 var _pulse: Tween
 var _debug: DebugJump
+## 見たエンディングの数の印（自動の動作確認からも見る）
+var marks: EndingMarks
 
 
 func _ready() -> void:
@@ -45,6 +48,20 @@ func _build_ui() -> void:
 	title.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui.add_child(title)
+
+	# 見たエンディングの数（タイトルの下、右寄せの小さな紙の小札）
+	var chip := PanelContainer.new()
+	chip.theme_type_variation = &"PaperChip"
+	chip.anchor_left = 1.0
+	chip.anchor_right = 1.0
+	chip.offset_right = -UiTokens.SCREEN_MARGIN - UiTokens.SPACE_L
+	chip.offset_top = UiTokens.SCREEN_MARGIN + UiTokens.SPACE_M + UiTokens.FONT_TITLE * UiTokens.LINE_HEIGHT_RATIO + UiTokens.SPACE_S
+	chip.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(chip)
+	marks = EndingMarks.new()
+	marks.seen = EndingRecord.seen_count()
+	chip.add_child(marks)
 
 	# 道の帯（画面の下から 40px の高さ）に案内とメニューを置く
 	var band := Control.new()
@@ -87,6 +104,9 @@ func _build_ui() -> void:
 	_list.vertical = false
 	_menu_panel.add_child(_list)
 	_add_item(Strings.MENU_START, _on_start)
+	# 4つのエンディングをすべて見たら、エピローグ「それから」
+	if EndingRecord.all_seen():
+		_add_item(Strings.MENU_EPILOGUE, _on_epilogue)
 	# 開発用：ルートと日を選んでとぶ（デバッグ実行のときだけ）
 	if DebugJump.available():
 		_add_item(Strings.MENU_DEBUG, _on_debug)
@@ -144,6 +164,23 @@ func _on_start() -> void:
 	GameState.reset()
 	SfxPlayer.stop_music()
 	Transition.change_scene(MAIN_SCENE)
+
+
+func _on_epilogue() -> void:
+	if Transition.is_busy():
+		return
+	GameState.start_epilogue()
+	SfxPlayer.stop_music()
+	Transition.change_scene(MAIN_SCENE)
+
+
+## メニューの項目の文字（自動の動作確認から使う）
+func menu_texts() -> Array[String]:
+	var out: Array[String] = []
+	for c in _list.get_children():
+		if c is MenuItem:
+			out.append((c as MenuItem).text)
+	return out
 
 
 func _on_debug() -> void:
