@@ -1,28 +1,31 @@
 class_name SenkoGame
-extends NatsumiScreen
+extends MinigameBase
 ## ミニゲーム「線香花火」（9日目、初恋ルート）。会話の @game senko で始まる。
-## 夜の田んぼ道で、なつみと二人だけの花火大会。
-## 1. はじめる前に、押しつづける操作を必ず案内する（押すと火がつく）
-## 2. 押しつづけているあいだは手が止まっていて、火の玉が保たれる。離すと手がぶれて、少しで落ちる（GRACE 秒）
-## 3. つぼみ → ぼたん → まつば → やなぎ → ちりぎく と移っていく。とちゅうで風が吹くと火の玉がゆれる（見た目だけ）
-## 4. なつみのほうが先に落ちる。最後まで落とさなければ「よくできた」（grade。好感度 +1、フラグ senko_good。落ちたら senko_miss）
-## 入力は HoldInput（キーボードは Space / Enter / E、タッチ・マウスは画面のどこか）
+## 夜の田んぼ道で、なつみと二人だけの花火大会。押し続けは使わない。
+## 火の玉が左右にゆっくり揺れ、揺れはだんだん大きくなる。端に寄りすぎる前に、決定・タップで真ん中へ戻す
+## （まん中にあるときに押すと、手がぶれて かえって揺れる）。端まで行くと落ちる。
+## ぼたん → まつば → やなぎ → ちりぎく と進む（BURN_TIME 秒）。
+## ちりぎくまで落とさなければ「よくできた」（好感度 +1、フラグ senko_good）。なつみの火の玉が先に落ちる。
+## ふつうのときは、主人公の火の玉が先に落ちる（フラグ senko_miss）。
 
-enum Phase { GUIDE, BURN, OUTRO, DONE }
+enum Phase { BURN, OUTRO }
 
-## 燃えている時間と、移りかわり（[ここから, 名前]）。火花の量と長さは段ごとにかわる
-const BURN_TIME := 13.0
-const STAGES := [[0.0, &"tsubomi"], [0.12, &"botan"], [0.35, &"matsuba"], [0.68, &"yanagi"], [0.9, &"chirigiku"]]
-## 離してから火の玉が落ちるまでの猶予（すぐ押しなおせば、だいじょうぶ）
-const GRACE := 0.35
-## なつみの火の玉が落ちる時（燃えている時間に対する割合）
-const HERS_FALL := 0.82
-## 風が吹く時（燃えている時間に対する割合）と、その長さ（秒）
-const WINDS := [0.3, 0.62]
-const WIND_TIME := 1.4
-const OUTRO_TIME := 2.2
+## 燃えている時間と、移りかわり（[ここから, 名前, 揺れが大きくなる速さ（1秒あたり）]）
+const BURN_TIME := 30.0
+const STAGES := [[0.0, &"botan", 0.22], [0.2, &"matsuba", 0.36], [0.5, &"yanagi", 0.3], [0.8, &"chirigiku", 0.2]]
+## 「よくできた」：この段（ちりぎく）まで落とさない
+const GOOD_STAGE := &"chirigiku"
+## 揺れの往復の速さと、まん中で押したときに手がぶれる量・まん中とみなす幅
+const SWAY_SPEED := 2.4
+const JOLT := 0.3
+const CENTER := 0.22
+## なつみの火の玉が落ちる時（燃えている時間に対する割合。ちりぎくの途中）
+const HERS_FALL := 0.9
+## 主人公が先に落としたとき、なつみの火が燃えつきるまでの時間
+const AFTER_MINE := 3.0
+const OUTRO_TIME := 2.4
 const P := preload("res://world/world_palette.gd")
-## 背景の絵（夜の田んぼ道）と、しゃがんだふたりの絵（Gemini の水彩）
+## 背景の絵（夜の田んぼ道）と、しゃがんだふたりの絵
 const BG: Texture2D = preload("res://ui/minigame_bg/senko.jpg")
 const BG_FOCUS := Vector2(0.5, 0.5)
 const PAIR: Texture2D = preload("res://world/scenery/painted/senko_pair.png")
@@ -31,118 +34,127 @@ const PAIR_H := 0.74
 const PAIR_FOOT := 0.98
 const TIP_HERS := Vector2(0.4685, 0.6467)
 const TIP_MINE := Vector2(0.5455, 0.6467)
+## 揺れの端（こよりの先から、絵の px で）
+const SWAY_PX := 22.0
 
-var phase := Phase.GUIDE
+var phase := Phase.BURN
 var burn := 0.0
-## 落ちた（主人公の火の玉）
 var mine_fell := false
 var hers_fell := false
 var held_to_end := false
-var _off := 0.0
+## 揺れの大きさ（1 で端）と、いまの位置（-1〜1）
+var amp := 0.0
+var off := 0.0
+var _swing := 0.0
+var _back := 0.0
 var _t := 0.0
 var _mine_fall_t := -1.0
 var _hers_fall_t := -1.0
-var _wind_said := false
-var _hold: HoldInput
 
 
-func _build() -> void:
-	_hold = HoldInput.new()
-	_hold.pressed.connect(_on_pressed)
-	add_child(_hold)
-	_hold.enabled = true
+func _setup() -> void:
+	intro_text = Strings.SENKO_INTRO
 	set_ambient(WorldPalette.CAPSULE_AMBIENT)
-	say(Strings.SENKO_GUIDE)
+
+
+func _begin() -> void:
+	phase = Phase.BURN
+	burn = 0.0
+	mine_fell = false
+	hers_fell = false
+	held_to_end = false
+	amp = 0.0
+	off = 0.0
+	_swing = 0.0
+	_back = 0.0
+	_t = 0.0
+	_mine_fall_t = -1.0
+	_hers_fall_t = -1.0
+	SfxPlayer.play("accept")
 	show_hint(Strings.SENKO_HINT_TOUCH, Strings.SENKO_HINT_KEY)
 
 
-func _on_pressed() -> void:
-	if phase == Phase.GUIDE:
-		phase = Phase.BURN
-		SfxPlayer.play("accept")
-		hush()
-		show_hint(Strings.SENKO_HOLD_TOUCH, Strings.SENKO_HOLD_KEY)
-
-
-func stage() -> StringName:
-	var out: StringName = STAGES[0][1]
+func _stage_info() -> Array:
+	var out: Array = STAGES[0]
 	for st in STAGES:
 		if burn / BURN_TIME >= st[0]:
-			out = st[1]
+			out = st
 	return out
 
 
-func _wind() -> float:
-	var u := burn / BURN_TIME
-	for w in WINDS:
-		var dt: float = (u - w) * BURN_TIME
-		if dt >= 0.0 and dt < WIND_TIME:
-			return sin(dt / WIND_TIME * PI)
-	return 0.0
+func stage() -> StringName:
+	return _stage_info()[1]
 
 
-func _process(delta: float) -> void:
-	var d := delta * speed
-	_t += d
+func _process_game(delta: float) -> void:
+	_t += delta
 	match phase:
 		Phase.BURN:
-			burn += d
-			# 離すと手がぶれる。猶予をすぎたら落ちる
-			if _hold.is_down:
-				_off = 0.0
-			elif not mine_fell:
-				_off += d
-				if _off >= GRACE:
+			burn += delta
+			if not mine_fell:
+				amp += float(_stage_info()[2]) * delta
+				_swing += delta * SWAY_SPEED
+				# まん中へ戻しているあいだは、なめらかに
+				_back = maxf(_back - delta * 4.0, 0.0)
+				off = sin(_swing) * amp * (1.0 - _back)
+				if absf(off) >= 1.0:
 					_drop_mine()
-			if _wind() > 0.2 and not _wind_said:
-				_wind_said = true
-				say(Strings.SENKO_WIND)
-			elif _wind() <= 0.0 and _wind_said and not hers_fell and not mine_fell:
-				_wind_said = false
 			if not hers_fell and not mine_fell and burn >= BURN_TIME * HERS_FALL:
 				_drop_hers()
 			if burn >= BURN_TIME:
 				_end_burn()
 		Phase.OUTRO:
-			if _t >= OUTRO_TIME and not done:
-				phase = Phase.DONE
-				grade = GameState.Grade.GOOD if held_to_end else GameState.Grade.NORMAL
-				finish()
-	queue_redraw()
+			if _t >= OUTRO_TIME:
+				end_game(held_to_end)
+
+
+## 決定・タップ：火の玉を真ん中へ戻す。まん中にあるときに押すと、手がぶれて揺れる
+func _accept(_pos: Variant = null) -> void:
+	if phase == Phase.OUTRO:
+		speed = UiTokens.SKIP_SPEED
+		return
+	if mine_fell:
+		return
+	if absf(off) < CENTER:
+		amp += JOLT
+	else:
+		amp = 0.15
+		_back = 1.0
+		SfxPlayer.play("cursor")
 
 
 func _drop_mine() -> void:
 	mine_fell = true
 	_mine_fall_t = _t
 	SfxPlayer.play("plop")
-	say(Strings.SENKO_MINE_FELL)
+	caption(Strings.SENKO_MINE_FELL)
 	hide_hint()
-	_hold.enabled = false
-	# 先に落としたときは、なつみの火は最後まで燃えて、そのまま終わる
-	burn = maxf(burn, BURN_TIME * 0.6)
+	# 先に落としたときは、なつみの火が燃えつきて、そのまま終わる
+	burn = maxf(burn, BURN_TIME - AFTER_MINE)
 
 
 func _drop_hers() -> void:
 	hers_fell = true
 	_hers_fall_t = _t
 	SfxPlayer.play("plop")
-	say(Strings.SENKO_HERS_FELL)
+	caption(Strings.SENKO_HERS_FELL)
 
 
 func _end_burn() -> void:
 	held_to_end = not mine_fell
-	if held_to_end:
-		say(Strings.SENKO_END)
 	hide_hint()
-	_hold.enabled = false
 	phase = Phase.OUTRO
 	_t = 0.0
 
 
-func _input(event: InputEvent) -> void:
-	if phase == Phase.OUTRO and is_tap(event):
-		speed = UiTokens.SKIP_SPEED
-		get_viewport().set_input_as_handled()
+func _on_quit() -> void:
+	mine_fell = true
+
+
+func bot(good: bool) -> Dictionary:
+	if phase != Phase.BURN or mine_fell or not good:
+		return {}
+	return {"key": KEY_SPACE, "tap": center_tap()} if absf(off) >= 0.6 else {}
 
 
 # --- 絵 -----------------------------------------------------------------------
@@ -165,17 +177,14 @@ func _draw() -> void:
 func _draw_senko(tip: Vector2, hers: bool, k: float) -> void:
 	var fell := hers_fell if hers else mine_fell
 	var fall_t := _hers_fall_t if hers else _mine_fall_t
-	# 手がぶれる（主人公が離しているとき）・風でゆれる。こよりの絵から離れすぎないよう、小さく
-	var sway := _wind() * 5.0 * k * sin(_t * 2.6 + (1.0 if hers else 0.0))
-	var shake := 0.0
-	if not hers and not _hold.is_down and phase == Phase.BURN and not mine_fell and not UiAnim.reduced():
-		shake = sin(_t * 50.0) * 3.0 * k * (_off / GRACE)
-	if UiAnim.reduced():
-		sway = 0.0
-	var ball := tip + Vector2(sway + shake, 0)
-	var lit := phase != Phase.GUIDE
-	if not lit:
-		return
+	# ぼくの火の玉は左右に揺れる（端まで行くと落ちる）。なつみのは小さくゆれるだけ
+	var sway := off * SWAY_PX * k if not hers else sin(_t * 1.3) * 2.0 * k
+	var ball := tip + Vector2(sway, 0)
+	if not hers and not mine_fell and phase == Phase.BURN:
+		# 揺れの端の目安（うすい線）
+		for side in [-1.0, 1.0]:
+			var x: float = tip.x + side * SWAY_PX * k
+			draw_line(Vector2(x, tip.y - 10.0 * k), Vector2(x, tip.y + 10.0 * k), Color(1, 1, 1, 0.25), 2.0)
 	var u := burn / BURN_TIME
 	if fell:
 		# 落ちていく火の玉が、すぐに消える

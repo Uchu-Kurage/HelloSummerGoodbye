@@ -40,6 +40,15 @@ const BOX_MISSED_PLACE := "%sの どこか"
 const BOX_MISSED_HINT := "%s　%s"
 const BOX_HINT_SELECT := "えらぶと くわしく みられるよ"
 const BACK := "もどる"
+## ミニゲームの共通の枠（始める前の操作の絵、矢印、おわったあと）
+const MINIGAME_KEY_SPACE := "Space"
+const MINIGAME_KEY_TOUCH := "タップ"
+const MINIGAME_START_KEY := "で はじめる（←→ で えらぶ／Esc で やめる）"
+const MINIGAME_START_TOUCH := "で はじめる（「もどる」で やめる）"
+const MINIGAME_LEFT := "←"
+const MINIGAME_RIGHT := "→"
+const MINIGAME_NEXT := "つぎへ"
+const MINIGAME_RETRY := "もういちど"
 const BUTTON_BOX := "たからばこ"
 const BUTTON_PAUSE := "ひとやすみ"
 
@@ -98,13 +107,12 @@ const BASE_PLACE_KEY := "やじるしと けっていで はめる。R で ま�
 const BASE_DONE := "あまもり、ぜんぶ ふさいだ！"
 const BASE_ROTATE := "まわす"
 const BASE_RETURN := "もどす"
-## 飛び込み（ミニゲーム）
-const DIVE_HINT_TOUCH := "がめんを おしつづけて、「の！」で はなす"
-const DIVE_HINT_KEY := "Space を おしつづけて、「の！」で はなす"
-## タケルのかけ声と、おそいときに下から呼ぶ声
+const BASE_INTRO := "ピースを えらんで、やねと かべの すきまを うめよう"
+## やめたとき（残りのすき間をタケルが埋める）。シナリオにないので、せりふではなく説明の書き方
+const BASE_QUIT_FILL := "（のこりは タケルが ふさいだ）"
+## 飛び込み（ミニゲーム）：タケルのかけ声
 const DIVE_COUNT_SE := "せー……"
 const DIVE_COUNT_NO := "の！"
-const DIVE_LATE_CALL := "はやく こいよー！"
 ## 帽子を受け止める（ミニゲーム）
 const HAT_CALL := "おーい！ まどー！ まど あけろー！"
 const HAT_PROMISE := "やくそくだぞー！"
@@ -148,25 +156,6 @@ const CAPSULE_DIG_LINES := [
 ]
 ## さみしい一言（CAPSULE_DIG_LINES の番号）。このときだけ懐中電灯の光が少しゆれる
 const CAPSULE_SAD_LINES := [2, 5]
-## カブトムシとり（ミニゲーム）
-const KABUTO_HINT_TOUCH := "がめんを おしつづけて そーっと すすむ。はなすと とまる"
-const KABUTO_HINT_KEY := "Space を おしつづけて そーっと すすむ。はなすと とまる"
-const KABUTO_GRAB := "つかむ"
-const KABUTO_GRAB_TOUCH := "「つかむ」を タップ"
-const KABUTO_GRAB_KEY := "Space で つかむ"
-## 落ちてしまったとき、うしろのタケルの小声
-const KABUTO_DROPPED := "あ！ ……まだ いる。あそこ。"
-## 石切り（ミニゲーム）
-const ISHI_PICK_TOUCH := "なげる いしを タップ（%d／%d かいめ）"
-const ISHI_PICK_KEY := "やじるしで いしを えらんで けってい（%d／%d かいめ）"
-const ISHI_AIM_TOUCH := "がめんを おしつづけて うでを ひき、はなして なげる"
-const ISHI_AIM_KEY := "Space を おしつづけて うでを ひき、はなして なげる。Esc で えらびなおす"
-const ISHI_REPICK := "えらびなおす"
-## 1回も跳ねずに沈んだとき、タケルが笑う
-const ISHI_PLOP := "ぽちゃん！"
-## 型抜き（ミニゲーム）
-const KATANUKI_HINT_TOUCH := "がめんを おしつづけて けずる。はなすと ひとやすみ"
-const KATANUKI_HINT_KEY := "Space を おしつづけて けずる。はなすと ひとやすみ"
 ## となりのタケルの型が割れたとき
 const KATANUKI_TAKERU_BREAK := "……あーっ！ われた！"
 ## きれいに抜けたとき、屋台のおじさん
@@ -176,40 +165,31 @@ const KATANUKI_CLEAN := "おっ、ぬけたね"
 const SPEECH_FORMAT := "%s「%s」"
 
 ## --- 初恋ルート（なつみ）のミニゲーム ---
-## スケッチ（3日目）：見本の景色に近い色や形を選んでいく
-const SKETCH_HINT_TOUCH := "いろや かたちを タップで えらぶ"
-const SKETCH_HINT_KEY := "やじるしで えらんで けってい"
-## 描くところと、なつみの声かけ（SKETCH_STEPS の順）
-const SKETCH_STEPS := ["まずは そら。どの いろ？", "つぎは やま。どんな かたち？", "かわは、どの いろかな。", "さいごに いし。"]
-const SKETCH_MATCH := "うん。そっくり。"
-const SKETCH_OTHER := "……それも いいね。"
-const SKETCH_DONE := "できた。"
+## ゲーム中の小札は、シナリオにないせりふを足さないよう、説明の書き方（かっこ）にする
+## スケッチ（3日目）：景色の4か所を、3色から選んで塗る
+const SKETCH_INTRO := "けしきを みて、4かしょを おなじ いろで ぬろう"
+const SKETCH_HINT_TOUCH := "いろを タップして ぬる"
+const SKETCH_HINT_KEY := "←→ で いろを えらんで Space"
+const SKETCH_PLACES := ["（そらを ぬる）", "（やまを ぬる）", "（かわを ぬる）", "（いわを ぬる）"]
 ## 金魚すくい（5日目）
-const KINGYO_HINT_TOUCH := "きんぎょが ポイの うえに きたら タップ"
-const KINGYO_HINT_KEY := "きんぎょが ポイの うえに きたら Space"
-const KINGYO_START := "ポイは、ななめに いれるんだよ。"
-const KINGYO_GOT := "とれた！"
-const KINGYO_MISS := "……にげちゃった。"
-const KINGYO_BROKE := "あ、やぶれた。"
-const KINGYO_COUNT := "%dひき"
+const KINGYO_INTRO := "ポイを うごかして、きんぎょの まうえで すくおう"
+const KINGYO_HINT_TOUCH := "← → で ポイを うごかし、まうえで タップ"
+const KINGYO_HINT_KEY := "←→ で ポイを うごかし、まうえで Space"
+## すくった数と、ポイがあと何回もつか
+const KINGYO_COUNT := "（%dひき　ポイ：あと %dかい）"
+const KINGYO_BROKE := "（ポイが やぶれた。%dひき）"
 ## 貝がら拾い（6日目）
-const KAIGARA_HINT_TOUCH := "なみが ひいたら、かいがらを タップ"
-const KAIGARA_HINT_KEY := "なみが ひいたら、やじるしで えらんで けってい"
-const KAIGARA_WAIT := "なみが ひくまで まってね。"
-const KAIGARA_START := "なみが ひいたら、いまだよ。"
-const KAIGARA_PLAIN := "しろくて きれい。"
-const KAIGARA_SAKURA := "それ、さくらがい！"
-const KAIGARA_GONE := "……なみに もってかれちゃった。"
-## 線香花火（9日目）。「押しつづけ」は気づきにくいので、始める前に必ず案内を出す
-const SENKO_GUIDE := "おしつづけてね。てが ぶれると、おちちゃうから。"
-const SENKO_HINT_TOUCH := "がめんを おしつづけて、ひの たまを おとさない（おすと はじまるよ）"
-const SENKO_HINT_KEY := "Space を おしつづけて、ひの たまを おとさない（おすと はじまるよ）"
-const SENKO_HOLD_TOUCH := "はなさないでね"
-const SENKO_HOLD_KEY := "Space を はなさないでね"
-const SENKO_WIND := "……かぜ。"
-const SENKO_HERS_FELL := "……あ。わたしの、おちちゃった。"
-const SENKO_MINE_FELL := "あ……おちちゃったね。"
-const SENKO_END := "……さいごまで、おちなかったね。"
+const KAIGARA_INTRO := "なみが ひいている あいだに、かいがらを ひろおう"
+const KAIGARA_HINT_TOUCH := "← → で あるいて、あしもとの かいがらを タップ"
+const KAIGARA_HINT_KEY := "←→ で あるいて、あしもとの かいがらを Space"
+const KAIGARA_COUNT := "（かいがら：%dこ）"
+const KAIGARA_GOT_SAKURA := "（さくらがいを ひろった）"
+## 線香花火（9日目）。押し続けは使わない（揺れる火の玉を、決定・タップで真ん中へ戻す）
+const SENKO_INTRO := "ゆれる ひのたまを、はしに いく まえに まんなかへ もどそう"
+const SENKO_HINT_TOUCH := "はしに よったら タップで まんなかへ"
+const SENKO_HINT_KEY := "はしに よったら Space で まんなかへ"
+const SENKO_HERS_FELL := "（なつみの ひのたまが おちた）"
+const SENKO_MINE_FELL := "（ぼくの ひのたまが おちた）"
 ## 映画会（7日目）：暗転と音だけで表す（上の小札に、音を書く）
 const MOVIE_SOUNDS := ["（ジジ……カタカタカタ……）", "（ギィ……）", "（ひた、ひた、ひた……）", "（……キャーッ！）", "（あかりが ついた）"]
 ## 絵を広げる（10日目・高）
@@ -219,47 +199,47 @@ const DRAWING_HINT_TOUCH := "タップで とじる"
 const DRAWING_HINT_KEY := "Space で とじる"
 
 ## --- 神隠しルート（お面の子）の画面 ---
-## かくれんぼ（4日目）：雨の境内で、隠れたお面の子を探す
-const KAKURENBO_SPOTS := ["とうろう", "おおきな き", "こまいぬ", "さいせんばこ"]
-const KAKURENBO_HINT_TOUCH := "かくれていそうな ところを タップ"
-const KAKURENBO_HINT_KEY := "やじるしで えらんで けってい"
+## かくれんぼ（神隠し4日目・ノーマル8日目で同じ仕組み）：境内の隠れ場所6つから、相手を探す
+const KAKURENBO_INTRO := "すずの おとが する ほうを さがそう"
+const KAKURENBO_JIJI_INTRO := "むぎわらぼうしの はしが みえる ほうを さがそう"
+const KAKURENBO_SPOTS := ["とうろう", "おおきな き", "こまいぬ", "さいせんばこ", "とりいの かげ", "ちょうずや"]
+const KAKURENBO_HINT_TOUCH := "しらべる ところを タップ"
+const KAKURENBO_HINT_KEY := "←→ で えらんで Space で しらべる"
+const KAKURENBO_COUNT := "（じゅう かぞえる……）"
 const KAKURENBO_READY := "……もう いいよ。"
+const KAKURENBO_LOOK := "（%sを しらべる）"
 const KAKURENBO_MISS := "（……いない）"
-## なんどか外すと、隠れているところで鈴がかすかに鳴る
-const KAKURENBO_BELL := "（どこかで、すずが ちりんと なった）"
+## お面の子の近くを選ぶと出る、鈴の音の印（音が出なくても分かるように）
+const KAKURENBO_BELL_MARK := "♪ ちりん"
 const KAKURENBO_FOUND := "（いた！）"
-## おじいちゃんとのかくれんぼ（8日目、ノーマルルート）
+## 見つけられなかったとき、自分から出てくる
+const KAKURENBO_CAME_OUT := "（こまいぬの うしろから、でてきた）"
 const KAKURENBO_JIJI_READY := "……もう いいぞ。"
-## なんどか外すと、せきばらいをして、狛犬のうしろから自分で出てくる（見つけられなかった）
-const KAKURENBO_JIJI_COUGH := "（どこかで、こほんと せきばらいが きこえた）"
 const KAKURENBO_JIJI_CAME_OUT := "（こまいぬの うしろから、でてきた）"
-## 夜市の物々交換（5日目）：持っている物を、店の品物と交換していく
-const YOMISE_GOODS := ["どんぐり", "かざぐるま", "あおい りんごあめ", "あおい あめだま"]
-const YOMISE_HINT_TOUCH := "とりかえっこ する みせを タップ"
-const YOMISE_HINT_KEY := "やじるしで みせを えらんで けってい"
-const YOMISE_HAND := "てもと：%s"
-const YOMISE_START := "ほしい ものと、とりかえて くれるよ。"
-const YOMISE_TRADED := "（……とりかえっこ した）"
-const YOMISE_NO := "（みせの ひとは、くびを よこに ふった）"
-const YOMISE_FOOD := "それ、たべちゃ だめだよ。"
-const YOMISE_DONE := "……きれい。"
-## 鈴の音で道探し（6日目）：暗い森の分かれ道で、鈴の鳴るほうへ
-const SUZU_MICHI_SIDES := ["ひだり", "みぎ"]
-const SUZU_MICHI_HINT_TOUCH := "すずの なる ほうを タップ（ひかりも ゆれるよ）"
-const SUZU_MICHI_HINT_KEY := "すずの なる ほうを やじるしで えらんで けってい"
-const SUZU_MICHI_START := "こっちだよ。"
-const SUZU_MICHI_RIGHT := "……こっち。"
+## 夜市の物々交換（5日目）：屋台4つと、てもとの「夜市の品」3つ（YomiseGame.Goods の順）
+const YOMISE_INTRO := "やたいの ほしい ものを きいて、とりかえっこを つなごう"
+const YOMISE_GOODS := ["ふうりん", "かざぐるま", "ほおずき", "ガラスの おはじき", "あおい ちょうちん", "あおい あめだま", "いちばん きれいな あめだま"]
+const YOMISE_HINT_TOUCH := "やたいを タップで きく。もう いちど タップで とりかえる"
+const YOMISE_HINT_KEY := "←→ で やたいを えらび、Space で きく・とりかえる"
+## てもとと、あと何回とりかえられるか
+const YOMISE_HAND := "（てもと：%s　あと %dかい）"
+const YOMISE_WANTS := "（%sが ほしい。%sと とりかえて くれる）"
+const YOMISE_NO := "（%sを もっていない）"
+const YOMISE_TRADED := "（%sと とりかえた）"
+const YOMISE_GOT := "（%sを もらった）"
+## 鈴の音で道探し（6日目）：暗い森の分かれ道で、鈴の鳴るほうへ（同じ側で光もゆれる）
+const SUZU_MICHI_INTRO := "すずの なる ほう（ひかりの ゆれる ほう）へ すすもう"
+const SUZU_MICHI_HINT_TOUCH := "← → か、がめんの ひだり・みぎを タップで すすむ"
+const SUZU_MICHI_HINT_KEY := "←→ で すすむ。Space で もう いちど きく"
+const SUZU_MICHI_FORK := "（わかれみち %d／%d）"
 const SUZU_MICHI_WRONG := "（……ちがう みち みたい。もどろう）"
 const SUZU_MICHI_OUT := "（もりを ぬけた）"
-## 鬼ごっこ（8日目）：色の抜けた村で、お面の子を追いかける
-const ONI_HINT_TOUCH := "がめんを おしつづけて はしる"
-const ONI_HINT_KEY := "Space を おしつづけて はしる"
-const ONI_FLEE_TOUCH := "おしつづけて にげる"
-const ONI_FLEE_KEY := "Space を おしつづけて にげる"
-const ONI_START := "きみが おに。こっち こっち。"
-const ONI_TOUCHED := "あはは、つかまった。"
-const ONI_SWAP := "こんどは ぼくが おに。"
-const ONI_CAUGHT := "……つかまえた。"
+## 鬼ごっこ（8日目）：色の抜けた村で、前を走るお面の子を追いかける（走るのは自動。決定で飛び越える）
+const ONI_INTRO := "へいや みずたまりの まえで とびこえて、おめんの こを おいかけよう"
+const ONI_HINT_TOUCH := "へいや みずたまりの まえで タップ（とびこえる）"
+const ONI_HINT_KEY := "へいや みずたまりの まえで Space（とびこえる）"
+const ONI_TURN := "（おめんの こが とまって、ふりかえった）"
+const ONI_CAUGHT := "（つかまえた）"
 ## 鈴を振る（10日目のバス）：一度だけ鳴る
 const SUZU_FURU_HINT_TOUCH := "タップで すずを ふる"
 const SUZU_FURU_HINT_KEY := "Space で すずを ふる"
@@ -269,32 +249,33 @@ const SUZU_FURU_CLOSE_TOUCH := "タップで とじる"
 const SUZU_FURU_CLOSE_KEY := "Space で とじる"
 
 ## --- ノーマルルート（祖父母）の画面 ---
-## 洗濯物の取り込み（4日目）：夕立が来る前に、物干しの洗濯物を取り込む
-const SENTAKU_CLOTHES := ["シャツ", "タオル", "くつした", "てぬぐい", "ズボン", "まくらカバー"]
-const SENTAKU_HINT_TOUCH := "せんたくものを タップで とりこむ"
-const SENTAKU_HINT_KEY := "やじるしで えらんで けってい"
-const SENTAKU_START := "はやく はやく！"
-const SENTAKU_GOT := ["よいしょ。", "はい、つぎ。", "その ちょうし。", "あと すこし！"]
+## 洗濯物の取り込み（4日目）：夕立が来る前に、物干しの洗濯物を取り込む（布団は2回）
+const SENTAKU_INTRO := "あめが ふる まえに、せんたくものを ぜんぶ とりこもう"
+const SENTAKU_CLOTHES := ["シャツ", "タオル", "くつした", "てぬぐい", "ズボン", "ふとん"]
+const SENTAKU_HINT_TOUCH := "せんたくものを タップで とりこむ（ふとんは 2かい）"
+const SENTAKU_HINT_KEY := "←→ で うごいて Space で とりこむ（ふとんは 2かい）"
+const SENTAKU_COUNT := "（とりこんだ：%d／%d）"
+const SENTAKU_FUTON := "（ふとんは おもい。もう いちど）"
 const SENTAKU_RAIN := "（ぽつ、ぽつ……）"
-const SENTAKU_ALL := "ぜんぶ とりこんだ！"
-const SENTAKU_WET := "あらら、すこし ぬれちゃったね。"
+const SENTAKU_ALL := "（ぜんぶ とりこんだ）"
 ## 精霊馬づくり（6日目）：きゅうりとなすに、割りばしの足をさす
+const SHORYOUMA_INTRO := "わりばしが ●の うえに きたら さして、あしを 4ほん たてよう"
 const SHORYOUMA_HINT_TOUCH := "はしが ●の うえに きたら タップで さす"
 const SHORYOUMA_HINT_KEY := "はしが ●の うえに きたら Space で さす"
 ## [どの野菜か, おばあちゃんの一言]
 const SHORYOUMA_VEG := [["きゅうり", "きゅうりは うま。はやく かえって こられるように。"], ["なす", "なすは うし。ゆっくり かえれるように。"]]
-const SHORYOUMA_GOOD := "うん、まっすぐ。"
-const SHORYOUMA_TILT := "ちょっと ななめ。それも いいねえ。"
-const SHORYOUMA_DONE_UMA := "はい、うまの できあがり。"
-const SHORYOUMA_DONE_USHI := "うしも できた。"
-## 星座さがし（9日目）：夏の大三角
-const SEIZA_HINT_TOUCH := "あかるい ほしを みっつ、タップで つなぐ"
-const SEIZA_HINT_KEY := "やじるしで ほしを えらんで けってい"
-const SEIZA_START := "いちばん あかるいのを、みっつ。"
-const SEIZA_RIGHT := ["そう、それだ。", "うん。もう ひとつ。"]
-const SEIZA_WRONG := "それは ちがうな。もっと あかるいのだ。"
-const SEIZA_HINT_GLOW := "（おじいちゃんが、そらを ゆびさした）"
-const SEIZA_DONE := "それが なつの さんかくだ。"
+const SHORYOUMA_GOOD := "（まっすぐ ささった）"
+const SHORYOUMA_TILT := "（ちょっと ななめに ささった）"
+const SHORYOUMA_DONE_UMA := "（うまが できた）"
+const SHORYOUMA_DONE_USHI := "（うしが できた）"
+## 星座さがし（9日目）：おじいちゃんが言う星座を順につなぎ、最後に夏の大三角
+const SEIZA_INTRO := "おじいちゃんの いう せいざを、じゅんに つなごう"
+## 星座の名前（SeizaGame.FIGURES の順）。かっこのものは、せりふではなく説明
+const SEIZA_CALLS := ["はくちょうざ。", "ことざ。", "わしざ。", "（いちばん あかるい ほしを みっつ つなぐ）"]
+const SEIZA_HINT_TOUCH := "つぎの ほしを タップで つなぐ"
+const SEIZA_HINT_KEY := "←→ で ほしを えらんで Space で つなぐ"
+const SEIZA_WRONG := "（ちがう ほし）"
+const SEIZA_DONE := "（なつの だいさんかく）"
 ## 三角の星の名前（見つけたあとに、そばへ出す）
 const SEIZA_NAMES := ["ベガ", "アルタイル", "デネブ"]
 ## バスの窓（10日目）：手をふる祖父母が小さくなっていく
@@ -313,3 +294,28 @@ const ROTATE_SUB := "スマホを よこに すると あそべるよ"
 
 const CONTINUE_MARK := "▼"
 const SELECT_MARK := "●"
+
+## --- ミニゲームの始める前の説明（1行）と、遊んでいるあいだの案内 ---
+const TAKERU := "タケル"
+const ISHI_INTRO := "ゲージを 2かい とめて、いしを なげよう"
+const ISHI_DEMO := "みてろよ。"
+const ISHI_ANGLE_KEY := "かくど：ひくい ところで Space"
+const ISHI_ANGLE_TOUCH := "かくど：ひくい ところで タップ"
+const ISHI_POWER_KEY := "ちから：まんなかで Space"
+const ISHI_POWER_TOUCH := "ちから：まんなかで タップ"
+const KATA_INTRO := "みどりの ところで とめて、ひよこを けずろう"
+const KATA_HINT_KEY := "みどりの ところで Space"
+const KATA_HINT_TOUCH := "みどりの ところで タップ"
+const KABUTO_INTRO := "かいちゅうでんとうで てらして、むしを つかまえよう"
+const KABUTO_HINT_KEY := "←→ で てらす、Space で つかまえる（あと %d かい）"
+const KABUTO_HINT_TOUCH := "むしの いる ところを タップで つかまえる（あと %d かい）"
+const KABUTO_GOT := "（%sを つかまえた）"
+const KABUTO_TAKE := "（%sを もってかえる）"
+const DIVE_INTRO := "せーので とんで、みずの ちかくで ひざを かかえよう"
+const DIVE_JUMP_KEY := "まんなかで Space（ふみきり）"
+const DIVE_JUMP_TOUCH := "まんなかで タップ（ふみきり）"
+const DIVE_TUCK_KEY := "みずに ちかづいたら Space（ひざを かかえる）"
+const DIVE_TUCK_TOUCH := "みずに ちかづいたら タップ（ひざを かかえる）"
+const DIVE_SMALL := "（しぶき：ちいさい）"
+const DIVE_MID := "（しぶき：タケルと おなじくらい）"
+const DIVE_LARGE := "（しぶき：タケルより おおきい）"

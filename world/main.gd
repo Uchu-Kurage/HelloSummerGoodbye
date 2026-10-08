@@ -114,7 +114,7 @@ func _go_ending() -> void:
 func _input(event: InputEvent) -> void:
 	if get_tree().paused or Transition.is_busy() or _ending:
 		return
-	if event.is_action_pressed("pause"):
+	if event.is_action_pressed("pause") and not hud.is_in_minigame():
 		SfxPlayer.play("accept")
 		pause_menu.open()
 		get_viewport().set_input_as_handled()

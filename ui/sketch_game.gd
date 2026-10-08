@@ -1,280 +1,268 @@
 class_name SketchGame
-extends NatsumiScreen
+extends MinigameBase
 ## ミニゲーム「スケッチ」（3日目、初恋ルート）。会話の @game sketch で始まる。
 ## 川原で、なつみと並んで絵を描く。背景の景色が見本で、右の岩の上に自分の画用紙。
-## そら（いろ）→ やま（かたち）→ かわ（いろ）→ いし（かたち）の順に、3つから選んで描いていく。
-## 失敗も時間制限もない。見本との一致が GOOD_MATCHES 以上なら「よくできた」（grade。好感度 +1、フラグ sketch_good）。
+## 景色の4か所（そら → やま → かわ → いわ）を順に塗る。各所で3色から選ぶ（左右で選んで決定。タッチは色をタップ）。
+## 4か所中 GOOD_MATCHES か所以上が景色の色と合えば「よくできた」（好感度 +1、フラグ sketch_good）。失敗はない。
 
-enum Phase { CHOOSE, WAIT, SHOW }
+enum Phase { CHOOSE, PAINT, SHOW }
 
-## 高得点になる一致の数（4つのうち）
+## 「よくできた」になる、景色と色が合った数（4か所のうち。仮の値）
 const GOOD_MATCHES := 3
-## 選んでから次へ進むまで／できあがりを見せる時間
-const STEP_WAIT := 0.9
-const SHOW_TIME := 1.8
-const CHOICE_SIZE := Vector2(144, 100)
-## 描くもの：0 そら（いろ）／1 やま（かたち）／2 かわ（いろ）／3 いし（かたち）
-const STEPS := 4
-## 見本の値（いろの段は色、かたちの段は形の番号 0 まるい・1 とがった・2 たいら）と、ほかの選択肢
-const SKY_COLORS := [Color("#8EC5E0"), Color("#E9B489"), Color("#B9B6C9")]
-const RIVER_COLORS := [Color("#7FA9C8"), Color("#A88B62"), Color("#9FC48A")]
-const SHAPES := [0, 1, 2]
-const MOUNTAIN := Color("#8FB28A")
+## 塗る場所（PLACES の順）と、場所ごとの3色（0 番が景色と同じ色）
+const PLACES := 4
+const COLORS := [
+	[Color("#8EC5E0"), Color("#E9B489"), Color("#B9B6C9")],
+	[Color("#7FA27A"), Color("#8E87B5"), Color("#B48A62")],
+	[Color("#7FA9C8"), Color("#A88B62"), Color("#9FC48A")],
+	[Color("#A8A296"), Color("#C9786A"), Color("#D9C27A")],
+]
+## 筆で塗っていく時間と、できあがりを見せる時間
+const PAINT_TIME := 3.4
+const SHOW_TIME := 3.0
+const SWATCH := Vector2(104, UiTokens.TOUCH_MIN)
 const GRASS := Color("#B9C98E")
-const STONE := Color("#A8A296")
 const PENCIL := Color(0.4, 0.36, 0.3, 0.35)
 ## 背景の絵（川原の景色。これが見本になる）と、切り取るとき残したいところ
 const BG_TEX: Texture2D = preload("res://ui/minigame_bg/sketch.jpg")
 const BG_FOCUS := Vector2(0.4, 0.3)
+const NATSUMI_TEX: Texture2D = preload("res://world/scenery/painted/natsumi_mg1_1.png")
 
 var phase := Phase.CHOOSE
-var step := 0
+var place := 0
+var cursor := 0
 var matches := 0
-## 段ごとの選択肢の並び（見本の値の番号）と、選んだもの（-1 ならまだ）
+## 場所ごとの3色の並び（COLORS の番号）と、塗った色（-1 ならまだ）
 var _order: Array = []
 var picked: Array[int] = [-1, -1, -1, -1]
 var rng := RandomNumberGenerator.new()
-var _wait := 0.0
-var _row: HBoxContainer
-var _buttons: Array[Button] = []
+var _t := 0.0
 
 
-func _build() -> void:
+func _setup() -> void:
+	intro_text = Strings.SKETCH_INTRO
+	arrows = true
 	rng.randomize()
-	for i in STEPS:
+
+
+func _begin() -> void:
+	phase = Phase.CHOOSE
+	place = 0
+	cursor = 0
+	matches = 0
+	picked = [-1, -1, -1, -1]
+	_order.clear()
+	for i in PLACES:
 		var o := [0, 1, 2]
-		# 見本と同じものが、いつも同じ場所にならないように
+		# 景色と同じ色が、いつも同じ場所にならないように
 		for k in range(o.size() - 1, 0, -1):
 			var j := rng.randi_range(0, k)
 			var t: int = o[k]
 			o[k] = o[j]
 			o[j] = t
 		_order.append(o)
-	_row = HBoxContainer.new()
-	_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_row.add_theme_constant_override("separation", UiTokens.TOUCH_GAP)
-	_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bottom.add_child(_row)
-	for i in 3:
-		var b := make_choice(i, CHOICE_SIZE, _draw_choice, _on_choice)
-		_row.add_child(b)
-		_buttons.append(b)
-	link_row(_buttons)
-	say(Strings.SKETCH_STEPS[0])
+	_ask()
+
+
+func _ask() -> void:
+	phase = Phase.CHOOSE
+	caption(Strings.SKETCH_PLACES[place])
 	show_hint(Strings.SKETCH_HINT_TOUCH, Strings.SKETCH_HINT_KEY)
-	if InputMode.keyboard:
-		_buttons[0].grab_focus()
 
 
-## いまの段で、見本と同じものの場所（自動の動作確認から使う）
+## いまの場所で、景色と同じ色の位置（自動の動作確認から使う）
 func correct_index() -> int:
-	return (_order[step] as Array).find(0) if step < STEPS else -1
+	return (_order[place] as Array).find(0) if place < PLACES else -1
 
 
-func _on_choice(i: int) -> void:
-	choose(i)
+func _left() -> void:
+	if phase == Phase.CHOOSE and cursor > 0:
+		cursor -= 1
+		SfxPlayer.play("cursor")
 
 
-## 選ぶ（自動の動作確認からも呼べる）
-func choose(i: int) -> void:
-	if phase != Phase.CHOOSE or step >= STEPS:
+func _right() -> void:
+	if phase == Phase.CHOOSE and cursor < 2:
+		cursor += 1
+		SfxPlayer.play("cursor")
+
+
+func _accept(pos: Variant = null) -> void:
+	if phase != Phase.CHOOSE:
+		if phase == Phase.PAINT:
+			speed = UiTokens.SKIP_SPEED
 		return
-	var v: int = _order[step][i]
-	picked[step] = v
+	# タッチは、色をタップすると、その色で塗る
+	if pos is Vector2:
+		var hit := _swatch_at(pos)
+		if hit < 0:
+			return
+		cursor = hit
+	_paint(cursor)
+
+
+func _paint(i: int) -> void:
+	var v: int = _order[place][i]
+	picked[place] = v
 	if v == 0:
 		matches += 1
 	SfxPlayer.play("accept")
-	say(Strings.SKETCH_MATCH if v == 0 else Strings.SKETCH_OTHER)
-	for b in _buttons:
-		b.disabled = true
-	phase = Phase.WAIT
-	_wait = STEP_WAIT
-	queue_redraw()
-
-
-func _process(delta: float) -> void:
-	var d := delta * speed
-	match phase:
-		Phase.WAIT:
-			_wait -= d
-			if _wait <= 0.0:
-				step += 1
-				if step >= STEPS:
-					_show_done()
-				else:
-					phase = Phase.CHOOSE
-					say(Strings.SKETCH_STEPS[step])
-					for b in _buttons:
-						b.disabled = false
-						for c in b.get_children():
-							if c is Control:
-								(c as Control).queue_redraw()
-					if InputMode.keyboard:
-						_buttons[0].grab_focus()
-		Phase.SHOW:
-			_wait -= d
-			if _wait <= 0.0 and not done:
-				grade = GameState.Grade.GOOD if matches >= GOOD_MATCHES else GameState.Grade.NORMAL
-				finish()
-
-
-func _show_done() -> void:
-	phase = Phase.SHOW
-	_wait = SHOW_TIME
-	say(Strings.SKETCH_DONE)
 	hide_hint()
-	var f := get_viewport().gui_get_focus_owner()
-	if f:
-		f.release_focus()
-	UiAnim.fade(_row, 0.0, UiTokens.TIME_SMALL_OUT)
-	SfxPlayer.play("pickup")
+	phase = Phase.PAINT
+	_t = 0.0
 
 
-## できあがりを見せているあいだは、決定キー／タップで早送り
-func _input(event: InputEvent) -> void:
-	if phase == Phase.SHOW and is_tap(event):
-		speed = UiTokens.SKIP_SPEED
-		get_viewport().set_input_as_handled()
+func _process_game(delta: float) -> void:
+	_t += delta
+	match phase:
+		Phase.PAINT:
+			if _t >= PAINT_TIME:
+				speed = 1.0
+				place += 1
+				cursor = 0
+				if place >= PLACES:
+					phase = Phase.SHOW
+					_t = 0.0
+					hush()
+					SfxPlayer.play("pickup")
+				else:
+					_ask()
+		Phase.SHOW:
+			if _t >= SHOW_TIME:
+				end_game(matches >= GOOD_MATCHES, matches)
+
+
+func bot(good: bool) -> Dictionary:
+	if phase != Phase.CHOOSE:
+		return {}
+	var want := correct_index() if good else (correct_index() + 1) % 3
+	if want < cursor:
+		return {"key": KEY_LEFT, "tap": _swatch_tap(want)}
+	if want > cursor:
+		return {"key": KEY_RIGHT, "tap": _swatch_tap(want)}
+	return {"key": KEY_SPACE, "tap": _swatch_tap(want)}
+
+
+func _swatch_tap(i: int) -> Vector2:
+	return global_position + _swatch_rect(i).get_center()
 
 
 # --- 絵 -----------------------------------------------------------------------
 
+func _paper() -> Rect2:
+	var s := size
+	var top := UiTokens.SCREEN_MARGIN + 64.0
+	var bot := s.y - UiTokens.SCREEN_MARGIN - SWATCH.y - UiTokens.SPACE_L * 2 - 48.0
+	var h := maxf(bot - top, 120.0)
+	var w := minf(h * 1.4, s.x * 0.44)
+	h = w / 1.4
+	return Rect2(s.x - UiTokens.SCREEN_MARGIN - w - 40.0, top + (bot - top - h) * 0.5, w, h)
+
+
+func _swatch_rect(i: int) -> Rect2:
+	var p := _paper()
+	var gap := UiTokens.TOUCH_GAP * 2.0
+	var total := SWATCH.x * 3 + gap * 2
+	var x0 := p.get_center().x - total / 2.0
+	return Rect2(Vector2(x0 + (SWATCH.x + gap) * i, p.end.y + UiTokens.SPACE_L), SWATCH)
+
+
+func _swatch_at(pos: Vector2) -> int:
+	for i in 3:
+		if _swatch_rect(i).grow(10).has_point(pos - global_position):
+			return i
+	return -1
+
+
 func _draw() -> void:
 	var s := size
-	# 背景の川原の景色（Gemini の水彩）が、そのまま見本になる
+	if s.x < 1.0:
+		return
+	# 背景の川原の景色が、そのまま見本になる。左に、となりで描いているなつみ
 	MinigameBg.draw_cover(self, BG_TEX, Rect2(Vector2.ZERO, s), BG_FOCUS)
-	# 画用紙は、手前の平らな岩の上（右寄り）に置く。上の小札と下の選択肢のあいだに収める
-	var top := UiTokens.SCREEN_MARGIN + 64.0
-	var bot := s.y - UiTokens.SCREEN_MARGIN - 48.0 - CHOICE_SIZE.y - UiTokens.SPACE_M * 2
-	var h := maxf(bot - top, 120.0)
-	var w := minf(h * 1.4, s.x * 0.42)
-	h = w / 1.4
-	var paper := Rect2(s.x - UiTokens.SCREEN_MARGIN - w, top + (bot - top - h) * 0.5, w, h)
-	# 画用紙：選んだものだけ描かれる。まだのところは、えんぴつの下書き
+	draw_sprite(NATSUMI_TEX, Vector2(s.x * 0.16, s.y * 0.94), s.y * 0.36)
+	var paper := _paper()
 	draw_rect(Rect2(paper.position + Vector2(4, 6), paper.size).grow(6), UiTokens.SHADOW)
 	draw_rect(paper.grow(6), UiTokens.PAPER_DARK)
 	draw_rect(paper, UiTokens.PAPER)
-	_landscape(paper, picked, true)
+	_landscape(paper)
+	# 3色（いまの場所の）。えらんでいる色に印
+	if phase == Phase.CHOOSE and place < mini(PLACES, _order.size()):
+		for i in 3:
+			var r := _swatch_rect(i)
+			draw_rect(r.grow(4), UiTokens.PAPER)
+			draw_rect(r, COLORS[place][_order[place][i]])
+			if i == cursor:
+				draw_rect(r.grow(8), UiTokens.ACCENT_INK, false, 4.0)
 
 
-## 景色を描く。values はそれぞれの段で選んだ値（-1 なら描かない）
-func _landscape(r: Rect2, values: Array, sketch := false) -> void:
+## 塗った場所の割合（塗っている途中は、左から筆で塗られていく）
+func _fill(i: int) -> float:
+	if picked[i] < 0:
+		return 0.0
+	if i == place and phase == Phase.PAINT:
+		return clampf(_t / (PAINT_TIME * 0.8), 0.0, 1.0)
+	return 1.0
+
+
+func _landscape(r: Rect2) -> void:
 	var horizon := r.position.y + r.size.y * 0.55
-	if values[0] >= 0:
-		draw_rect(Rect2(r.position, Vector2(r.size.x, r.size.y * 0.55)), SKY_COLORS[values[0]])
-	if sketch:
-		draw_line(Vector2(r.position.x, horizon), Vector2(r.end.x, horizon), PENCIL, 1.5)
-	if values[1] >= 0:
-		_mountains(r, horizon, values[1], MOUNTAIN, -1.0)
-	elif sketch:
-		_mountains(r, horizon, 0, PENCIL, 1.5)
-	if values[0] >= 0 or not sketch:
-		draw_rect(Rect2(r.position.x, horizon, r.size.x, r.end.y - horizon), GRASS)
-	if values[2] >= 0:
-		_river(r, RIVER_COLORS[values[2]], -1.0)
-	elif sketch:
-		_river(r, PENCIL, 1.5)
-	if values[3] >= 0:
-		_stones(r, values[3], STONE, -1.0)
-	elif sketch:
-		_stones(r, 0, PENCIL, 1.5)
-
-
-## 形の番号 0 まるい・1 とがった・2 たいら。line > 0 なら線だけ（下書き）
-func _mountains(r: Rect2, base: float, shape: int, c: Color, line: float) -> void:
+	# そら
+	_fill_rect(Rect2(r.position, Vector2(r.size.x, r.size.y * 0.55)), 0)
+	draw_rect(Rect2(r.position.x, horizon, r.size.x, r.end.y - horizon), Color(GRASS, 0.35))
+	# やま（丸い山がふたつ）
 	for m in [[0.28, 0.42, 0.32], [0.68, 0.48, 0.26]]:
 		var cx: float = r.position.x + r.size.x * m[0]
 		var hw: float = r.size.x * m[1] * 0.5
 		var mh: float = r.size.y * m[2]
 		var pts := PackedVector2Array()
-		match shape:
-			0:
-				for i in 17:
-					var t := i / 16.0
-					pts.append(Vector2(cx - hw + hw * 2 * t, base - mh * sin(PI * t)))
-			1:
-				pts.append_array([Vector2(cx - hw, base), Vector2(cx - hw * 0.4, base - mh * 0.7), Vector2(cx - hw * 0.15, base - mh * 0.5),
-					Vector2(cx, base - mh * 1.1), Vector2(cx + hw * 0.3, base - mh * 0.6), Vector2(cx + hw, base)])
-			_:
-				pts.append_array([Vector2(cx - hw, base), Vector2(cx - hw * 0.55, base - mh * 0.7), Vector2(cx + hw * 0.55, base - mh * 0.7), Vector2(cx + hw, base)])
-		if line > 0.0:
-			draw_polyline(pts, c, line)
-		else:
-			draw_colored_polygon(pts, c)
-
-
-func _river(r: Rect2, c: Color, line: float) -> void:
+		for k in 17:
+			var t := k / 16.0
+			pts.append(Vector2(cx - hw + hw * 2 * t, horizon - mh * sin(PI * t)))
+		_fill_poly(pts, 1, r)
+	# かわ
 	var top := PackedVector2Array()
 	var bot := PackedVector2Array()
-	for i in 17:
-		var t := i / 16.0
+	for k in 17:
+		var t := k / 16.0
 		var x := r.position.x + r.size.x * t
-		top.append(Vector2(x, r.position.y + r.size.y * (0.68 + 0.03 * sin(t * TAU))))
-		bot.append(Vector2(x, r.position.y + r.size.y * (0.82 + 0.03 * sin(t * TAU + 1.2))))
-	if line > 0.0:
-		draw_polyline(top, c, line)
-		draw_polyline(bot, c, line)
-		return
-	var poly := top.duplicate()
-	bot.reverse()
-	poly.append_array(bot)
-	draw_colored_polygon(poly, c)
-	for i in 3:
-		var y := r.position.y + r.size.y * (0.72 + i * 0.035)
-		var x := r.position.x + r.size.x * (0.15 + i * 0.27)
-		draw_line(Vector2(x, y), Vector2(x + r.size.x * 0.12, y), Color(1, 1, 1, 0.6), 2.0)
-
-
-func _stones(r: Rect2, shape: int, c: Color, line: float) -> void:
-	for st in [[0.2, 0.06], [0.5, 0.045], [0.78, 0.055]]:
-		var p := Vector2(r.position.x + r.size.x * st[0], r.position.y + r.size.y * 0.91)
+		top.append(Vector2(x, r.position.y + r.size.y * (0.66 + 0.03 * sin(t * TAU))))
+		bot.append(Vector2(x, r.position.y + r.size.y * (0.8 + 0.03 * sin(t * TAU + 1.2))))
+	var river := top.duplicate()
+	var b2 := bot.duplicate()
+	b2.reverse()
+	river.append_array(b2)
+	_fill_poly(river, 2, r)
+	# いわ（手前に三つ）
+	for st in [[0.2, 0.07], [0.52, 0.05], [0.8, 0.06]]:
+		var p := Vector2(r.position.x + r.size.x * st[0], r.position.y + r.size.y * 0.9)
 		var rad: float = r.size.x * st[1]
-		_shape(p, rad, shape, c, line)
+		var pts := PackedVector2Array()
+		for k in 16:
+			var a := TAU * k / 16.0
+			pts.append(p + Vector2(cos(a) * rad, sin(a) * rad * 0.6))
+		_fill_poly(pts, 3, r)
 
 
-## 小さな形（いし・選択肢の絵に使う）
-func _shape(p: Vector2, rad: float, shape: int, c: Color, line: float, ci: CanvasItem = null) -> void:
-	if ci == null:
-		ci = self
-	var pts := PackedVector2Array()
-	match shape:
-		0:
-			for i in 16:
-				var a := TAU * i / 16.0
-				pts.append(p + Vector2(cos(a) * rad, sin(a) * rad * 0.6))
-		1:
-			pts.append_array([p + Vector2(-rad, rad * 0.6), p + Vector2(rad, rad * 0.6), p + Vector2(rad, -rad * 0.6), p + Vector2(-rad, -rad * 0.6)])
-		_:
-			pts.append_array([p + Vector2(-rad, rad * 0.6), p + Vector2(rad, rad * 0.6), p + Vector2(0, -rad * 0.8)])
-	if line > 0.0:
-		pts.append(pts[0])
-		ci.draw_polyline(pts, c, line)
-	else:
-		ci.draw_colored_polygon(pts, c)
+func _fill_rect(area: Rect2, i: int) -> void:
+	var f := _fill(i)
+	if f > 0.0:
+		draw_rect(Rect2(area.position, Vector2(area.size.x * f, area.size.y)), COLORS[i][picked[i]])
+	if f < 1.0:
+		draw_rect(area, PENCIL, false, 1.5)
 
 
-## 選択肢の枠の中の絵（いろの段は色の見本、かたちの段は形）
-func _draw_choice(a: Control, i: int) -> void:
-	if step >= STEPS:
+## 形を塗る（塗っている途中は、紙の左から f の割合まで）。まだのところは、えんぴつの下書き
+func _fill_poly(pts: PackedVector2Array, i: int, paper: Rect2) -> void:
+	var f := _fill(i)
+	if f >= 1.0:
+		draw_colored_polygon(pts, COLORS[i][picked[i]])
 		return
-	var v: int = _order[step][i]
-	var c := a.size / 2.0
-	match step:
-		0, 2:
-			var col: Color = SKY_COLORS[v] if step == 0 else RIVER_COLORS[v]
-			a.draw_rect(Rect2(c - Vector2(40, 26), Vector2(80, 52)), col)
-		1:
-			var pts := PackedVector2Array()
-			var base := c.y + 24
-			match v:
-				0:
-					for k in 13:
-						var t := k / 12.0
-						pts.append(Vector2(c.x - 44 + 88 * t, base - 46 * sin(PI * t)))
-				1:
-					pts.append_array([Vector2(c.x - 44, base), Vector2(c.x - 18, base - 30), Vector2(c.x - 6, base - 20), Vector2(c.x + 6, base - 50), Vector2(c.x + 44, base)])
-				_:
-					pts.append_array([Vector2(c.x - 44, base), Vector2(c.x - 24, base - 32), Vector2(c.x + 24, base - 32), Vector2(c.x + 44, base)])
-			a.draw_colored_polygon(pts, MOUNTAIN)
-		3:
-			_shape(c + Vector2(0, 6), 30.0, v, STONE, -1.0, a)
+	var outline := pts.duplicate()
+	outline.append(pts[0])
+	draw_polyline(outline, PENCIL, 1.5)
+	if f > 0.0:
+		var clip := PackedVector2Array([paper.position, Vector2(paper.position.x + paper.size.x * f, paper.position.y),
+			Vector2(paper.position.x + paper.size.x * f, paper.end.y), Vector2(paper.position.x, paper.end.y)])
+		for part in Geometry2D.intersect_polygons(pts, clip):
+			draw_colored_polygon(part, COLORS[i][picked[i]])

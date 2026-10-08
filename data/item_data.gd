@@ -26,6 +26,8 @@ extends Resource
 @export_multiline var description_good: String
 ## alt_if が合うときの「よくできた」の一言。空なら alt_description を使う
 @export_multiline var alt_description_good: String
+## よくできたときの一言の「%d」に入れる値が、記録にないとき（デバッグのジャンプなど）の値
+@export var grade_value_default := 0
 @export_group("ルートで一言を変える")
 ## この条件が合うときは description のかわりに alt_description を出す
 @export var alt_if: FlagCondition
@@ -37,9 +39,14 @@ extends Resource
 ## いまのフラグと、手に入れたときのミニゲームの結果で出す一言（宝箱・エンディング・縁側の場面で同じものを出す）
 func text() -> String:
 	var good := GameState.item_grade(id) == GameState.Grade.GOOD
+	var t := description_good if good and description_good != "" else description
 	if alt_description != "" and alt_if and alt_if.is_met():
-		return alt_description_good if good and alt_description_good != "" else alt_description
-	return description_good if good and description_good != "" else description
+		t = alt_description_good if good and alt_description_good != "" else alt_description
+	# よくできたときの一言に「%d」があれば、ミニゲームで記録した値（石切りの跳ねた回数）を入れる
+	if t.contains("%d"):
+		var v := GameState.game_value(grade_game)
+		t = t % (v if v >= 0 else grade_value_default)
+	return t
 
 
 ## いまのフラグで出す場所のヒント

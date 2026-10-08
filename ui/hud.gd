@@ -562,7 +562,12 @@ func _run_minigame(game_name: String) -> void:
 	_last_grade = -1
 	if GameState.GRADED_GAMES.has(StringName(game_name)):
 		_last_grade = int(g.get("grade"))
-		GameState.record_grade(StringName(game_name), _last_grade as GameState.Grade)
+		# 何度遊んでも、記録するのは最初の1回
+		if not GameState.game_grades.has(StringName(game_name)):
+			var value: Variant = g.get("grade_value")
+			GameState.record_grade(StringName(game_name), _last_grade as GameState.Grade, int(value) if value != null else -1)
+		else:
+			_last_grade = GameState.game_grade(StringName(game_name))
 	g.queue_free()
 	_minigame = null
 	UiAnim.panel_in(_msg)
