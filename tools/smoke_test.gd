@@ -2040,6 +2040,8 @@ func _check_missed() -> void:
 	await _wait(0.8)
 	var main := get_tree().current_scene
 	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	# タッチで開く（キーボードのときは最初の枠が選ばれた見た目になるので、ここではタッチにそろえる）
+	InputMode._apply(true, false)
 	TouchControls.fire_action(&"open_box")
 	await _wait(1.0)
 	check(box.is_open, "missed: box opens")

@@ -78,13 +78,14 @@ func _ready() -> void:
 	_add_item(Strings.MINIGAME_RETRY, func(): retry_requested.emit())
 	# もどる（右上）と、左右の矢印（下の左右のすみ）
 	_quit = _button(Strings.BACK, Vector2(UiTokens.TOUCH_MIN * 1.25, UiTokens.TOUCH_MIN))
-	_corner(_quit, Control.PRESET_TOP_RIGHT)
+	# 大きさは、テーマ（文字）が決まってからわかるので、並べ終わってから置く（大きさがかわったら置きなおす）
+	_corner.call_deferred(_quit, Control.PRESET_TOP_RIGHT)
 	_quit.pressed.connect(func(): quit_requested.emit())
 	_left = _button(Strings.MINIGAME_LEFT, Vector2(UiTokens.TOUCH_MIN * 1.25, UiTokens.TOUCH_MIN * 1.25))
-	_corner(_left, Control.PRESET_BOTTOM_LEFT)
+	_corner.call_deferred(_left, Control.PRESET_BOTTOM_LEFT)
 	_left.pressed.connect(func(): left_pressed.emit())
 	_right = _button(Strings.MINIGAME_RIGHT, _left.custom_minimum_size)
-	_corner(_right, Control.PRESET_BOTTOM_RIGHT)
+	_corner.call_deferred(_right, Control.PRESET_BOTTOM_RIGHT)
 	_right.pressed.connect(func(): right_pressed.emit())
 	InputMode.mode_changed.connect(func(_t): _refresh())
 	_refresh()
@@ -92,7 +93,22 @@ func _ready() -> void:
 
 ## 画面のすみに置く（余白 SCREEN_MARGIN。親の大きさが変わってもすみに付いていく）
 func _corner(b: Control, preset: Control.LayoutPreset) -> void:
-	b.set_anchors_and_offsets_preset(preset, Control.PRESET_MODE_MINSIZE, UiTokens.SCREEN_MARGIN)
+	var right := preset in [Control.PRESET_TOP_RIGHT, Control.PRESET_BOTTOM_RIGHT]
+	var bottom := preset in [Control.PRESET_BOTTOM_LEFT, Control.PRESET_BOTTOM_RIGHT]
+	b.anchor_left = 1.0 if right else 0.0
+	b.anchor_right = b.anchor_left
+	b.anchor_top = 1.0 if bottom else 0.0
+	b.anchor_bottom = b.anchor_top
+	var place := func() -> void:
+		# 文字やテーマで大きくなっても、はしから SCREEN_MARGIN の内側に収める
+		var sz := b.get_combined_minimum_size().max(b.size)
+		var m := float(UiTokens.SCREEN_MARGIN)
+		b.offset_left = -m - sz.x if right else m
+		b.offset_right = b.offset_left + sz.x
+		b.offset_top = -m - sz.y if bottom else m
+		b.offset_bottom = b.offset_top + sz.y
+	place.call()
+	b.resized.connect(func(): if b.size != Vector2(b.offset_right - b.offset_left, b.offset_bottom - b.offset_top): place.call())
 
 
 func _button(text: String, sz: Vector2) -> Button:
