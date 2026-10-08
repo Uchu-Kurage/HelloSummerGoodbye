@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CameoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/cameo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"kamikakushi_d8_gakuban"
+route = &"kamikakushi"
+day_number = 8
+x = 2150.0
+kind = 2
+prop_kind = 27

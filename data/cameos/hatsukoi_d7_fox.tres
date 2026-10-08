@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CameoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/cameo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hatsukoi_d7_fox"
+route = &"hatsukoi"
+day_number = 7
+x = 3200.0
+kind = 1
+depth = 60.0

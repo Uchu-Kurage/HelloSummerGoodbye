@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_05.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
@@ -6,59 +6,11 @@
 [ext_resource type="Resource" path="res://data/npcs/takeru_festival.tres" id="npc_takeru_festival"]
 [ext_resource type="Resource" path="res://data/npcs/takeru_festival_home.tres" id="npc_takeru_festival_home"]
 [ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+[ext_resource type="PackedScene" path="res://world/festival_grounds.tscn" id="grounds"]
 
 [node name="Day05_takeru" instance=ExtResource("base")]
 
-[node name="Torii" type="Node2D" parent="Props"]
-position = Vector2(700, 604)
-script = ExtResource("prop")
-kind = 7
-
-[node name="Lanterns" type="Node2D" parent="Props"]
-position = Vector2(900, 604)
-script = ExtResource("prop")
-kind = 8
-width = 1500.0
-
-[node name="Katanuki" type="Node2D" parent="Props"]
-position = Vector2(1300, 604)
-script = ExtResource("prop")
-kind = 10
-
-[node name="Board" type="PanelContainer" parent="Props/Katanuki"]
-offset_left = -80.0
-offset_top = -340
-offset_right = 80.0
-offset_bottom = -284
-mouse_filter = 2
-theme_type_variation = &"SignBoard"
-
-[node name="Label" type="Label" parent="Props/Katanuki/Board"]
-layout_mode = 2
-theme_type_variation = &"WorldSignLabel"
-text = "かたぬき"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Kingyo" type="Node2D" parent="Props"]
-position = Vector2(1950, 604)
-script = ExtResource("prop")
-kind = 10
-
-[node name="Board" type="PanelContainer" parent="Props/Kingyo"]
-offset_left = -120.0
-offset_top = -340
-offset_right = 120.0
-offset_bottom = -284
-mouse_filter = 2
-theme_type_variation = &"SignBoard"
-
-[node name="Label" type="Label" parent="Props/Kingyo/Board"]
-layout_mode = 2
-theme_type_variation = &"WorldSignLabel"
-text = "きんぎょすくい"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="Festival" parent="Props" instance=ExtResource("grounds")]
 
 [node name="Light1" type="Node2D" parent="Props"]
 position = Vector2(2850, 604)
@@ -80,12 +32,6 @@ npc_data = ExtResource("npc_takeru_festival_home")
 
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("glow")
-
-[node name="LanternsGlow" type="Node2D" parent="Props/Glow"]
-position = Vector2(900, 604)
-script = ExtResource("prop")
-kind = 9
-width = 1500.0
 
 [node name="Light1Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(2850, 604)

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CameoData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/cameo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_fox_child.png" id="sprite"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+
+[sub_resource type="Resource" id="cond"]
+script = ExtResource("2")
+forbid_any = Array[StringName]([&"mask_kitsune", &"mask_hyottoko", &"mask_okame"])
+
+[resource]
+script = ExtResource("1")
+id = &"normal_d5_fox"
+route = &"normal"
+day_number = 5
+x = 2280.0
+kind = 1
+appear_if = SubResource("cond")
+sprite = ExtResource("sprite")
+height = 150.0
+depth = 30.0

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CameoData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/cameo_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi.tres" id="npc"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/natsumi_mg1_1.png" id="sprite"]
+
+[resource]
+script = ExtResource("1")
+id = &"shinyu_d4_natsumi"
+route = &"shinyu"
+day_number = 4
+x = 330.0
+kind = 0
+line = "……（えを かいている）"
+npc = ExtResource("npc")
+sprite = ExtResource("sprite")
+height = 135.0

@@ -31,7 +31,7 @@ func _process(_delta: float) -> void:
 	var d := global_position.x - _player.global_position.x
 	if d < VANISH_FROM:
 		gone = true
-		UiAnim.fade(self, 0.0, UiTokens.TIME_FADE * 1.5)
+		UiAnim.fade(self, 0.0, UiTokens.TIME_GLIMPSE_VANISH)
 
 
 func _draw() -> void:

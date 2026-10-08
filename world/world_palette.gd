@@ -58,6 +58,10 @@ const BANANA := Color("#E3C75A")
 const BEETLE := Color("#3E2A1E")
 const FIRE := Color("#E08A3C")
 ## 型抜き（砂糖の板）：板、ふち、刷られた輪郭、削った溝、ひびの線、抜けたあとのくぼみ
+## 駄菓子屋の前にとめた自転車（神隠し8日目の顔出し。絵が入るまでの仮の線画）
+const BIKE_FRAME := Color("#7A4A3A")
+const BIKE_TIRE := Color("#3A332E")
+const BIKE_METAL := Color("#A8A49C")
 const KATANUKI := Color("#F1E3D3")
 const KATANUKI_EDGE := Color("#D8C2AA")
 const KATANUKI_PRINT := Color("#C7A98E")

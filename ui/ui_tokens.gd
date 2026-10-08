@@ -86,6 +86,8 @@ const TIME_ENGAWA_LINE_HOLD := 2.5
 const TIME_ENGAWA_TOTAL := 20.0
 ## 異界の日の空の縁側（煙だけ）を見せる時間
 const TIME_ENGAWA_EMPTY := 2.0
+## お面の子（遠くの姿・他ルートの顔出し）が近づくと消えるときのフェード（急に消さない）
+const TIME_GLIMPSE_VANISH := 1.2
 ## タイトルの「はじめる」案内がゆっくり明滅する周期の半分
 const TIME_PULSE := 1.2
 const PANEL_SCALE_FROM := 0.96

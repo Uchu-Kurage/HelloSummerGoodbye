@@ -1,0 +1,66 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
+
+[node name="FestivalGrounds" type="Node2D"]
+
+[node name="Torii" type="Node2D" parent="."]
+position = Vector2(700, 604)
+script = ExtResource("prop")
+kind = 7
+
+[node name="Lanterns" type="Node2D" parent="."]
+position = Vector2(900, 604)
+script = ExtResource("prop")
+kind = 8
+width = 1500.0
+
+[node name="Katanuki" type="Node2D" parent="."]
+position = Vector2(1300, 604)
+script = ExtResource("prop")
+kind = 10
+
+[node name="Board" type="PanelContainer" parent="Katanuki"]
+offset_left = -80.0
+offset_top = -340.0
+offset_right = 80.0
+offset_bottom = -284.0
+mouse_filter = 2
+theme_type_variation = &"SignBoard"
+
+[node name="Label" type="Label" parent="Katanuki/Board"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "かたぬき"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Kingyo" type="Node2D" parent="."]
+position = Vector2(1950, 604)
+script = ExtResource("prop")
+kind = 10
+
+[node name="Board" type="PanelContainer" parent="Kingyo"]
+offset_left = -120.0
+offset_top = -340.0
+offset_right = 120.0
+offset_bottom = -284.0
+mouse_filter = 2
+theme_type_variation = &"SignBoard"
+
+[node name="Label" type="Label" parent="Kingyo/Board"]
+layout_mode = 2
+theme_type_variation = &"WorldSignLabel"
+text = "きんぎょすくい"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Glow" type="CanvasLayer" parent="."]
+script = ExtResource("glow")
+
+[node name="LanternsGlow" type="Node2D" parent="Glow"]
+position = Vector2(900, 604)
+script = ExtResource("prop")
+kind = 9
+width = 1500.0

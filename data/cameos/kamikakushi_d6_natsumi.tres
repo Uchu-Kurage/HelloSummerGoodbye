@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CameoData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/cameo_data.gd" id="1"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi.tres" id="npc"]
+
+[resource]
+script = ExtResource("1")
+id = &"kamikakushi_d6_natsumi"
+route = &"kamikakushi"
+day_number = 6
+x = 1000.0
+kind = 0
+npc = ExtResource("npc")
