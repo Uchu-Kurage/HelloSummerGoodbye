@@ -82,7 +82,7 @@ func _ready() -> void:
 
 ## 説明を閉じて始める
 func _start() -> void:
-	if not frame.intro_visible():
+	if not frame.intro_ready():
 		return
 	frame.hide_intro()
 	if InputMode.keyboard:

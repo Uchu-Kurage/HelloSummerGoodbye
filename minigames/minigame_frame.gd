@@ -14,7 +14,12 @@ signal right_pressed
 signal next_requested
 signal retry_requested
 
+## 説明が出てから、この時間（ミリ秒）は押しても始めない
+const INTRO_GUARD_MS := 250
+
 var _intro: PanelContainer
+var _intro_tween: Tween
+var _intro_shown_at := 0
 var _intro_line: Label
 var _key: Label
 var _key_hint: Label
@@ -134,15 +139,29 @@ func _add_item(text: String, cb: Callable) -> void:
 func show_intro(line: String) -> void:
 	_intro_line.text = line
 	_refresh()
+	_stop_intro_tween()
 	_intro.modulate.a = 0.0
 	_intro.show()
-	UiAnim.panel_in(_intro)
+	_intro_tween = UiAnim.panel_in(_intro)
+	_intro_shown_at = Time.get_ticks_msec()
 
 
 func hide_intro() -> void:
+	# 出ている途中（panel_in の動き）でも、必ず消えきるように前の動きを止めてから消す
+	_stop_intro_tween()
 	if _intro.visible:
-		UiAnim.panel_out(_intro)
+		_intro_tween = UiAnim.panel_out(_intro)
 
+
+func _stop_intro_tween() -> void:
+	if _intro_tween and _intro_tween.is_valid():
+		_intro_tween.kill()
+	_intro_tween = null
+
+
+## 説明が出てから、押して始められるまでの時間がたったか（会話を送った押しで、すぐ始まらないように）
+func intro_ready() -> bool:
+	return intro_visible() and Time.get_ticks_msec() - _intro_shown_at >= INTRO_GUARD_MS
 
 func intro_visible() -> bool:
 	return _intro.visible and _intro.modulate.a > 0.0
