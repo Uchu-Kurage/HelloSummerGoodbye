@@ -529,6 +529,19 @@ func _check_minigames() -> void:
 		if is_instance_valid(r):
 			r.queue_free()
 		await get_tree().process_frame
+	# 会話を送った押しの続き：画面が出たのと同じときに押しても始まらず、説明は出たまま。そのあと押すと始まって、説明は消える
+	InputMode._apply(false, true)
+	var early: MinigameBase = Hud.MINIGAMES["ishikiri"].new()
+	early.game_name = "ishikiri"
+	get_tree().root.add_child(early)
+	await _key(KEY_SPACE)
+	await _wait(0.6)
+	var waited := early.state == MinigameBase.State.INTRO and early.frame.intro_visible()
+	await _key(KEY_SPACE)
+	await _wait(0.6)
+	check(waited and early.state == MinigameBase.State.PLAY and not early.frame._intro.visible,
+		"minigame intro: a carried-over press does not start it; starting hides the intro")
+	early.queue_free()
 	# 会話の中でやめる：Esc で「ふつう」になり、会話はそのまま「ふつう」のせりふへ進む（進行が止まらない）
 	GameState.reset()
 	var qhud: Hud = load("res://ui/hud.tscn").instantiate()

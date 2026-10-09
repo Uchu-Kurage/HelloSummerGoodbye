@@ -41,7 +41,13 @@ func _build() -> void:
 	frame.next_requested.connect(func(): finish())
 	frame.retry_requested.connect(retry)
 	frame.set_arrows(false)
-	frame.show_intro.call_deferred(intro_text)
+	_show_intro.call_deferred()
+
+
+## 始める前の説明を出す（並べ終わってから。もう始まっていたら出さない）
+func _show_intro() -> void:
+	if state == State.INTRO and not done:
+		frame.show_intro(intro_text)
 
 
 ## 部品を作る（1回だけ）
@@ -143,7 +149,9 @@ func _input(event: InputEvent) -> void:
 	match state:
 		State.INTRO:
 			if is_tap(event) and not _on_button(event):
-				start()
+				# 説明が出てすぐの押し（会話を送った押しの続き）では始めない
+				if frame.intro_ready():
+					start()
 				get_viewport().set_input_as_handled()
 		State.PLAY:
 			if event.is_action_pressed("ui_left") or event.is_action_pressed("move_left"):
