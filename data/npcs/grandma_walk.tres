@@ -9,7 +9,6 @@ id = &"grandma_walk"
 display_name = "おばあちゃん"
 lines = Array[String](["この みちはね、おかあさんも かよったのよ。", "がっこうまで、とおかったんだから。", "あの子、よく みちくさ しててねえ。"])
 repeat_lines = Array[String](["ゆっくり いこうね。"])
-auto_talk = true
 sprite = ExtResource("sprite")
 placeholder_color = Color(0.663, 0.722, 0.557, 1)
 height = 150.0
