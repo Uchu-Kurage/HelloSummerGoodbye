@@ -37,7 +37,6 @@ kind = 33
 [node name="NatsumiGrandma" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1600, 604)
 npc_data = ExtResource("n_grandma")
-remember_talk = false
 
 [node name="Natsumi" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2150, 604)

@@ -49,7 +49,6 @@ position = Vector2(560, 604)
 npc_data = ExtResource("npc_radio")
 face_player = false
 draw_body = false
-remember_talk = false
 
 [node name="Natsumi" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1110, 604)
