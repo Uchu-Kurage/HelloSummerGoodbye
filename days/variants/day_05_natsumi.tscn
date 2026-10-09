@@ -27,7 +27,7 @@ script = ExtResource("prop")
 kind = 11
 
 [node name="NatsumiHome" parent="Props" instance=ExtResource("npc")]
-position = Vector2(3080, 604)
+position = Vector2(3600, 604)
 npc_data = ExtResource("n_home")
 
 [node name="Glow" type="CanvasLayer" parent="Props"]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_base.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
@@ -8,6 +8,7 @@
 [ext_resource type="Resource" path="res://data/npcs/natsumi.tres" id="npc_natsumi"]
 [ext_resource type="Script" path="res://world/fox_far.gd" id="fox_far"]
 [ext_resource type="Resource" path="res://data/npcs/grandma_walk.tres" id="npc_grandma_walk"]
+[ext_resource type="Resource" path="res://data/npcs/radio.tres" id="npc_radio"]
 
 [node name="Day02" instance=ExtResource("base")]
 
@@ -42,6 +43,13 @@ position = Vector2(560, 606)
 script = ExtResource("prop")
 kind = 26
 width = 460.0
+
+[node name="Radio" parent="Props" instance=ExtResource("npc")]
+position = Vector2(560, 604)
+npc_data = ExtResource("npc_radio")
+face_player = false
+draw_body = false
+remember_talk = false
 
 [node name="Natsumi" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1110, 604)

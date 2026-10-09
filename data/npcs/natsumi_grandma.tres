@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"natsumi_grandma"
+display_name = "なつみの おばあちゃん"
+lines = Array[String](["なつみの おともだちね。", "きょうは おぼんだから、はまで あそぶだけよ。", "うみには はいらないこと。"])
+repeat_lines = Array[String](["とおくへ いかないでね。"])
+placeholder_color = Color(0.62, 0.66, 0.72, 1)
+height = 150.0
+skin_color = Color(0.886, 0.722, 0.580, 1)
+hair_color = Color(0.82, 0.80, 0.78, 1)
+shirt_color = Color(0.62, 0.66, 0.72, 1)
+pants_color = Color(0.40, 0.38, 0.42, 1)
+hair_full = true
+stoop = 4.0
