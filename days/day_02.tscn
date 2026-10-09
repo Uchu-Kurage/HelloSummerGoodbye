@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_base.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://world/fox_far.gd" id="fox_far"]
 [ext_resource type="Resource" path="res://data/npcs/grandma_walk.tres" id="npc_grandma_walk"]
 [ext_resource type="Resource" path="res://data/npcs/radio.tres" id="npc_radio"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_alone.tres" id="npc_takeru_alone"]
 
 [node name="Day02" instance=ExtResource("base")]
 
@@ -49,7 +50,6 @@ position = Vector2(560, 604)
 npc_data = ExtResource("npc_radio")
 face_player = false
 draw_body = false
-remember_talk = false
 
 [node name="Natsumi" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1110, 604)
@@ -87,6 +87,10 @@ npc_data = ExtResource("npc_dagashi_obachan")
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(1900, 604)
 npc_data = ExtResource("npc_takeru")
+
+[node name="TakeruAlone" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1900, 604)
+npc_data = ExtResource("npc_takeru_alone")
 
 [node name="FoxFar" type="Node2D" parent="Props"]
 position = Vector2(3050, 604)

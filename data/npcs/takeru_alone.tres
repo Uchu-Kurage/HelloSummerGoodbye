@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_takeru.png" id="sprite"]
+
+[sub_resource type="Resource" id="appear"]
+script = ExtResource("2")
+require_all = Array[StringName]([&"route_natsumi"])
+
+[resource]
+script = ExtResource("1")
+id = &"takeru_alone"
+display_name = "タケル"
+lines = Array[String](["（タケルが ひとりで、ビー玉を はじいている）", "……ひとりでも、ビー玉の れんしゅうは できるし。"])
+repeat_lines = Array[String](["（タケルは こっちを みないで、ビー玉を はじいている）"])
+appear_if = SubResource("appear")
+sprite = ExtResource("sprite")
+placeholder_color = Color(0.659, 0.357, 0.271, 1)
+height = 154.0
+skin_color = Color(0.776, 0.557, 0.384, 1)
+hair_color = Color(0.129, 0.114, 0.102, 1)
+shirt_color = Color(0.914, 0.890, 0.827, 1)
+pants_color = Color(0.243, 0.353, 0.478, 1)
+hair_full = true
