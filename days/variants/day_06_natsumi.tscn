@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_06.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
 [ext_resource type="Resource" path="res://data/npcs/natsumi_sea.tres" id="n_sea"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_grandma.tres" id="n_grandma"]
 [ext_resource type="Script" path="res://world/seaside_zone.gd" id="seaside"]
 
 [node name="Day06_natsumi" instance=ExtResource("base")]
@@ -32,6 +33,11 @@ kind = 32
 position = Vector2(2350, 604)
 script = ExtResource("prop")
 kind = 33
+
+[node name="NatsumiGrandma" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1600, 604)
+npc_data = ExtResource("n_grandma")
+remember_talk = false
 
 [node name="Natsumi" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2150, 604)

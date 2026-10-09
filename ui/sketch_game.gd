@@ -66,7 +66,8 @@ func _begin() -> void:
 
 func _ask() -> void:
 	phase = Phase.CHOOSE
-	caption(Strings.SKETCH_PLACES[place])
+	# いま塗る場所は、左上の小札ではなく、画用紙のすぐ上に大きく出す（_draw）
+	hush()
 	show_hint(Strings.SKETCH_HINT_TOUCH, Strings.SKETCH_HINT_KEY)
 
 
@@ -186,6 +187,17 @@ func _draw() -> void:
 	draw_rect(paper.grow(6), UiTokens.PAPER_DARK)
 	draw_rect(paper, UiTokens.PAPER)
 	_landscape(paper)
+	# いま塗る場所の案内（画用紙のすぐ上のまん中。目と手もとが近いところに）
+	if phase == Phase.CHOOSE and place < PLACES and state == State.PLAY:
+		var font := get_theme_default_font()
+		var text: String = Strings.SKETCH_PLACES[place]
+		var fs := UiTokens.FONT_BODY
+		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		var chip := Rect2(Vector2(paper.get_center().x - tw / 2.0 - UiTokens.SPACE_M, paper.position.y - 16.0 - fs * 2.0), Vector2(tw + UiTokens.SPACE_M * 2.0, fs * 2.0))
+		draw_rect(Rect2(chip.position + Vector2(2, 3), chip.size), UiTokens.SHADOW)
+		draw_rect(chip, UiTokens.PAPER)
+		draw_rect(chip, UiTokens.ACCENT_INK, false, 2.0)
+		draw_string(font, Vector2(chip.position.x + UiTokens.SPACE_M, chip.position.y + fs * 1.35), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTokens.INK)
 	# 3色（いまの場所の）。えらんでいる色に印
 	if phase == Phase.CHOOSE and place < mini(PLACES, _order.size()):
 		for i in 3:
