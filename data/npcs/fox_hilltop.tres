@@ -7,7 +7,7 @@
 script = ExtResource("1")
 id = &"fox_hilltop"
 display_name = "おめんの子"
-lines = Array[String](["……ほら。", "あれが、ぼくの いるところ。", "@leave"])
+lines = Array[String](["……ほら。", "あれが、ぼくの いるところ。", "（おめんの子が、てを さしだした）", "おぼんの あいだだけ、いっしょに いられるんだ。", "……ひとりは、もう いやだ。", "いっしょに いこう。", "@event smoke", "@leave"])
 auto_talk = true
 sprite = ExtResource("sprite")
 placeholder_color = Color(0.851, 0.439, 0.353, 1)

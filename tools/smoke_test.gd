@@ -27,7 +27,14 @@ func _ready() -> void:
 	# 見たエンディングの記録は、ふだんの記録を消さないよう別のファイルに
 	EndingRecord.path = EPI_RECORD
 	DirAccess.remove_absolute(EPI_RECORD)
-	await _run()
+	# 一部だけ確かめるとき：godot --headless res://tools/smoke_test.tscn -- paging
+	if OS.get_cmdline_user_args().has("paging"):
+		for r in EndingRecord.ROUTES:
+			EndingRecord.mark(r)
+		await _check_title_marks()
+		await _check_box_paging()
+	else:
+		await _run()
 	print("SMOKE ", "FAILED" if _fail else "OK")
 	get_tree().quit(1 if _fail else 0)
 
@@ -173,7 +180,7 @@ func _run() -> void:
 		# 7日目：けんかのあと、タケルは帰ってしまう
 		if day == 6 and loaded.has(6):
 			var road := (loaded[6] as Node).get_node_or_null("Props/TakeruRoad") as Npc
-			if road and GameState.has_talked(&"takeru_okuribi") and not road.can_interact():
+			if road and GameState.has_talked(&"takeru_road") and not road.can_interact():
 				takeru_left_day7 = true
 		if camera.position.x < max_cam - 0.5:
 			cam_back = true
@@ -239,7 +246,7 @@ func _run() -> void:
 		var ghost: Array = eb._slots.filter(func(sl): return sl.item.id == skipped.id)
 		check(ghost.size() == 1 and ghost[0].missed and ghost[0].theme_type_variation == &"SlotMissed",
 			"ending box: the skipped day 8 item stays a shadow (%s)" % skipped.id)
-		check(TreasureBox.missed_hint(skipped) == "8/20　ひみつきちの どこか", "ending box: shadow hint %s" % TreasureBox.missed_hint(skipped))
+		check(TreasureBox.missed_hint(skipped) == "8/22　ひみつきちの どこか", "ending box: shadow hint %s" % TreasureBox.missed_hint(skipped))
 		var marble_slot: Array = eb._slots.filter(func(sl): return sl.item.id == &"marble")
 		check(marble_slot.size() == 1 and not marble_slot[0].missed and marble_slot[0].note == "タケルに あげた", "ending box: the marble slot keeps タケルに あげた")
 		check(eb._slots.filter(func(sl): return sl.missed).size() == 1, "ending box: only the one skipped item is a shadow")
@@ -268,7 +275,7 @@ func _run() -> void:
 	for i in [7, 8]:
 		var b := _base_in(paths, i)
 		check(b != "", "base reused on day %d (%s)" % [i + 1, b])
-	for id in [&"takeru_base", &"takeru_festival", &"takeru_festival_home", &"takeru_dawn", &"takeru_trap", &"takeru_dive", &"takeru_okuribi", &"takeru_capsule"]:
+	for id in [&"takeru_base", &"takeru_festival", &"takeru_festival_home", &"takeru_dawn", &"takeru_trap", &"takeru_dive", &"takeru_road", &"takeru_capsule"]:
 		check(GameState.has_talked(id), "takeru talks on his own: %s" % id)
 	check(not GameState.has_talked(&"natsumi"), "natsumi was not talked to")
 	var bridge_npc: NpcData = load("res://data/npcs/natsumi_bridge.tres")
@@ -376,6 +383,7 @@ func _run() -> void:
 		for k in all_keys:
 			check(TimeKeys.is_sorted(k), "day %d time keys sorted %s" % [di + 1, str(k)])
 	check(GameState.summer_progress(8, 31) > GameState.summer_progress(7, 21), "summer progress increases")
+	_check_timeline()
 	var c0 := TimeOfDay.sky_color(0.4, 0.0)
 	var c1 := TimeOfDay.sky_color(0.4, 1.0)
 	check(c1.s < c0.s, "sky fades late summer")
@@ -397,8 +405,79 @@ func _run() -> void:
 	await _check_debug_jump()
 	await _check_grades()
 	await _check_cameos()
-	await _check_epilogue()
+	await _check_title_marks()
+	await _check_box_paging()
 	await _check_minigames()
+
+
+# --- ひと夏のタイムライン（正史）：ルートごとの日付・日のタイトル・時間帯のキー -----------------
+
+## ルート -> 1〜10日目の日付（「月/日」。日付の札に出る文字）。神隠しの7〜9日目は「？？/？？」
+const TIMELINE_DATES := {
+	"normal": ["7/21", "7/23", "7/24", "8/1", "8/6", "8/12", "8/17", "8/20", "8/29", "8/31"],
+	"shinyu": ["7/21", "7/23", "7/24", "7/28", "8/6", "8/10", "8/18", "8/22", "8/23", "8/31"],
+	"hatsukoi": ["7/21", "7/23", "7/24", "8/3", "8/6", "8/11", "8/19", "8/25", "8/30", "8/31"],
+	"kamikakushi": ["7/21", "7/23", "7/24", "8/1", "8/6", "8/13", "？？/？？", "？？/？？", "？？/？？", "8/16"],
+}
+## ルート -> 1〜10日目の日のタイトル（看板などに出るもの。各ルートのドキュメントの見出し）
+const TIMELINE_TITLES := {
+	"normal": ["到着の日", "村を知る日", "川の日", "夕立の日", "夏祭りの日", "お盆の前の日", "親戚が帰る日", "静かな日", "星の夜", "帰る日"],
+	"shinyu": ["到着の日", "村を知る日", "川の日", "夕立の日", "夏祭りの日", "夜明けの日", "飛び込みの日", "静かな日", "仲直りの夜", "帰る日"],
+	"hatsukoi": ["到着の日", "村を知る日", "川の日", "夕立の日", "夏祭りの日", "海の日", "映画会の日", "台風の日", "最後の夜", "帰る日"],
+	"kamikakushi": ["到着の日", "村を知る日", "川の日", "夕立の日", "夏祭りの日", "お盆（迎え火）", "異界の入口", "色のない日", "夜市の奥", "お盆（送り火）"],
+}
+## ルート -> 日（1〜10）-> 時間帯のキー（ルート分岐表「時間帯のキー」）。書いていない日は指定なし
+const TIMELINE_KEYS := {
+	"normal": {5: [[0, 0.6], [1, 1.0]], 6: [[0, 0.6], [1, 1.0]], 7: [[0, 0.5], [1, 0.85]], 8: [[0, 0.25], [1, 0.75]], 9: [[0, 0.85], [1, 1.0]], 10: [[0, 0.0], [1, 0.15]]},
+	"shinyu": {5: [[0, 0.6], [1, 1.0]], 6: [[0, -0.15], [0.6, 0.0], [1, 0.25]], 7: [[0, 0.25], [0.6, 0.6], [1, 0.85]], 8: [[0, 0.25], [1, 0.6]], 9: [[0, 0.85], [1, 1.0]], 10: [[0, 0.0], [1, 0.15]]},
+	"hatsukoi": {3: [[0, 0.25], [1, 0.6]], 4: [[0, 0.25], [1, 0.85]], 5: [[0, 0.6], [1, 1.0]], 6: [[0, 0.25], [1, 0.6]], 7: [[0, 0.85], [1, 1.0]], 8: [[0, 0.25], [1, 0.6]], 9: [[0, 0.85], [1, 1.0]], 10: [[0, 0.0], [1, 0.15]]},
+	"kamikakushi": {5: [[0, 0.6], [1, 1.0]], 6: [[0, 0.6], [1, 1.0]], 7: [[0, 0.6], [1, 1.0]], 8: [[0, 0.25], [1, 0.6]], 9: [[0, 0.85], [1, 1.0]], 10: [[0, 0.9], [0.15, 0.9], [0.15, 0.0], [1, 0.15]]},
+}
+const TIMELINE_FLAGS := {
+	"normal": [], "shinyu": [&"route_takeru"], "hatsukoi": [&"route_natsumi"], "kamikakushi": [&"route_kamikakushi"],
+}
+
+
+func _check_timeline() -> void:
+	var keep := GameState.flags.duplicate()
+	for route in TIMELINE_DATES:
+		GameState.flags.clear()
+		for f in TIMELINE_FLAGS[route]:
+			GameState.set_flag(f)
+		var progress_prev := -1.0
+		for i in 10:
+			var d := GameState.get_day(i)
+			var tag := "timeline %s day %d: " % [route, i + 1]
+			check(GameState.day_date_text(d) == _date_text(TIMELINE_DATES[route][i]),
+				tag + "date %s (%s)" % [TIMELINE_DATES[route][i], GameState.day_date_text(d)])
+			check(GameState.day_title(d) == TIMELINE_TITLES[route][i], tag + "title %s (%s)" % [TIMELINE_TITLES[route][i], GameState.day_title(d)])
+			# 季節の色：本当の日付から計算される（異界の日は、異界に入る直前の日の値で止まる）
+			var md := GameState.day_month_day(d)
+			if GameState.is_otherworld(d):
+				check(GameState.summer_progress_of(d) == GameState.summer_progress(8, 13), tag + "season held at 8/13")
+			else:
+				check(is_equal_approx(GameState.summer_progress_of(d), GameState.summer_progress(md.x, md.y)) and GameState.summer_progress_of(d) >= progress_prev,
+					tag + "season follows %d/%d (%.3f)" % [md.x, md.y, GameState.summer_progress_of(d)])
+				progress_prev = GameState.summer_progress_of(d)
+			var want: Array = TIMELINE_KEYS[route].get(i + 1, [])
+			var keys := GameState.day_time_keys(d)
+			var got: Array = keys.map(func(v): return [v.x, v.y])
+			check(got.size() == want.size() and range(got.size()).all(func(j): return is_equal_approx(got[j][0], want[j][0]) and is_equal_approx(got[j][1], want[j][1])),
+				tag + "time keys %s (%s)" % [str(want), str(got)])
+		# 神隠しの10日目は、目覚めの日付は 8/16、めくれた先の本当の日付は 8/31
+		if route == "kamikakushi":
+			check(GameState.day_month_day(GameState.get_day(9)) == Vector2i(8, 31), "timeline kamikakushi day 10: the real date is 8/31")
+			check(not GameState.is_otherworld(GameState.get_day(9)) and GameState.is_otherworld(GameState.get_day(6)), "timeline kamikakushi: day 7 is the first otherworld day")
+	# 4日目に神隠しのフラグだけ（鈴が鳴った日）でも 8/1
+	GameState.flags.clear()
+	GameState.set_flag(&"rusty_bell_found")
+	check(GameState.day_date(GameState.get_day(3)) == ["8", "1"], "timeline: the shrine day 4 is 8/1")
+	GameState.flags = keep
+
+
+func _date_text(label: String) -> String:
+	var parts := label.split("/")
+	return Strings.DATE_FULL % [parts[0], parts[1]]
 
 
 # --- ミニゲーム（共通の土台）-------------------------------------------------------
@@ -586,7 +665,7 @@ func _check_minigames() -> void:
 	Engine.time_scale = keep_scale
 
 
-# --- エピローグ「それから」 ----------------------------------------------------
+# --- タイトルの印と、宝箱のページ送り -----------------------------------------------
 
 const EPI_RECORD := "user://endings_smoke.cfg"
 
@@ -597,127 +676,59 @@ func _open_title() -> Node:
 	return get_tree().current_scene
 
 
-func _check_epilogue() -> void:
+func _check_title_marks() -> void:
 	# 本編の4ルート（ノーマル・親友・初恋・神隠し）を通したので、4つとも記録されている
 	check(EndingRecord.seen_count() == 4 and EndingRecord.all_seen(), "ending record: all 4 endings seen after the route runs (%d)" % EndingRecord.seen_count())
 	var cf := ConfigFile.new()
 	check(cf.load(EPI_RECORD) == OK and cf.get_section_keys(EndingRecord.SECTION).size() == 4, "ending record: saved to user:// as 4 booleans")
-	# 3つ以下では「それから」が出ない。印の数は見た数
+	# タイトルの印は見た数だけ。4つ見ても「それから」は出ない（エピローグはなくなった）
 	DirAccess.remove_absolute(EPI_RECORD)
 	for n in 5:
 		if n > 0:
 			EndingRecord.mark(EndingRecord.ROUTES[n - 1])
 		var t := await _open_title()
-		var has_epi: bool = t.menu_texts().has(Strings.MENU_EPILOGUE)
-		check(t.marks.seen == n and has_epi == (n == 4), "title: %d endings seen -> marks %d, それから %s" % [n, t.marks.seen, has_epi])
-	await _play_epilogue(false)
-	await _play_epilogue(true)
+		var texts: Array[String] = t.menu_texts()
+		check(t.marks.seen == n and not texts.has("それから") and texts.has(Strings.MENU_START), "title: %d endings seen -> marks %d, no それから %s" % [n, t.marks.seen, str(texts)])
+	check(not FileAccess.file_exists("res://days/epilogue.tscn") and not FileAccess.file_exists("res://data/days/epilogue.tres"), "the epilogue scene and data are gone")
+	check(EndingRecord.all_seen(), "ending record is kept (for the elderly chapter later)")
 
 
-## エピローグを最初から最後まで遊ぶ（touch：タッチだけ／そうでなければキーボードだけ）
-func _play_epilogue(touch: bool) -> void:
-	var tag := "epilogue (%s): " % ("touch" if touch else "keyboard")
+## 宝箱のページ送り（TreasureBox.show_all）を、キーボードだけ・タッチだけで確かめる。全ルートのアイテムを並べる
+func _check_box_paging() -> void:
+	await _check_box_paging_with(false)
+	await _check_box_paging_with(true)
+
+
+func _check_box_paging_with(touch: bool) -> void:
+	var tag := "paging (%s): " % ("touch" if touch else "keyboard")
 	var keep_scale := Engine.time_scale
 	Engine.time_scale = 3.0
-	var t := await _open_title()
-	var vs := get_viewport().get_visible_rect().size
-	if touch:
-		await _touch(_to_screen(vs / 2.0))
-		await _wait(0.6)
-		var item: Control = null
-		for c in t._list.get_children():
-			if c is MenuItem and (c as MenuItem).text == Strings.MENU_EPILOGUE:
-				item = c
-		await _touch(_to_screen(item.get_global_rect().get_center()))
-	else:
-		await _key(KEY_ENTER)
-		await _wait(0.6)
-		await _key(KEY_RIGHT)
-		await _key(KEY_ENTER)
-	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Main", 6.0) and GameState.epilogue, tag + "それから opens the epilogue")
-	var main := get_tree().current_scene
-	await _wait(0.6)
-	var hud: Hud = main.get_node("HUD")
-	var player: Player = main.get_node("Player")
-	var day: DayBase = null
-	for c in main.get_node("Days").get_children():
-		if c is DayBase:
-			day = c
-	check(GameState.day_count() == 1 and day and day.scene_file_path == "res://days/epilogue.tscn" and day.get_node("Items").get_child_count() == 0,
-		tag + "one day, no items")
-	check(hud.card_text().contains("31") and GameState.summer_progress_of(GameState.current_day()) == 1.0, tag + "date card 8/31 (%s), summer at the end" % hud.card_text())
-	check(is_equal_approx(GameState.day_time(GameState.current_day(), 0.0), 0.45) and is_equal_approx(GameState.day_time(GameState.current_day(), 1.0), 0.85), tag + "time keys 0.45 -> 0.85")
-	check(player.body_scale > 1.0, tag + "the grown-up is taller")
-	# 右へ歩きつづける。会話は決定（タップ）で送り、神社の二人は決定（タップ）で早送り
-	var hold := InputEventScreenTouch.new()
-	hold.index = 0
-	hold.position = _to_screen(Vector2(vs.x * 0.8, vs.y * 0.75))
-	hold.pressed = true
-	var right := InputEventKey.new()
-	right.keycode = KEY_RIGHT
-	right.physical_keycode = KEY_RIGHT
-	right.pressed = true
-	Input.parse_input_event(hold if touch else right)
-	var seen: Array[String] = []
-	var kids_skipped := false
-	var g := 0.0
-	var kids: Node2D = day.get_node("Props/Kids")
-	var bell := false
-	var kids_state := [false, 1.0, 1.0]
-	while is_instance_valid(main) and get_tree().current_scene == main and g < 90.0:
-		await _wait(0.12)
-		g += 0.12
-		if not is_instance_valid(kids) or not is_instance_valid(hud):
-			break
-		bell = day.get("bell_rang")
-		kids_state = [kids.done, kids.speed, kids.modulate.a]
-		if kids.started and not kids.done and not kids_skipped:
-			kids_skipped = true
-			if touch:
-				var tap := InputEventScreenTouch.new()
-				tap.index = 1
-				tap.position = _to_screen(Vector2(vs.x * 0.75, vs.y * 0.4))
-				tap.pressed = true
-				Input.parse_input_event(tap)
-				await get_tree().process_frame
-				tap.pressed = false
-				Input.parse_input_event(tap)
-			else:
-				await _key(KEY_ENTER)
-		if hud.is_talking() and hud.is_message_open():
-			var line: String = hud._msg_text.text
-			if seen.is_empty() or seen[-1] != line:
-				seen.append(line)
-			if touch:
-				# 歩く指を離してから、一言パネルをタップ（1本目の指のタップだけがクリックになる）。そのあと、また押しつづける
-				hold.pressed = false
-				Input.parse_input_event(hold)
-				await _touch(_to_screen(hud._msg.get_global_rect().get_center()))
-				hold.pressed = true
-				Input.parse_input_event(hold)
-			else:
-				await _key(KEY_ENTER)
-	hold.pressed = false
-	right.pressed = false
-	Input.parse_input_event(hold if touch else right)
-	check(bell, tag + "the bell rang once at the shrine by the bus stop")
-	check(kids_state[0] and kids_state[1] == UiTokens.SKIP_SPEED and kids_state[2] < 0.01, tag + "the two children ran up and faded (fast-forwarded)")
-	check(seen.has("……おそいぞ、とかいもん。"), tag + "the man at the base: ……おそいぞ、とかいもん。")
-	var a := seen.find("おかえり。")
-	check(a >= 0 and seen.find("……きょうは、なにしたの？") > a and seen.find("……ただいま") > seen.find("……きょうは、なにしたの？"), tag + "grandma, then ……ただいま %s" % str(seen))
-	check(get_tree().current_scene and get_tree().current_scene.name == "Ending", tag + "then the treasure box")
-	var end_scene := get_tree().current_scene
-	if end_scene == null or end_scene.name != "Ending":
-		Engine.time_scale = keep_scale
-		return
-	var box: TreasureBox = end_scene.get_node("TreasureBox")
-	await _until(func(): return box.is_open and box._tween == null, 40.0)
-	await _wait(0.5)
+	GameState.reset()
+	# 前の画面（タイトル）が上にかぶってタップを受けないよう、空の画面に切り替えておく
+	var old := get_tree().current_scene
+	var holder := Node.new()
+	get_tree().root.add_child(holder)
+	get_tree().current_scene = holder
+	if old and old != holder:
+		old.queue_free()
+	await get_tree().process_frame
+	var root := Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var box: TreasureBox = preload("res://ui/treasure_box.tscn").instantiate()
+	box.ending_mode = true
 	var every := GameState.every_item()
-	check(box.header_caption.text == Strings.EPILOGUE_TITLE and box._slots.size() == every.size() and every.size() >= 30,
-		tag + "final box: every route's items (%d)" % box._slots.size())
-	check(box._slots.all(func(sl): return sl.collected and not sl.missed and sl.note == ""), tag + "final box: no shadows, no notes")
-	check(box.page_count() > 1 and box.page_slots().size() < box._slots.size(), tag + "final box: pages (%d)" % box.page_count())
+	box.show_all(every)
+	root.add_child(box)
+	get_tree().root.add_child(root)
+	await _wait(0.3)
+	var revealed := [false]
+	box.reveal_finished.connect(func(): revealed[0] = true)
+	box.open()
+	await _until(func(): return revealed[0], 60.0)
+	await _wait(0.5)
+	check(box._slots.size() == every.size() and every.size() >= 30, tag + "every route's items (%d)" % box._slots.size())
+	check(box._slots.all(func(sl): return sl.collected and not sl.missed and sl.note == ""), tag + "no shadows, no notes")
+	check(box.page_count() > 1 and box.page_slots().size() < box._slots.size(), tag + "pages (%d)" % box.page_count())
 	var ids := {}
 	if touch:
 		for p in box.page_count():
@@ -733,7 +744,8 @@ func _play_epilogue(touch: bool) -> void:
 		await _wait(0.2)
 		check(box.page == box.page_count() - 2, tag + "まえ goes back a page")
 	else:
-		await _key(KEY_DOWN)
+		box.first_slot().grab_focus()
+		await _wait(0.1)
 		for p in box.page_count():
 			for sl in box.page_slots():
 				ids[sl.item.id] = true
@@ -746,16 +758,8 @@ func _play_epilogue(touch: bool) -> void:
 		check(f is ItemSlot and box._detail_name.text == (f as ItemSlot).item.display_name, tag + "the focused slot shows its line")
 		await _key(KEY_LEFT)
 	check(ids.size() == every.size(), tag + "every item can be seen across the pages (%d / %d)" % [ids.size(), every.size()])
-	# タイトルへ
-	var back: MenuItem = end_scene._list.get_child(0)
-	check(back.text == Strings.EPILOGUE_TO_TITLE, tag + "タイトルへ")
-	if touch:
-		await _touch(_to_screen(back.get_global_rect().get_center()))
-	else:
-		back.grab_focus()
-		await _key(KEY_ENTER)
-	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 6.0) and not GameState.epilogue
-		and GameState.day_count() == 10, tag + "back to the title, the main days restored")
+	root.queue_free()
+	holder.queue_free()
 	Engine.time_scale = keep_scale
 
 
@@ -767,7 +771,7 @@ const CAMEO_EXPECT := {
 	[2, 5]: [&"hatsukoi_d5_takeru"], [2, 7]: [&"hatsukoi_d7_takeru", &"hatsukoi_d7_fox"],
 	[5, 5]: [&"kamikakushi_d5_natsumi", &"kamikakushi_d5_takeru"], [5, 6]: [&"kamikakushi_d6_natsumi", &"kamikakushi_d6_takeru"],
 	[5, 8]: [&"kamikakushi_d8_bicycle", &"kamikakushi_d8_gakuban"],
-	[0, 5]: [&"normal_d5_fox", &"normal_d5_natsumi", &"normal_d5_takeru"], [0, 7]: [&"normal_d7_boxes", &"normal_d7_takeru"],
+	[0, 5]: [&"normal_d5_fox", &"normal_d5_natsumi", &"normal_d5_takeru"], [0, 7]: [&"normal_d7_bicycle", &"normal_d7_boxes", &"normal_d7_takeru"],
 }
 ## 話しかけると返す一言（ほかは話しかけられない）
 const CAMEO_LINES := {
@@ -1266,7 +1270,7 @@ func _natsumi_route() -> void:
 		check(str(paths.get(i, "")).ends_with("day_%02d_natsumi.tscn" % (i + 1)), "natsumi day %d swapped: %s" % [i + 1, paths.get(i, "")])
 	check(str(paths.get(9, "")).ends_with("day_10_natsumi_high.tscn"), "natsumi day 10 (high): %s" % paths.get(9, ""))
 	for id in [&"natsumi_paddy", &"natsumi", &"natsumi_river", &"natsumi_rain", &"natsumi_festival", &"natsumi_festival_home",
-			&"natsumi_sea", &"natsumi_movie", &"natsumi_okuribi", &"natsumi_typhoon", &"natsumi_senko"]:
+			&"natsumi_sea", &"natsumi_movie", &"natsumi_road", &"natsumi_typhoon", &"natsumi_senko"]:
 		check(GameState.has_talked(id), "natsumi talks: %s" % id)
 	for g in ["sketch", "kingyo", "kaigara", "senko"]:
 		check(GameState.has_flag(StringName(g + "_good")), "natsumi minigame high score: %s" % g)
@@ -1368,8 +1372,8 @@ var _kk := {}
 
 
 ## 1日目から歩いて、祠のわきの鈴を拾い、4日目に神社でお面の子と遊ぶ（なつみ・タケルには話しかけない）。
-## 7日目に送り火の煙をくぐると日付が「？？」になり、8・9日目は「？？」のまま色が抜ける。
-## 10日目は送り火の夜の神社で目覚め、日付が 8/31 までめくれて、バスで鈴が一度だけ鳴る
+## 6日目の最後に迎え火の煙をくぐると日付が「？？」になり、7〜9日目は「？？」のまま色が抜ける。
+## 10日目は送り火の夜の家の門口で目覚め（隣に祖父）、日付が 8/31 までめくれて、バスで鈴が一度だけ鳴る
 func _kamikakushi_route() -> void:
 	GameState.reset()
 	_kk.clear()
@@ -1387,7 +1391,7 @@ func _kamikakushi_route() -> void:
 	var bell_text_d1 := ""
 	var d10_start_time := -1.0
 	var d10_after_time := -1.0
-	var d7_card_before := ""
+	var d6_card_before := ""
 	Input.action_press("move_right")
 	var t := 0.0
 	while t < 600.0 and get_tree().current_scene == main:
@@ -1406,10 +1410,10 @@ func _kamikakushi_route() -> void:
 			max_ow[day] = maxf(max_ow.get(day, 0.0), tod.otherworld)
 		if day == 0 and GameState.is_collected(&"rusty_bell") and bell_text_d1 == "":
 			bell_text_d1 = GameState.find_item(&"rusty_bell").text()
-		if day == 6 and d7_card_before == "" and not Transition.is_busy():
-			d7_card_before = hud.card_text()
-		if day == 6:
-			cards["d7_end"] = hud.card_text()
+		if day == 5 and d6_card_before == "" and not Transition.is_busy():
+			d6_card_before = hud.card_text()
+		if day == 5:
+			cards["d6_end"] = hud.card_text()
 		if day == 9:
 			var L := GameState.DAY_LENGTH_PX
 			var p := (player.global_position.x - 9 * L) / L
@@ -1448,7 +1452,7 @@ func _kamikakushi_route() -> void:
 	check(GameState.has_talked(&"grandpa_bell"), "kamikakushi: grandpa notices the bell on day 3")
 	for i in range(3, 10):
 		check(str(paths.get(i, "")).ends_with("day_%02d_kamikakushi.tscn" % (i + 1)), "kamikakushi day %d swapped: %s" % [i + 1, paths.get(i, "")])
-	for id in [&"fox_rain", &"fox_festival", &"fox_market", &"fox_market_bye", &"fox_mukaebi", &"fox_hilltop", &"fox_okuribi", &"fox_gray", &"fox_shrine", &"grandpa_farewell_kk"]:
+	for id in [&"fox_rain", &"fox_festival", &"fox_market", &"fox_market_bye", &"fox_mukaebi", &"fox_hilltop", &"fox_entrance", &"fox_gray", &"fox_shrine", &"grandpa_gate_kk", &"grandpa_farewell_kk"]:
 		check(GameState.has_talked(id), "kamikakushi talks: %s" % id)
 	for id in [&"yomise_ame", &"fox_mask"]:
 		check(GameState.was_received(id), "kamikakushi: received %s" % id)
@@ -1468,13 +1472,16 @@ func _kamikakushi_route() -> void:
 		"onigokko よくできた: sunflower text %s" % GameState.find_item(&"gray_sunflower").text())
 	check(_kk.get("bell", []) == [true, 2], "bus: the bell rings only once %s" % str(_kk.get("bell")))
 	var unknown := Strings.DATE_MONTH % Strings.DATE_UNKNOWN + " " + Strings.DATE_DAY % Strings.DATE_UNKNOWN
-	check(not d7_card_before.contains(Strings.DATE_UNKNOWN) and cards.get("d7_end", "") == unknown,
-		"day 7: the date turns to ？？ beyond the smoke (%s -> %s)" % [d7_card_before, cards.get("d7_end", "")])
-	check(cards.get(7, "") == unknown and cards.get(8, "") == unknown, "days 8-9: date stays ？？ (%s / %s)" % [cards.get(7, ""), cards.get(8, "")])
-	check(max_ow.get(7, 0.0) > 0.9 and max_ow.get(8, 0.0) > 0.9 and max_ow.get(3, 0.0) == 0.0, "otherworld: colors fade on days 8-9 only %s" % str(max_ow))
+	check(d6_card_before.contains("13") and not d6_card_before.contains(Strings.DATE_UNKNOWN) and cards.get("d6_end", "") == unknown,
+		"day 6: 8/13, and the date turns to ？？ beyond the smoke at the end (%s -> %s)" % [d6_card_before, cards.get("d6_end", "")])
+	check(cards.get(6, "") == unknown and cards.get(7, "") == unknown and cards.get(8, "") == unknown,
+		"days 7-9: date stays ？？ (%s / %s / %s)" % [cards.get(6, ""), cards.get(7, ""), cards.get(8, "")])
+	check(max_ow.get(6, 0.0) > 0.9 and max_ow.get(7, 0.0) > 0.9 and max_ow.get(8, 0.0) > 0.9 and max_ow.get(3, 0.0) == 0.0 and max_ow.get(2, 0.0) == 0.0,
+		"otherworld: colors fade on days 7-9 %s" % str(max_ow))
+	check(max_ow.get(5, 0.0) > 0.3, "day 6: the colors start to fade beyond the smoke (%.2f)" % max_ow.get(5, 0.0))
 	check(max_ow.get(4, 0.0) > 0.3 and max_ow.get(4, 0.0) < 0.9, "day 5: the night market is faintly otherworldly (%.2f)" % max_ow.get(4, 0.0))
 	check(cards.get(9, "").ends_with("16") and cards.get("d10_after", "").ends_with("31"), "day 10: wakes on 8/16, flips to 8/31 (%s -> %s)" % [cards.get(9, ""), cards.get("d10_after", "")])
-	check(d10_start_time >= 0.89 and d10_after_time >= 0.0 and d10_after_time < 0.3, "day 10: night at the shrine, then morning (%.2f -> %.2f)" % [d10_start_time, d10_after_time])
+	check(d10_start_time >= 0.89 and d10_after_time >= 0.0 and d10_after_time < 0.3, "day 10: night at the gate, then morning (%.2f -> %.2f)" % [d10_start_time, d10_after_time])
 	check(TimeSkip.dates_between(Vector2i(8, 16), Vector2i(8, 31)).size() == 16, "time skip riffles 8/16..8/31")
 	var scene := get_tree().current_scene
 	check(scene and scene.name == "Ending", "kamikakushi: ending reached")
@@ -1483,8 +1490,9 @@ func _kamikakushi_route() -> void:
 		check(GameState.current_ending().id == &"kamikakushi" and end_box.header_caption.text == GameState.current_ending().title, "kamikakushi ending shown")
 		var ids := end_box._slots.map(func(sl): return sl.item.id)
 		check(ids.has(&"fox_mask") and ids.has(&"gray_sunflower") and ids.has(&"rusty_bell"), "kamikakushi: otherworld items stay in the box")
-		check(GameState.item_date(GameState.get_day(7)) == [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN] and GameState.item_date(GameState.get_day(9))[1] == "31",
-			"box: days 8-9 slots are dated ？？")
+		check(GameState.item_date(GameState.get_day(6)) == [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN] and GameState.item_date(GameState.get_day(7)) == [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
+			and GameState.item_date(GameState.get_day(8)) == [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN] and GameState.item_date(GameState.get_day(9))[1] == "31"
+			and GameState.item_date(GameState.get_day(5)) == ["8", "13"], "box: days 7-9 slots are dated ？？, day 6 is 8/13")
 	check(GameState.has_talked(&"grandma_laundry"), "kamikakushi day 4 shares the laundry scene")
 	# 4日目に「かえる」を選ぶと、ルートは立たない（データの上で）。親友・初恋ルートでは神社の場面にならない
 	var keep := GameState.flags.duplicate()
@@ -1813,7 +1821,7 @@ func _reply_lines(item: StringName, route: StringName) -> Array:
 ## 返事のデータ：フォルダの .tres をぜんぶ読み、ルート → 共通 → 「なんにも」の順に探す
 func _check_engawa_data() -> void:
 	var files := Array(DirAccess.get_files_at(EngawaReply.DIR)).filter(func(f): return f.ends_with(".tres"))
-	check(EngawaReply.all().size() == files.size() and files.size() >= 28, "engawa replies: every .tres in data/engawa is read (%d)" % files.size())
+	check(EngawaReply.all().size() == files.size() and files.size() >= 27, "engawa replies: every .tres in data/engawa is read (%d)" % files.size())
 	check(_reply_lines(&"river_stone", &"shinyu")[0].begins_with("おじいちゃん：あそこの せがれか"), "engawa reply: route first (shinyu river stone)")
 	check(_reply_lines(&"river_stone", &"normal")[0].begins_with("おじいちゃん：いい いしだ"), "engawa reply: then the shared one")
 	check(_reply_lines(&"no_such_item", &"normal") == ["おじいちゃん：そういう ひも ある"], "engawa reply: unknown item -> なんにも")
@@ -1863,25 +1871,26 @@ func _check_engawa_kamikakushi() -> void:
 	check(_engawa_lines("kamikakushi", 4)[-1] == "おじいちゃん：……さっき、すずの おとが した きが したな",
 		"engawa kamikakushi day 4: grandpa heard the bell after the reply %s" % str(_engawa_lines("kamikakushi", 4)))
 	check(_engawa_lines("kamikakushi", 5).has("ぼく：……おまつりの おく"), "engawa kamikakushi day 5: night market candy")
-	check(_engawa_lines("kamikakushi", 6)[-1] == "おじいちゃん：……", "engawa kamikakushi day 6: grandpa says nothing")
-	for d in [7, 8, 9]:
+	for d in [6, 7, 8, 9]:
 		var rec := _engawa_rec("kamikakushi", d)
 		check(rec.get("empty", false) and rec.get("lines", [1]).is_empty() and rec.get("ms", 0.0) > 1500.0 and rec.get("ms", 0.0) < 3500.0,
 			"engawa kamikakushi day %d: nobody there, only the smoke (%s)" % [d, str(rec)])
-	for d in [1, 2, 3, 4, 5, 6]:
+	for d in [1, 2, 3, 4, 5]:
 		check(not _engawa_rec("kamikakushi" if d >= 4 else "normal", d).get("empty", true), "engawa kamikakushi day %d: grandparents are there" % d)
-	# 異界の日：季節の色は7日目で止まり、10日目は本当の日付の進み具合
-	var s7 := GameState.summer_progress_of(GameState.get_day(6))
-	check(GameState.is_otherworld(GameState.get_day(7)) and GameState.is_otherworld(GameState.get_day(8)) and not GameState.is_otherworld(GameState.get_day(6)),
-		"kamikakushi: days 8-9 are otherworld days")
-	check(GameState.summer_progress_of(GameState.get_day(7)) == s7 and GameState.summer_progress_of(GameState.get_day(8)) == s7
-		and GameState.summer_progress_of(GameState.get_day(9)) > s7, "kamikakushi: the season stops at day 7 on days 8-9")
+	# 異界の日：季節の色は6日目（8/13）で止まり、10日目は本当の日付の進み具合
+	var s6 := GameState.summer_progress_of(GameState.get_day(5))
+	check(GameState.is_otherworld(GameState.get_day(6)) and GameState.is_otherworld(GameState.get_day(7)) and GameState.is_otherworld(GameState.get_day(8))
+		and not GameState.is_otherworld(GameState.get_day(5)), "kamikakushi: days 7-9 are otherworld days")
+	check(GameState.summer_progress_of(GameState.get_day(6)) == s6 and GameState.summer_progress_of(GameState.get_day(7)) == s6 and GameState.summer_progress_of(GameState.get_day(8)) == s6
+		and GameState.summer_progress_of(GameState.get_day(9)) > s6 and s6 == GameState.summer_progress(8, 13), "kamikakushi: the season stops at day 6 (8/13) on days 7-9")
 	check(GameState.day_date(GameState.get_day(9)) == ["8", "16"], "kamikakushi day 10: wakes on 8/16 (date_label_override)")
 
 
 func _check_engawa_normal() -> void:
 	check(_engawa_days() == [1, 2, 3, 4, 5, 6, 7, 8, 9], "engawa normal: days 1-9 %s" % str(_engawa_days()))
 	check(_engawa_lines("normal", 5) == ["おばあちゃん：よく にあってるよ"], "engawa normal day 5: festival mask %s" % str(_engawa_lines("normal", 5)))
+	check(_engawa_lines("normal", 7)[-2] == "おばあちゃん：……おぼんの あいだ、" and _engawa_lines("normal", 7)[-1] == "おばあちゃん：なんだか おとなびて みえたねえ",
+		"engawa normal day 7: grandma says he looked grown-up during obon %s" % str(_engawa_lines("normal", 7)))
 	check(_engawa_rec("normal", 9).get("picked") == &"straw_hat" and _engawa_lines("normal", 9) == ["おばあちゃん：あら、おじいちゃんの。にあうねえ"], "engawa normal day 9: straw hat")
 	for d in range(1, 10):
 		check(not _engawa_rec("normal", d).get("empty", true), "engawa normal day %d: grandparents are there" % d)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_06.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="r1"]
@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="r5"]
 [ext_resource type="Resource" path="res://data/npcs/fox_hilltop.tres" id="r6"]
 [ext_resource type="Script" path="res://world/glow_layer.gd" id="r7"]
+[ext_resource type="Script" path="res://world/smoke_gate.gd" id="r8"]
+[ext_resource type="Script" path="res://world/otherworld_zone.gd" id="r9"]
 
 [node name="Day06_kamikakushi" instance=ExtResource("base")]
 
@@ -59,6 +61,19 @@ width = 640
 [node name="FoxTop" parent="Props" instance=ExtResource("r3")]
 position = Vector2(3420, 604)
 npc_data = ExtResource("r6")
+
+[node name="Smoke" type="Node2D" parent="Props"]
+script = ExtResource("r8")
+position = Vector2(3560, 604)
+title = "煙のむこう"
+
+[node name="Otherworld" type="Node2D" parent="Props"]
+script = ExtResource("r9")
+from_x = 3200
+to_x = 9000
+ramp = 840
+strength = 1.0
+ambient = "autumn_insects"
 
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("r7")

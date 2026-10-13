@@ -11,9 +11,13 @@ extends Resource
 @export var title: String
 ## 空でなければ、DayData の items のかわりにこちらを使う（ルート用のアイテム）
 @export var items: Array[ItemData] = []
+## この差し替えの日付（月・日）。0 なら DayData の month / day のまま。
+## ルートごとに日付が違う日（親友の4日目は 7/28、初恋は 8/3、など）に使う
+@export var month := 0
+@export var day := 0
 @export_group("時間帯")
 ## 時間帯のキー（DayData.time_keys と同じ）。空なら [(0, 0.00), (1, 1.00)]。
-## 例：神隠しルートの10日目は [(0, 0.90), (0.36, 0.90), (0.36, 0.00), (1, 0.15)]。飛ぶ x は TimeSkip の暗転の中に入れる
+## 例：神隠しルートの10日目は [(0, 0.90), (0.15, 0.90), (0.15, 0.00), (1, 0.15)]。飛ぶ x は TimeSkip の暗転の中に入れる
 @export var time_keys: Array[Vector2] = []:
 	set(v):
 		time_keys = v

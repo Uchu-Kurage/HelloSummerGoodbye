@@ -36,11 +36,6 @@ npc_data = ExtResource("aunt")
 position = Vector2(1260, 604)
 npc_data = ExtResource("grandma_bon")
 
-[node name="Mukaebi" type="Node2D" parent="Props"]
-position = Vector2(1800, 604)
-script = ExtResource("prop")
-kind = 17
-
 [node name="Shoryouma" type="Node2D" parent="Props"]
 position = Vector2(2010, 604)
 script = ExtResource("nprop")
@@ -58,11 +53,6 @@ npc_data = ExtResource("cousin")
 
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("glow")
-
-[node name="MukaebiGlow" type="Node2D" parent="Props/Glow"]
-position = Vector2(1800, 604)
-script = ExtResource("prop")
-kind = 18
 
 [node name="Stars" type="Node2D" parent="Props/Glow"]
 position = Vector2(2100, 604)

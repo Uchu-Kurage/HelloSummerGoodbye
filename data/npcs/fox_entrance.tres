@@ -5,9 +5,9 @@
 
 [resource]
 script = ExtResource("1")
-id = &"fox_okuribi"
+id = &"fox_entrance"
 display_name = "おめんの子"
-lines = Array[String](["きょうで、かえらなきゃ いけないんだ。", "……ひとりは、もう いやだ。", "いっしょに いこう。", "ぼく：……うん", "@event smoke", "@leave"])
+lines = Array[String](["ここが、ぼくの いるところ。", "ほおずきが、みちを てらして くれるんだ。", "ぼく：……かえれる？", "……おくりびの よるにはね。"])
 auto_talk = true
 sprite = ExtResource("sprite")
 placeholder_color = Color(0.851, 0.439, 0.353, 1)

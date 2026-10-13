@@ -28,7 +28,7 @@ const WALK_FPS := 6.0
 
 ## 日の切り替わりの間は true
 var locked := false
-## 姿の大きさ（エピローグ「それから」では、おとなの背丈にする。歩き方・速さは同じ）
+## 姿の大きさ（おとなの背丈にするときなどに使う。歩き方・速さは同じ）
 var body_scale := 1.0
 ## 会話の間は true（会話を閉じると歩ける）
 var talking := false

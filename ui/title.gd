@@ -1,7 +1,7 @@
 extends Node2D
 ## タイトル画面。背景は1日目の景色をゆっくり横に流す。
 ## ブラウザは最初の操作まで音を鳴らせないので「タップして はじめる」を挟み、そのあとで音を有効にする。
-## タイトルの下に、見たエンディングの数の印（4つの丸）。4つすべて見たら、メニューに「それから」（エピローグ）が増える。
+## タイトルの下に、見たエンディングの数の印（4つの丸）。どれが足りないかは出さない。
 
 const SCROLL_SPEED := 36.0
 const MAIN_SCENE := "res://world/main.tscn"
@@ -104,9 +104,6 @@ func _build_ui() -> void:
 	_list.vertical = false
 	_menu_panel.add_child(_list)
 	_add_item(Strings.MENU_START, _on_start)
-	# 4つのエンディングをすべて見たら、エピローグ「それから」
-	if EndingRecord.all_seen():
-		_add_item(Strings.MENU_EPILOGUE, _on_epilogue)
 	# 開発用：ルートと日を選んでとぶ（デバッグ実行のときだけ）
 	if DebugJump.available():
 		_add_item(Strings.MENU_DEBUG, _on_debug)
@@ -162,14 +159,6 @@ func _on_start() -> void:
 	if Transition.is_busy():
 		return
 	GameState.reset()
-	SfxPlayer.stop_music()
-	Transition.change_scene(MAIN_SCENE)
-
-
-func _on_epilogue() -> void:
-	if Transition.is_busy():
-		return
-	GameState.start_epilogue()
 	SfxPlayer.stop_music()
 	Transition.change_scene(MAIN_SCENE)
 

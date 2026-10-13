@@ -4,7 +4,7 @@ extends Node2D
 ## 異界（神隠しルート）。この日の from_x〜to_x（日の中の座標）を歩いている間は、景色の色が抜け、環境音がかわる。
 ## - 色：その日の小物と背景の層に、色を抜くシェーダー（desaturate.gdshader）をかける。時間帯の色（CanvasModulate）と空の色も褪せさせる（TimeOfDay.set_otherworld）。
 ##   主人公と、夜の灯り（GlowLayer の下。青い提灯など）は色のまま
-## - 強さは strength（5日目の夜市はうすく、8・9日目はしっかり）。入るとき・出るときは ramp の幅でだんだん
+## - 強さは strength（5日目の夜市はうすく、7〜9日目はしっかり）。入るとき・出るときは ramp の幅でだんだん
 ## 新しい絵は描かず、ふだんの村の絵の色を抜いて使う。
 
 const DESATURATE := preload("res://world/shaders/desaturate.gdshader")
