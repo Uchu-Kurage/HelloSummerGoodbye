@@ -82,6 +82,15 @@ tools/      テーマ・データの生成ツール、自動の動作確認
 - 4つすべて見たか（`EndingRecord.all_seen()`）は、あとで老年期の章を開く条件に使う予定です。エピローグ「それから」はなくなりました
 - 宝箱は、全ルートのアイテムを並べてページ送り（「まえ」「つぎ」、キーボードは行のはしで左右）で見せる使い方（`TreasureBox.show_all`）も残してあります
 
+## 章「あの夏へ」（作業中）
+
+4つのエンディングをすべて見たあと、4つ目のエンディングの「つづける」から、スタッフロール → 章題「あの夏へ」→ 病室へ続きます（設計は DESIGN.md の 8.69999、シナリオは `docs/scenario/老年期・破・急 シナリオ（初稿）.md`）。段階ごとに作っていて、いまは**段階1（土台）**までです。
+
+- 日の並びは `data/chapter/chapter_day_list.tres`（`GameState.start_chapter()` で `day_list` を差し替える）。DayData に主人公の姿（`player_form`）・メニューの種類（`menu_kind`）・縁側の場面の種類（`engawa_kind`）がある
+- 章のメニューは宝箱のかわりにポケット／カメラ（`TreasureBox` の見出しと並べるものが変わる）。写真のデータは `PhotoData`（`data/photo_data.gd`）
+- 見たエンディングの記録（`user://endings.cfg`）に、章を終えたかと、親友ルートで缶に入れたアイテムの ID も持つ（`EndingRecord`）
+- 自動の動作確認の一部だけ試すとき：`godot --headless res://tools/smoke_test.tscn -- chapter`（章の入り方・主人公の姿・ポケットとカメラ・章の終わり）／`-- paging`（タイトルの印・宝箱のページ送り・章）
+
 ## 他ルートの人物の顔出しを足す
 
 `res://data/cameos/` に CameoData（`.tres`）を1つ足すだけで、その日の道に出ます（`world/cameo.tscn`。日のシーンの土台が置きます）。

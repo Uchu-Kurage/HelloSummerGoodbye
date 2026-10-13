@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"chapter_nurse"
+display_name = "看護師"
+lines = Array[String](["ご主人、今日もありがとうございます"])
+placeholder_color = Color(0.7, 0.85, 0.88, 1)
+height = 165.0
+skin_color = Color(0.886, 0.722, 0.58, 1)
+hair_color = Color(0.2, 0.17, 0.15, 1)
+shirt_color = Color(0.92, 0.95, 0.96, 1)
+pants_color = Color(0.8, 0.88, 0.9, 1)
+hair_full = true
+stoop = 0.0

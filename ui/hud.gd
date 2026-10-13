@@ -157,7 +157,7 @@ func set_day(d: DayData) -> void:
 
 ## 日付の札に、月・日・タイトルを文字で入れる（異界の日の「？？」、10日目の時間が飛ぶところなど）
 func set_date(month: String, day: String, title: String) -> void:
-	_card_month.text = Strings.DATE_MONTH % month
+	_card_month.text = Strings.date_month(month)
 	_card_day.text = Strings.DATE_DAY % day
 	_card_title.text = title
 
@@ -541,6 +541,8 @@ func _bury() -> void:
 			_show_line(_talk_lines[prev])
 		return
 	GameState.give_away(picked, Strings.BURIED_NOTE)
+	# 急で缶から出すため、最後に入れたものを記録する（章「あの夏へ」）
+	EndingRecord.set_capsule_item(picked.id)
 	_open_message(Strings.PUT_IN_FORMAT % picked.display_name, picked.text(), picked.placeholder_color, picked.icon)
 
 

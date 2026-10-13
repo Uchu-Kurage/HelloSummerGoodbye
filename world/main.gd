@@ -9,6 +9,7 @@ const NEXT_DAY_START := 200.0
 const END_MARGIN := 240.0
 const START_X := 220.0
 const ENDING_SCENE := "res://ui/ending.tscn"
+const STAFF_ROLL_SCENE := "res://ui/staff_roll.tscn"
 const ENGAWA_SCENE := preload("res://ui/engawa.tscn")
 const TITLE_SCENE := "res://ui/title.tscn"
 
@@ -37,6 +38,7 @@ func _ready() -> void:
 	player.position = Vector2(x, Player.GROUND_Y)
 	camera.snap()
 	streamer.update_now()
+	player.set_form(GameState.player_form())
 	hud.player = player
 	hud.box = box
 	hud.set_day(GameState.current_day())
@@ -83,10 +85,14 @@ func _change_day(next: int) -> void:
 		camera.snap()
 		streamer.update_now()
 		GameState.set_current_day(next)
+		player.set_form(GameState.player_form())
 	var on_reveal := func(): hud.flip_to_day(d)
 	# 暗転のあと、日付の前に、終わった日（next - 1）の縁側の場面。最後の日（帰る日）の終わりにはない
 	var ended := next - 1
-	var interlude := func(): await engawa.play(ended)
+	# 章では、縁側の場面を出さない日がある
+	var interlude := Callable()
+	if GameState.engawa_kind(ended) == DayData.EngawaKind.NORMAL:
+		interlude = func(): await engawa.play(ended)
 	await Transition.play_day_change(GameState.day_date_text(d), GameState.day_title(d), on_dark, on_reveal, interlude)
 	player.locked = false
 	_changing_day = false
@@ -95,7 +101,8 @@ func _change_day(next: int) -> void:
 func _go_ending() -> void:
 	_ending = true
 	player.locked = true
-	Transition.change_scene(ENDING_SCENE)
+	# 章の終わりはスタッフロールへ（急の最後。いまは仮のつなぎ）
+	Transition.change_scene(STAFF_ROLL_SCENE if GameState.chapter else ENDING_SCENE)
 
 
 func _input(event: InputEvent) -> void:

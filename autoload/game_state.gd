@@ -18,9 +18,20 @@ const SUMMER_END := Vector2i(8, 31)
 const DAY_LIST_PATH := "res://data/day_list.tres"
 ## 秘密基地づくり（ペントミノ式の型はめ）の盤とピース
 const BASE_PUZZLE_PATH := "res://data/base_puzzle.tres"
+## 章「あの夏へ」の日の並び（老年期・破・急）。タイトルからは入らず、エンディングのあとの章への入り方で読み込む
+const CHAPTER_LIST_PATH := "res://data/chapter/chapter_day_list.tres"
+## 章のフィルムの枚数
+const FILM_MAX := 12
 const _MONTH_DAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 var day_list: DayList
+## 序の日の並び（章のあいだは day_list を章用に差し替えるので、こちらに取っておく）
+var main_day_list: DayList
+## 章「あの夏へ」を遊んでいるか
+var chapter := false
+## 章のフィルムの残り（破で撮るたびに減る）と、撮った写真（撮った順の PhotoData）
+var film_left := FILM_MAX
+var photos: Array[PhotoData] = []
 var current_day_index := 0
 ## 本編をはじめる日（ふだんは 0。デバッグのジャンプで変える）
 var start_day_index := 0
@@ -88,12 +99,18 @@ const HEART_MID := 5
 
 func _ready() -> void:
 	day_list = load(DAY_LIST_PATH)
+	main_day_list = day_list
 	_base_puzzle = load(BASE_PUZZLE_PATH)
 	var mask := find_item(&"festival_mask")
 	_mask_default_icon = mask.icon if mask else null
 
 
 func reset() -> void:
+	# 章からもどったら、序の日の並びにもどす
+	chapter = false
+	day_list = main_day_list
+	film_left = FILM_MAX
+	photos.clear()
 	collected.clear()
 	received.clear()
 	gone.clear()
@@ -121,6 +138,55 @@ func reset() -> void:
 		mask.icon = _mask_default_icon
 	current_day_index = 0
 	start_day_index = 0
+
+
+## 章「あの夏へ」を始める：記録をまっさらにして、日の並びを章用に差し替える
+func start_chapter() -> void:
+	reset()
+	chapter = true
+	day_list = load(CHAPTER_LIST_PATH)
+
+
+## いまの日の、宝箱のかわりの画面（章のポケット・カメラ。序は宝箱）
+func menu_kind() -> DayData.Menu:
+	return current_day().menu_kind if chapter else DayData.Menu.BOX
+
+
+## いまの日の、主人公の姿（序は子ども）
+func player_form() -> DayData.Form:
+	return current_day().player_form if chapter else DayData.Form.CHILD
+
+
+## 日の終わりの縁側の場面の種類（序はふつうの縁側）
+func engawa_kind(index: int) -> DayData.EngawaKind:
+	return get_day(index).engawa_kind if chapter else DayData.EngawaKind.NORMAL
+
+
+## ポケットに入っているもの（章で手に入れて、いま手もとにあるもの）
+func pocket_items() -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	for it in all_items():
+		if it and holds(it.id) and not out.has(it):
+			out.append(it)
+	return out
+
+
+## 撮った写真（現像前）を、撮った順の宝物の形で
+func photo_items() -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	for p in photos:
+		out.append(p.to_item())
+	return out
+
+
+## 見出しや押しボタンに出す名前（宝箱／ポケット／カメラ）
+func menu_name() -> String:
+	match menu_kind():
+		DayData.Menu.POCKET:
+			return Strings.POCKET
+		DayData.Menu.CAMERA:
+			return Strings.CAMERA
+	return Strings.BOX_TITLE
 
 
 func day_count() -> int:
@@ -404,7 +470,7 @@ func day_date(d: DayData) -> Array[String]:
 
 
 func day_date_text(d: DayData) -> String:
-	return Strings.DATE_FULL % day_date(d)
+	return Strings.date_full(day_date(d))
 
 
 ## 宝箱の枠の日付 [月, 日]（本当の日付。異界の日だけ「？？」）

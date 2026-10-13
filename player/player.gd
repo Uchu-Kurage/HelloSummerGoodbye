@@ -30,6 +30,11 @@ const WALK_FPS := 6.0
 var locked := false
 ## 姿の大きさ（おとなの背丈にするときなどに使う。歩き方・速さは同じ）
 var body_scale := 1.0
+## 姿（章「あの夏へ」：子ども／青年／老人）。老人だけダッシュできない。歩く速さは同じ
+var form: DayData.Form = DayData.Form.CHILD
+## 仮素材の姿ごとの背丈と色味（絵が入るまで）
+const FORM_SCALE := {DayData.Form.CHILD: 1.0, DayData.Form.YOUTH: 1.3, DayData.Form.ELDER: 1.2}
+const FORM_TINT := {DayData.Form.CHILD: Color.WHITE, DayData.Form.YOUTH: Color(1.0, 0.93, 0.85), DayData.Form.ELDER: Color(0.68, 0.68, 0.78)}
 ## 会話の間は true（会話を閉じると歩ける）
 var talking := false
 ## カメラ画面の左端（見えない壁）。これより左へは行けない
@@ -49,6 +54,7 @@ func _ready() -> void:
 	# 絵は大きく描いたものを小さくして使うので、ミップマップでなめらかにする
 	_visual.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_visual.draw.connect(_draw_body)
+	set_form(form)
 
 
 ## 少しのあいだ立ち止まる（アイテムを拾ったときなど）
@@ -58,6 +64,20 @@ func hold(seconds: float) -> void:
 
 func is_walking() -> bool:
 	return absf(velocity.x) > 1.0
+
+
+## 主人公の姿を切り替える（章の日の姿、村の青年期の回想）
+func set_form(f: DayData.Form) -> void:
+	form = f
+	body_scale = FORM_SCALE[f]
+	if _visual:
+		_visual.modulate = FORM_TINT[f]
+		_visual.queue_redraw()
+
+
+## ダッシュできるか（老人はできない）
+func can_dash() -> bool:
+	return form != DayData.Form.ELDER
 
 
 func is_dashing() -> bool:
@@ -74,7 +94,7 @@ func _physics_process(delta: float) -> void:
 		_press_t += delta
 	else:
 		_press_t = 0.0
-	var dash := clampf((_press_t - DASH_DELAY) / DASH_RAMP, 0.0, 1.0)
+	var dash := clampf((_press_t - DASH_DELAY) / DASH_RAMP, 0.0, 1.0) if can_dash() else 0.0
 	velocity = Vector2(dir * lerpf(WALK_SPEED, DASH_SPEED, dash), 0)
 	move_and_slide()
 	position.x = clampf(position.x, left_limit, right_limit)

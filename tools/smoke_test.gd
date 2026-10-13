@@ -28,11 +28,16 @@ func _ready() -> void:
 	EndingRecord.path = EPI_RECORD
 	DirAccess.remove_absolute(EPI_RECORD)
 	# 一部だけ確かめるとき：godot --headless res://tools/smoke_test.tscn -- paging
-	if OS.get_cmdline_user_args().has("paging"):
+	if OS.get_cmdline_user_args().has("chapter"):
+		for r in EndingRecord.ROUTES:
+			EndingRecord.mark(r)
+		await _check_chapter()
+	elif OS.get_cmdline_user_args().has("paging"):
 		for r in EndingRecord.ROUTES:
 			EndingRecord.mark(r)
 		await _check_title_marks()
 		await _check_box_paging()
+		await _check_chapter()
 	else:
 		await _run()
 	print("SMOKE ", "FAILED" if _fail else "OK")
@@ -283,6 +288,7 @@ func _run() -> void:
 	check(takeru_left_day7, "takeru goes home angry on day 7")
 	var buried := GameState.gone.keys().filter(func(k): return GameState.gone[k] == Strings.BURIED_NOTE)
 	check(buried.size() == 1, "one item buried in the time capsule %s" % str(buried))
+	check(buried.size() == 1 and EndingRecord.capsule_item() == buried[0], "capsule item recorded for the chapter: %s" % EndingRecord.capsule_item())
 	for id in [&"broken_katanuki", &"bug_cage", &"capsule_map", &"takeru_hat"]:
 		check(GameState.was_received(id), "received from takeru: %s" % id)
 	if get_tree().current_scene and get_tree().current_scene.name == "Ending":
@@ -407,6 +413,7 @@ func _run() -> void:
 	await _check_cameos()
 	await _check_title_marks()
 	await _check_box_paging()
+	await _check_chapter()
 	await _check_minigames()
 
 
@@ -758,8 +765,119 @@ func _check_box_paging_with(touch: bool) -> void:
 		check(f is ItemSlot and box._detail_name.text == (f as ItemSlot).item.display_name, tag + "the focused slot shows its line")
 		await _key(KEY_LEFT)
 	check(ids.size() == every.size(), tag + "every item can be seen across the pages (%d / %d)" % [ids.size(), every.size()])
+	# holder は current_scene のまま残す（次の change_scene_to_file が片づける）
 	root.queue_free()
-	holder.queue_free()
+	Engine.time_scale = keep_scale
+
+
+# --- 章「あの夏へ」（段階1：土台） ----------------------------------------------------
+
+func _check_chapter() -> void:
+	var keep_scale := Engine.time_scale
+	Engine.time_scale = 3.0
+	# 入り方：3つ以下では始まらず、4つで始まる
+	DirAccess.remove_absolute(EPI_RECORD)
+	for n in 3:
+		EndingRecord.mark(EndingRecord.ROUTES[n])
+	check(not EndingRecord.chapter_pending() and not EndingRecord.chapter_seen(), "chapter: not pending with 3 endings seen")
+	EndingRecord.set_capsule_item(&"blue_pencil")
+	check(EndingRecord.capsule_item() == &"blue_pencil", "chapter: the capsule item is recorded")
+	GameState.reset()
+	get_tree().change_scene_to_file("res://ui/ending.tscn")
+	await _wait(0.8)
+	var ending := get_tree().current_scene
+	var first: MenuItem = ending._list.get_child(0)
+	check(ending.name == "Ending" and first.text == Strings.ENDING_RETRY, "chapter: 3 endings -> the ending offers もういちど (%s)" % first.text)
+	EndingRecord.mark(EndingRecord.ROUTES[3])
+	check(EndingRecord.chapter_pending(), "chapter: pending once all 4 endings are seen")
+	get_tree().change_scene_to_file("res://ui/ending.tscn")
+	await _wait(0.8)
+	ending = get_tree().current_scene
+	first = ending._list.get_child(0)
+	check(first.text == Strings.ENDING_CONTINUE, "chapter: the 4th ending offers つづける (%s)" % first.text)
+	first.pressed.emit()
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "StaffRoll", 6.0), "chapter: staff roll after the ending")
+	await _wait(0.8)
+	await _key(KEY_ENTER)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "ChapterTitle", 40.0), "chapter: staff roll flows out to the chapter title (fast-forward)")
+	var ct := get_tree().current_scene
+	var shown := false
+	for c in ct.get_children():
+		if c is CenterContainer:
+			shown = (c.get_child(0).get_child(0) as Label).text == Strings.CHAPTER_TITLE
+	check(shown, "chapter: the title card says あの夏へ")
+	await _wait(0.3)
+	await _key(KEY_ENTER)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Main" and GameState.chapter, 10.0), "chapter: starts in the hospital after the title")
+	var main := get_tree().current_scene
+	await _wait(0.8)
+	var hud: Hud = main.get_node("HUD")
+	var player: Player = main.get_node("Player")
+	check(GameState.day_count() == 1 and GameState.current_day().title == "病室", "chapter: its own day list")
+	check(hud.card_text().contains("8月") and hud.card_text().contains("12"), "chapter: the date card is 8月 12日 (%s)" % hud.card_text())
+	check(player.form == DayData.Form.ELDER and not player.can_dash(), "chapter: the old man cannot dash")
+	# ダッシュできない：右を長押ししても歩く速さのまま。子どもに戻すと走れる
+	var top := 0.0
+	player.position.x = 300.0
+	Input.action_press("move_right")
+	for i in 90:
+		await get_tree().physics_frame
+		top = maxf(top, absf(player.velocity.x))
+	Input.action_release("move_right")
+	check(top > 1.0 and top <= Player.WALK_SPEED + 1.0, "chapter: elder keeps the walking speed (%.0f)" % top)
+	player.set_form(DayData.Form.YOUTH)
+	top = 0.0
+	player.position.x = 300.0
+	Input.action_press("move_right")
+	for i in 90:
+		await get_tree().physics_frame
+		top = maxf(top, absf(player.velocity.x))
+	Input.action_release("move_right")
+	check(player.can_dash() and top > Player.WALK_SPEED + 1.0, "chapter: the young man can dash (%.0f)" % top)
+	player.set_form(DayData.Form.ELDER)
+	# ポケット（宝箱のかわり）
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	check(GameState.menu_name() == Strings.POCKET, "chapter: the pocket replaces the treasure box")
+	TouchControls.fire_action(&"open_box")
+	await _wait(1.0)
+	check(box.is_open and box._title.text == Strings.POCKET and box._slots.is_empty(), "chapter: the pocket opens, empty at first (%s)" % box._title.text)
+	check(box._detail_text.text == Strings.POCKET_EMPTY, "chapter: the empty pocket says so (%s)" % box._detail_text.text)
+	await _key(KEY_ESCAPE)
+	await _wait(0.8)
+	check(not box.is_open, "chapter: Esc closes the pocket")
+	# カメラ（破で使う。ここでは画面だけ確かめる）：フィルムの残りと、現像前の写真の日付と場所だけ
+	var day := GameState.current_day()
+	day.menu_kind = DayData.Menu.CAMERA
+	var ph := PhotoData.new()
+	ph.id = &"test_photo"
+	ph.month = 8
+	ph.day = 14
+	ph.place = "川の飛び込み岩"
+	GameState.photos.append(ph)
+	GameState.film_left = 11
+	TouchControls.fire_action(&"open_box")
+	await _wait(1.0)
+	check(box.is_open and box._title.text == Strings.CAMERA and box._slots.size() == 1, "chapter: the camera opens with the photo (%s)" % box._title.text)
+	check(box._count.text == Strings.CAMERA_FILM % 11, "chapter: the film left is shown (%s)" % box._count.text)
+	box._slots[0].pressed.emit()
+	await _wait(0.2)
+	check(box._detail_name.text == Strings.CAMERA_PHOTO_NAME and box._detail_date.text == "8/14　川の飛び込み岩" and box._detail_text.text == "",
+		"chapter: the camera shows date and place only (%s / %s)" % [box._detail_name.text, box._detail_date.text])
+	await _key(KEY_ESCAPE)
+	await _wait(0.8)
+	day.menu_kind = DayData.Menu.POCKET
+	# 章のおわり：右はしへ行くと、スタッフロールを経てタイトルへ。章を終えたことが記録される
+	player.position.x = GameState.world_length() - main.END_MARGIN + 20.0
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "StaffRoll", 10.0), "chapter: the end of the chapter goes to the staff roll")
+	await _wait(0.8)
+	await _key(KEY_ENTER)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 40.0), "chapter: then back to the title")
+	check(EndingRecord.chapter_seen() and not EndingRecord.chapter_pending() and not GameState.chapter and GameState.day_count() == 10,
+		"chapter: finished is recorded; the main days are restored")
+	# 終えたあとは、4つ目のエンディングでも章へ続かない
+	get_tree().change_scene_to_file("res://ui/ending.tscn")
+	await _wait(0.8)
+	check(get_tree().current_scene._list.get_child(0).text == Strings.ENDING_RETRY, "chapter: after finishing, the ending offers もういちど again")
 	Engine.time_scale = keep_scale
 
 

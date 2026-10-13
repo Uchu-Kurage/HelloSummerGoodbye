@@ -92,6 +92,14 @@ const TIME_GLIMPSE_VANISH := 1.2
 const TIME_PULSE := 1.2
 const PANEL_SCALE_FROM := 0.96
 const FLOAT_DISTANCE := 8.0
+## 章題「あの夏へ」：フェードイン・静止・フェードアウト（合計 3 秒）
+const TIME_CHAPTER_IN := 0.9
+const TIME_CHAPTER_HOLD := 1.2
+const TIME_CHAPTER_OUT := 0.9
+## スタッフロールの流れる速さ（px／秒）と、行の間隔
+const STAFF_SPEED := 56.0
+const STAFF_LINE_GAP := 12
+## 暗い画面でのフェード（エンディングから章題へなど）
 ## 演出の早送り倍率
 const SKIP_SPEED := 6.0
 const TRANS := Tween.TRANS_SINE

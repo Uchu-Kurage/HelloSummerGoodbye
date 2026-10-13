@@ -81,6 +81,8 @@ func open() -> void:
 		return
 	is_open = true
 	covered = false
+	# 宝箱のかわりの画面（章ではポケット／カメラ）の名前に
+	(_list.get_child(1) as MenuItem).text = GameState.menu_name()
 	get_tree().paused = true
 	UiAnim.fade(_shade, 1.0, UiTokens.TIME_PANEL)
 	UiAnim.fade(_back, 1.0, UiTokens.TIME_PANEL)

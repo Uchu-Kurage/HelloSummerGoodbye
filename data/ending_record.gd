@@ -3,10 +3,13 @@ extends RefCounted
 ## 見たエンディングの記録（DESIGN.md「3. 作らないもの」の例外の、小さなセーブ）。
 ## user:// の ConfigFile に、ノーマル・親友・初恋・神隠しの4つを真偽値で持つ。それ以外（アイテム・好感度など）は保存しない。
 ## Web 版では user:// はブラウザ（IndexedDB）に残る。記録を消す操作はつけない。
-## 4つすべて見たかは、あとで老年期の章を開く条件に使う予定（all_seen）。タイトルの印（EndingMarks）は見た数だけ出す。
+## 4つすべて見たか（all_seen）は、章「あの夏へ」を開く条件に使う。タイトルの印（EndingMarks）は見た数だけ出す。
+## 章のために、ほかに2つだけ持つ：章を終えたか（chapter_seen）と、親友ルート9日目にタイムカプセルへ入れたアイテムの ID（capsule_item。急で缶から出す）。
 
 const PATH := "user://endings.cfg"
 const SECTION := "seen"
+## 章「あの夏へ」の記録の置き場所
+const CHAPTER_SECTION := "chapter"
 ## GameState.current_route() の値（初恋は高・中・低のどれでも hatsukoi）
 const ROUTES: Array[StringName] = [&"normal", &"shinyu", &"hatsukoi", &"kamikakushi"]
 
@@ -50,3 +53,37 @@ static func seen_count() -> int:
 ## 4つすべて見たか（老年期の章を開く条件に使う予定）
 static func all_seen() -> bool:
 	return seen_count() == ROUTES.size()
+
+
+## 章「あの夏へ」を最後まで遊んだことにする
+static func mark_chapter_seen() -> void:
+	var cf := _load()
+	cf.set_value(CHAPTER_SECTION, "seen", true)
+	_save(cf)
+
+
+static func chapter_seen() -> bool:
+	return bool(_load().get_value(CHAPTER_SECTION, "seen", false))
+
+
+## 章がこのあと始まるか（4つすべて見ていて、まだ終えていない）
+static func chapter_pending() -> bool:
+	return all_seen() and not chapter_seen()
+
+
+## 親友ルート9日目にタイムカプセルへ入れたアイテムを記録する（何度か遊んだら、最後のもの）
+static func set_capsule_item(id: StringName) -> void:
+	var cf := _load()
+	cf.set_value(CHAPTER_SECTION, "capsule_item", String(id))
+	_save(cf)
+
+
+## 記録したタイムカプセルのアイテムの ID（記録がなければ空）
+static func capsule_item() -> StringName:
+	return StringName(String(_load().get_value(CHAPTER_SECTION, "capsule_item", "")))
+
+
+static func _save(cf: ConfigFile) -> void:
+	var err := cf.save(path)
+	if err != OK:
+		push_warning("見たエンディングの記録を保存できなかった: %d" % err)
