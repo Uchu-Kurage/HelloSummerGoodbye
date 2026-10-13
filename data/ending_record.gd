@@ -3,7 +3,7 @@ extends RefCounted
 ## 見たエンディングの記録（DESIGN.md「3. 作らないもの」の例外の、小さなセーブ）。
 ## user:// の ConfigFile に、ノーマル・親友・初恋・神隠しの4つを真偽値で持つ。それ以外（アイテム・好感度など）は保存しない。
 ## Web 版では user:// はブラウザ（IndexedDB）に残る。記録を消す操作はつけない。
-## 4つすべて見ると、タイトル画面に「それから」が出る。
+## 4つすべて見たかは、あとで老年期の章を開く条件に使う予定（all_seen）。タイトルの印（EndingMarks）は見た数だけ出す。
 
 const PATH := "user://endings.cfg"
 const SECTION := "seen"
@@ -47,6 +47,6 @@ static func seen_count() -> int:
 	return n
 
 
-## 4つすべて見たか（「それから」を出す）
+## 4つすべて見たか（老年期の章を開く条件に使う予定）
 static func all_seen() -> bool:
 	return seen_count() == ROUTES.size()

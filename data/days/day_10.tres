@@ -49,7 +49,7 @@ script = ExtResource("v_script")
 condition = SubResource("cond_kk")
 scene_path = "res://days/variants/day_10_kamikakushi.tscn"
 title = "お盆（送り火）"
-time_keys = Array[Vector2]([Vector2(0, 0.9), Vector2(0.36, 0.9), Vector2(0.36, 0), Vector2(1, 0.15)])
+time_keys = Array[Vector2]([Vector2(0, 0.9), Vector2(0.15, 0.9), Vector2(0.15, 0), Vector2(1, 0.15)])
 date_label_override = "8/16"
 
 [resource]

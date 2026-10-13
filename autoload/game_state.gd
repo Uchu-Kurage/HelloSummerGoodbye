@@ -16,17 +16,11 @@ const DAY_LENGTH_PX := 3840.0
 const SUMMER_START := Vector2i(7, 20)
 const SUMMER_END := Vector2i(8, 31)
 const DAY_LIST_PATH := "res://data/day_list.tres"
-## エピローグ「それから」の日（day_list には入れず、タイトルの「それから」から読み込む）
-const EPILOGUE_DAY_PATH := "res://data/days/epilogue.tres"
 ## 秘密基地づくり（ペントミノ式の型はめ）の盤とピース
 const BASE_PUZZLE_PATH := "res://data/base_puzzle.tres"
 const _MONTH_DAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 var day_list: DayList
-## 本編の日の並び（エピローグのあいだは day_list をエピローグの1日だけにするので、こちらに取っておく）
-var main_day_list: DayList
-## エピローグ「それから」を遊んでいるか
-var epilogue := false
 var current_day_index := 0
 ## 本編をはじめる日（ふだんは 0。デバッグのジャンプで変える）
 var start_day_index := 0
@@ -94,16 +88,12 @@ const HEART_MID := 5
 
 func _ready() -> void:
 	day_list = load(DAY_LIST_PATH)
-	main_day_list = day_list
 	_base_puzzle = load(BASE_PUZZLE_PATH)
 	var mask := find_item(&"festival_mask")
 	_mask_default_icon = mask.icon if mask else null
 
 
 func reset() -> void:
-	# エピローグからもどったら、本編の日の並びにもどす
-	epilogue = false
-	day_list = main_day_list
 	collected.clear()
 	received.clear()
 	gone.clear()
@@ -385,9 +375,17 @@ func _day_spec(d: DayData) -> Resource:
 	return v if v else d
 
 
-## 異界の日か（神隠しルートの8・9日目）
+## 異界の日か（神隠しルートの7〜9日目）
 func is_otherworld(d: DayData) -> bool:
 	return _day_spec(d).is_otherworld
+
+
+## その日の本当の日付（月, 日）。ルートの差し替え（DayVariant）に month / day があればそちら、なければ DayData の値
+func day_month_day(d: DayData) -> Vector2i:
+	var v := day_variant(d)
+	if v and v.month > 0 and v.day > 0:
+		return Vector2i(v.month, v.day)
+	return Vector2i(d.month, d.day)
 
 
 ## 日付の札・日の切り替わり・看板に出す [月, 日]（文字）。
@@ -401,7 +399,8 @@ func day_date(d: DayData) -> Array[String]:
 		push_warning("date_label_override は「月/日」の形で書く: " + o)
 	if is_otherworld(d):
 		return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
-	return [str(d.month), str(d.day)]
+	var md := day_month_day(d)
+	return [str(md.x), str(md.y)]
 
 
 func day_date_text(d: DayData) -> String:
@@ -412,7 +411,8 @@ func day_date_text(d: DayData) -> String:
 func item_date(d: DayData) -> Array[String]:
 	if is_otherworld(d):
 		return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
-	return [str(d.month), str(d.day)]
+	var md := day_month_day(d)
+	return [str(md.x), str(md.y)]
 
 
 func day_title(d: DayData) -> String:
@@ -447,7 +447,7 @@ func current_route() -> StringName:
 	return &"normal"
 
 
-## 縁側の場面に誰もいない日か：異界の日と、異界に入った日（次の日が異界の日。神隠しルートの7日目）
+## 縁側の場面に誰もいない日か：異界の日と、異界に入った日（次の日が異界の日。神隠しルートの6日目）
 func engawa_empty(index: int) -> bool:
 	if is_otherworld(get_day(index)):
 		return true
@@ -518,22 +518,11 @@ func day_for_item(item: ItemData) -> DayData:
 	return null
 
 
-## エピローグ「それから」を始める：日の並びを、エピローグの1日（8/31）だけにする。アイテムは置かない
-func start_epilogue() -> void:
-	reset()
-	epilogue = true
-	var list := DayList.new()
-	var days: Array[DayData] = [load(EPILOGUE_DAY_PATH) as DayData]
-	list.days = days
-	list.endings = main_day_list.endings
-	day_list = list
-
-
-## 全ルートのアイテム（エピローグの最後の宝箱）。日の順に、本編の日とルートの差し替えのアイテムをすべて。
+## 全ルートのアイテム（宝箱にぜんぶ並べるとき。TreasureBox.show_all）。日の順に、本編の日とルートの差し替えのアイテムをすべて。
 ## 人に返すもの（色えんぴつ）は入れない
 func every_item() -> Array[ItemData]:
 	var out: Array[ItemData] = []
-	for d in main_day_list.days:
+	for d in day_list.days:
 		var lists: Array = [d.items]
 		for v in d.variants:
 			if v:
@@ -545,23 +534,18 @@ func every_item() -> Array[ItemData]:
 	return out
 
 
-## 本編での、そのアイテムの日付 [月, 日]（異界の日の差し替えのアイテムは「？？」）。エピローグの最後の宝箱で使う
+## そのアイテムの日付 [月, 日]（ルートの差し替えの日付。異界の日のアイテムは「？？」）。全ルートを並べた宝箱で使う
 func main_item_date(item: ItemData) -> Array[String]:
-	var d := main_day_for_item(item)
+	var d := day_for_item(item)
 	if d == null:
 		return ["", ""]
 	for v in d.variants:
-		if v and v.items.has(item) and v.is_otherworld:
-			return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
+		if v and v.items.has(item):
+			if v.is_otherworld:
+				return [Strings.DATE_UNKNOWN, Strings.DATE_UNKNOWN]
+			if v.month > 0 and v.day > 0:
+				return [str(v.month), str(v.day)]
 	return [str(d.month), str(d.day)]
-
-
-## 本編の日（エピローグのあいだも、本編の日付で探す）
-func main_day_for_item(item: ItemData) -> DayData:
-	for d in main_day_list.days:
-		if d.day_number == item.day_number:
-			return d
-	return null
 
 
 ## 夏の進み具合（0.0〜1.0）。空の色・環境音などはこの値から決める
@@ -573,14 +557,12 @@ func summer_progress(month: int, day: int) -> float:
 
 ## その日の夏の進み具合。異界の日は、異界に入る直前の日（異界の日でない、いちばん近い前の日）の値で止める
 func summer_progress_of(d: DayData) -> float:
-	# エピローグは、夏の最後（1.0）の色で止める
-	if epilogue:
-		return 1.0
 	var i := day_list.days.find(d)
 	while i > 0 and is_otherworld(get_day(i)):
 		i -= 1
 	var base := get_day(i) if i >= 0 else d
-	return summer_progress(base.month, base.day)
+	var md := day_month_day(base)
+	return summer_progress(md.x, md.y)
 
 
 static func _day_of_year(month: int, day: int) -> int:

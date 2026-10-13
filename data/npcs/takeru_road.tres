@@ -10,7 +10,7 @@ require_all = Array[StringName]([&"takeru_d7_jump"])
 
 [resource]
 script = ExtResource("1")
-id = &"takeru_okuribi"
+id = &"takeru_road"
 display_name = "タケル"
 lines = Array[String](["ぼく：らいねんも、ここで とびこもうな", "……。", "どうせ おまえは、らいねんも これるもんな。", "@choice なんで おこってるの？ | ……", "……もう いい。かえる。", "@leave"])
 appear_if = SubResource("appear")

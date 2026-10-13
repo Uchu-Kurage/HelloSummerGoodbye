@@ -4,7 +4,7 @@ extends Control
 ## ゲーム中（ending_mode = false）：開いている間はゲームを止める。Tab / Esc / もどる で閉じる。
 ## エンディング（ending_mode = true）：ふたが開き、拾ったアイテムが1つずつ順に現れる。
 ## えらぶとき（pick）：手もとにあるものを1つ選ぶ。会話の @bury（タイムカプセルに入れる）で使う。
-## ぜんぶ見せるとき（show_all。エピローグ「それから」の最後）：渡したアイテムを、そろった状態で並べる（影・「うめた」などは出さない）。
+## ぜんぶ見せるとき（show_all）：渡したアイテムを、そろった状態で並べる（影・「うめた」などは出さない）。
 ## 1画面に入らなければページ送りにする（「まえ」「つぎ」のボタン。キーボードは、行のはしで左右を押すと となりのページへ）。
 
 signal closed
@@ -180,7 +180,7 @@ func _build_tin() -> void:
 	dv.add_child(_detail_text)
 
 
-## 渡したアイテムを、ぜんぶそろった状態で並べる（エピローグ「それから」の最後の宝箱）。1画面に入らなければページ送り
+## 渡したアイテムを、ぜんぶそろった状態で並べる。1画面に入らなければページ送り
 func show_all(items: Array[ItemData]) -> void:
 	_all = items
 	_paged = true
@@ -383,7 +383,7 @@ func _show_detail(s: ItemSlot) -> void:
 	if s == null and ending_mode and not _all.is_empty():
 		_detail_name.text = Strings.ENDING_FOUND_TITLE
 		_detail_date.text = ""
-		_detail_text.text = Strings.EPILOGUE_FOUND % _found[1]
+		_detail_text.text = Strings.ALL_FOUND % _found[1]
 	elif s == null and ending_mode:
 		_detail_name.text = Strings.ENDING_FOUND_TITLE
 		if ending_message != "":
@@ -398,7 +398,7 @@ func _show_detail(s: ItemSlot) -> void:
 		_detail_date.text = ""
 		_detail_text.text = _pick_hint if _pick_mode else Strings.BOX_HINT_SELECT
 	elif not _all.is_empty():
-		# ぜんぶ見せるとき：日付だけ（「7/27」。異界の日は「？？/？？」）
+		# ぜんぶ見せるとき：日付だけ（「7/24」。異界の日は「？？/？？」）
 		_detail_name.text = s.item.display_name
 		_detail_date.text = Strings.BOX_MISSED_DATE % GameState.main_item_date(s.item)
 		_detail_text.text = s.item.text()
@@ -419,7 +419,7 @@ func _show_detail(s: ItemSlot) -> void:
 		_detail_text.text = Strings.BOX_EMPTY_DESC
 
 
-## 影の枠に出すヒント（「7/27　かわらの どこか」）。場所のヒントがなければ日付だけ
+## 影の枠に出すヒント（「7/24　かわらの どこか」）。場所のヒントがなければ日付だけ
 static func missed_hint(item: ItemData) -> String:
 	var d := GameState.day_for_item(item)
 	var date := Strings.BOX_MISSED_DATE % GameState.item_date(d) if d else ""

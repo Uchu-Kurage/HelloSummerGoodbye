@@ -5,9 +5,9 @@
 
 [resource]
 script = ExtResource("1")
-id = &"natsumi_okuribi"
+id = &"natsumi_road"
 display_name = "なつみ"
-lines = Array[String](["おくりび、さみしいね。", "みんな、かえっちゃうから。", "……じゃあね。", "@leave"])
+lines = Array[String](["なつやすみも、もう はんぶん すぎちゃったね。", "……じゃあね。", "@leave"])
 auto_talk = true
 sprite = ExtResource("sprite")
 placeholder_color = Color(0.910, 0.655, 0.627, 1)

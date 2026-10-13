@@ -24,7 +24,7 @@ extends Resource
 		time_keys = v
 		TimeKeys.warn_if_unsorted(v, resource_path)
 @export_group("異界と日付")
-## 異界の日（神隠しルートの8・9日目）。色を褪せさせ、季節の色を止め、日付の札を「？？」にする
+## 異界の日（神隠しルートの7〜9日目）。色を褪せさせ、季節の色を止め、日付の札を「？？」にする
 @export var is_otherworld := false
 ## 日付の札・日の切り替わりに出す日付を「月/日」の形で上書きする（例：「？？/？？」「8/16」）。空なら month/day。
 ## 宝箱の枠は本当の日付のまま（異界の日だけ「？？」）

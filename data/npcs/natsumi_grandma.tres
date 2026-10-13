@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"natsumi_grandma"
 display_name = "なつみの おばあちゃん"
-lines = Array[String](["なつみの おともだちね。", "きょうは おぼんだから、はまで あそぶだけよ。", "うみには はいらないこと。"])
+lines = Array[String](["なつみの おともだちね。", "もうすぐ おぼんだから、はまで あそぶだけよ。", "うみには はいらないこと。"])
 repeat_lines = Array[String](["とおくへ いかないでね。"])
 placeholder_color = Color(0.62, 0.66, 0.72, 1)
 height = 150.0

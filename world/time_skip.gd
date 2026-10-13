@@ -60,7 +60,7 @@ func _skip(hud: Hud) -> void:
 	done = true
 	_player.locked = true
 	var dd := _day()
-	var real := Vector2i(dd.month, dd.day)
+	var real := GameState.day_month_day(dd)
 	var t := title if title != "" else dd.title
 	var on_dark := func():
 		_player.position.x = global_position.x + push

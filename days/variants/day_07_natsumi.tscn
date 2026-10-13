@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
 [ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
 [ext_resource type="Resource" path="res://data/npcs/natsumi_movie.tres" id="n_movie"]
-[ext_resource type="Resource" path="res://data/npcs/natsumi_okuribi.tres" id="n_okuribi"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi_road.tres" id="n_okuribi"]
 [ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
 
 [node name="Day07_natsumi" instance=ExtResource("base")]
@@ -33,20 +33,15 @@ vertical_alignment = 1
 position = Vector2(1190, 604)
 npc_data = ExtResource("n_movie")
 
-[node name="Okuribi1" type="Node2D" parent="Props"]
+[node name="Streetlight1" type="Node2D" parent="Props"]
 position = Vector2(2450, 604)
 script = ExtResource("prop")
-kind = 17
+kind = 11
 
-[node name="Okuribi2" type="Node2D" parent="Props"]
+[node name="Streetlight2" type="Node2D" parent="Props"]
 position = Vector2(2950, 604)
 script = ExtResource("prop")
-kind = 17
-
-[node name="Okuribi3" type="Node2D" parent="Props"]
-position = Vector2(3400, 604)
-script = ExtResource("prop")
-kind = 17
+kind = 11
 
 [node name="NatsumiRoad" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2760, 604)
@@ -60,17 +55,12 @@ position = Vector2(900, 604)
 script = ExtResource("prop")
 kind = 25
 
-[node name="Okuribi1Glow" type="Node2D" parent="Props/Glow"]
+[node name="Streetlight1Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(2450, 604)
 script = ExtResource("prop")
-kind = 18
+kind = 12
 
-[node name="Okuribi2Glow" type="Node2D" parent="Props/Glow"]
+[node name="Streetlight2Glow" type="Node2D" parent="Props/Glow"]
 position = Vector2(2950, 604)
 script = ExtResource("prop")
-kind = 18
-
-[node name="Okuribi3Glow" type="Node2D" parent="Props/Glow"]
-position = Vector2(3400, 604)
-script = ExtResource("prop")
-kind = 18
+kind = 12
