@@ -46,7 +46,7 @@ static func dates_between(from: Vector2i, to: Vector2i) -> Array[String]:
 	var guard := 0
 	while guard < 400:
 		guard += 1
-		out.append(Strings.DATE_FULL % [str(m), str(d)])
+		out.append(Strings.date_full([str(m), str(d)] as Array[String]))
 		if m == to.x and d == to.y:
 			break
 		d += 1

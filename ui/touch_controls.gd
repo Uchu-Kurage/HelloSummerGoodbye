@@ -8,6 +8,8 @@ var _fingers: Array[int] = []
 var _positions: Dictionary = {}
 var _pressed_action := &""
 var _buttons: HBoxContainer
+## 宝箱（章ではポケット／カメラ）のボタン。日がかわったら名前を入れかえる
+var _box_button: Button
 var _shown := false
 ## ミニゲームなど、専用の画面が自分のボタンを出しているあいだは隠す
 var _suppressed := false
@@ -29,10 +31,12 @@ func _ready() -> void:
 	_buttons.offset_top = UiTokens.SCREEN_MARGIN
 	_buttons.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	root.add_child(_buttons)
-	_buttons.add_child(_make_button(Strings.BUTTON_BOX, &"open_box"))
+	_box_button = _make_button(Strings.BUTTON_BOX, &"open_box")
+	_buttons.add_child(_box_button)
 	_buttons.add_child(_make_button(Strings.BUTTON_PAUSE, &"pause"))
 	_buttons.modulate.a = 0.0
 	_buttons.hide()
+	GameState.day_changed.connect(func(_i): _box_button.text = GameState.menu_name())
 	InputMode.mode_changed.connect(func(_t): _refresh_buttons())
 	_refresh_buttons()
 

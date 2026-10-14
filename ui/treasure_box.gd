@@ -33,6 +33,9 @@ var _scroll: ScrollContainer
 var _slots: Array[ItemSlot] = []
 var _cols := MAX_COLUMNS
 var _title: Label
+var _lid_label: Label
+## 開いているあいだの種類（序の宝箱／章のポケット・カメラ）
+var _menu := DayData.Menu.BOX
 var _found := [0, 0]
 ## エンディングで右の欄に出す、しめくくりの一言
 var ending_message := ""
@@ -81,6 +84,7 @@ func _ready() -> void:
 	_lid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_lid)
 	var lid_label := Label.new()
+	_lid_label = lid_label
 	lid_label.text = Strings.BOX_TITLE
 	lid_label.theme_type_variation = &"HeadingLabel"
 	lid_label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -191,12 +195,24 @@ func _rebuild_slots() -> void:
 		s.queue_free()
 	_slots.clear()
 	_selected = null
-	var items := _all if not _all.is_empty() else GameState.all_items()
+	# 章のポケット・カメラ：手もとにあるものだけ（影・空の枠は出さない）
+	_menu = GameState.menu_kind() if (not ending_mode and not _pick_mode and _all.is_empty()) else DayData.Menu.BOX
+	var items: Array[ItemData]
+	if _menu == DayData.Menu.POCKET:
+		items = GameState.pocket_items()
+	elif _menu == DayData.Menu.CAMERA:
+		items = GameState.photo_items()
+	else:
+		items = _all if not _all.is_empty() else GameState.all_items()
 	var got := 0
 	var total := 0
 	for it in items:
 		var s := ItemSlot.new()
-		if not _all.is_empty():
+		if _menu != DayData.Menu.BOX:
+			total += 1
+			got += 1
+			s.setup(it, true, "", false)
+		elif not _all.is_empty():
 			# ぜんぶ見せるとき：影・「うめた」「タケルにあげた」は出さない
 			total += 1
 			got += 1
@@ -212,9 +228,10 @@ func _rebuild_slots() -> void:
 		s.focus_entered.connect(_on_slot_focused.bind(s))
 		_grid.add_child(s)
 		_slots.append(s)
-	_count.text = Strings.ENDING_COUNT % [got, total]
+	_count.text = Strings.CAMERA_FILM % GameState.film_left if _menu == DayData.Menu.CAMERA \
+		else ("" if _menu == DayData.Menu.POCKET else Strings.ENDING_COUNT % [got, total])
 	_found = [got, total]
-	_fit_grid(items.size())
+	_fit_grid(maxi(items.size(), 1))
 	page = 0
 	_show_page()
 	await get_tree().process_frame
@@ -393,6 +410,19 @@ func _show_detail(s: ItemSlot) -> void:
 		else:
 			_detail_date.text = ""
 			_detail_text.text = Strings.ENDING_FOUND % [_found[1], _found[0]]
+	elif s == null and _menu != DayData.Menu.BOX:
+		_detail_name.text = _title.text
+		_detail_date.text = ""
+		_detail_text.text = (Strings.POCKET_EMPTY if _menu == DayData.Menu.POCKET else Strings.CAMERA_EMPTY) if _slots.is_empty() else Strings.BOX_HINT_SELECT
+	elif s != null and _menu == DayData.Menu.CAMERA:
+		# 現像前の写真：日付と場所だけ。絵は出さない
+		_detail_name.text = Strings.CAMERA_PHOTO_NAME
+		_detail_date.text = s.item.description
+		_detail_text.text = ""
+	elif s != null and _menu == DayData.Menu.POCKET:
+		_detail_name.text = s.item.display_name
+		_detail_date.text = ""
+		_detail_text.text = s.item.text()
 	elif s == null:
 		_detail_name.text = _title.text
 		_detail_date.text = ""
@@ -438,7 +468,8 @@ func open() -> void:
 	if not ending_mode:
 		get_tree().paused = true
 	if not _pick_mode and not ending_mode:
-		_title.text = Strings.BOX_TITLE
+		_title.text = GameState.menu_name()
+		_lid_label.text = _title.text
 	show()
 	await _rebuild_slots()
 	_place_lid()

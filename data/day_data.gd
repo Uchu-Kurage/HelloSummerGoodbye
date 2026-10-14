@@ -16,6 +16,16 @@ extends Resource
 ## 宝箱の枠に数えないアイテム（道には置かず、会話の @drop で落ちる。人に返すものなど）。
 ## 持っているあいだだけ宝箱に出る（例：1日目になつみが落とす色えんぴつ）
 @export var extra_items: Array[ItemData] = []
+@export_group("章「あの夏へ」")
+## 主人公の姿（老人だけ走れない。歩く速さは同じ）
+enum Form { CHILD, YOUTH, ELDER }
+## 宝箱のかわりの画面（ポケット／カメラ）
+enum Menu { BOX, POCKET, CAMERA }
+## 日の終わりの縁側の場面（序の縁側／出さない／カメラを見せる縁側）
+enum EngawaKind { NORMAL, NONE, CAMERA }
+@export var player_form: Form = Form.CHILD
+@export var menu_kind: Menu = Menu.BOX
+@export var engawa_kind: EngawaKind = EngawaKind.NORMAL
 @export_group("時間帯")
 ## 時間帯のキー。x はその日の中の位置（0.0〜1.0）、y は時間の値（早朝 -0.15／朝 0.00／昼 0.25／夕方 0.60／夜 0.85／夜の終わり 1.00）。
 ## 空なら [(0, 0.00), (1, 1.00)]。x の小さい順に並べる。同じ x に2つ置くと、そこで時間が飛ぶ（暗転で隠す）

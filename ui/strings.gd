@@ -68,6 +68,46 @@ const DATE_MONTH := "%sがつ"
 const DATE_DAY := "%s"
 const DATE_FULL := "%sがつ %sにち"
 const DATE_UNKNOWN := "？？"
+## 章「あの夏へ」のあいだは、日付の札も漢字（「8月 12日」）
+const DATE_MONTH_CHAPTER := "%s月"
+const DATE_FULL_CHAPTER := "%s月 %s日"
+
+
+static func date_month(m: String) -> String:
+	return (DATE_MONTH_CHAPTER if GameState.chapter else DATE_MONTH) % m
+
+
+static func date_full(p: Array[String]) -> String:
+	return (DATE_FULL_CHAPTER if GameState.chapter else DATE_FULL) % p
+
+## 章「あの夏へ」：宝箱のかわりの画面の名前と、章題・スタッフロール
+const POCKET := "ポケット"
+const CAMERA := "カメラ"
+const CHAPTER_TITLE := "あの夏へ"
+const CAMERA_FILM := "フィルム のこり %d"
+const POCKET_EMPTY := "まだ なにも ない。"
+const CAMERA_EMPTY := "まだ とっていない。"
+const CAMERA_PHOTO_NAME := "げんぞう まえの しゃしん"
+## 4つ目のエンディングのあと、章へ続くメニュー（章があることは知らせない）
+const ENDING_CONTINUE := "つづける"
+## スタッフロール（仮。あとで中身を決める）。見出しの行は「# 」で始める
+const STAFF_LINES: Array[String] = [
+	"# To The Summer",
+	"",
+	"# 企画・シナリオ・実装",
+	"Ryoga",
+	"",
+	"# 絵",
+	"生成AI（Google Gemini）による水彩の絵",
+	"",
+	"# 音",
+	"フリー素材（CC0）",
+	"出典は CREDITS.md に",
+	"",
+	"# ありがとう",
+	"あの夏に出てくれた みんな",
+	"そして、遊んでくれた あなた",
+]
 
 ## 縁側の場面（日の切り替わりの中）。返事の文面は res://data/engawa/*.tres（EngawaReply）
 const ENGAWA_ASK := "おばあちゃん：きょうは、なにしたの？"

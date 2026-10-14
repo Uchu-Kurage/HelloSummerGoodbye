@@ -1,0 +1,19 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="base"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="npc"]
+[ext_resource type="Resource" path="res://data/npcs/chapter_nurse.tres" id="nurse"]
+[ext_resource type="Resource" path="res://data/npcs/chapter_natsumi_old.tres" id="natsumi"]
+
+[node name="ChapterHospital" instance=ExtResource("base")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Nurse" parent="Props" instance=ExtResource("npc")]
+position = Vector2(1500, 604)
+npc_data = ExtResource("nurse")
+
+[node name="Natsumi" parent="Props" instance=ExtResource("npc")]
+position = Vector2(2300, 604)
+npc_data = ExtResource("natsumi")

@@ -4,6 +4,7 @@ extends Control
 
 const MAIN_SCENE := "res://world/main.tscn"
 const ENDING_MUSIC := "ending"
+const STAFF_ROLL_SCENE := "res://ui/staff_roll.tscn"
 
 @onready var _box: TreasureBox = $TreasureBox
 var _list: MenuList
@@ -24,7 +25,11 @@ func _ready() -> void:
 	var ending := GameState.current_ending()
 	_box.header_caption.text = ending.title if ending and ending.title != "" else Strings.ENDING_TITLE
 	_box.ending_message = ending.message if ending else ""
-	_add_item(Strings.ENDING_RETRY, _on_retry)
+	# 4つすべて見て、章をまだ終えていないときは、もういちどの代わりに「つづける」（章があることは知らせない）
+	if EndingRecord.chapter_pending():
+		_add_item(Strings.ENDING_CONTINUE, _on_continue)
+	else:
+		_add_item(Strings.ENDING_RETRY, _on_retry)
 	_list.modulate.a = 0.0
 	_box.reveal_finished.connect(_on_revealed)
 	await get_tree().process_frame
@@ -46,6 +51,14 @@ func _on_revealed() -> void:
 	var slot := _box.first_slot()
 	if slot and items.size() > 0:
 		items[0].focus_neighbor_bottom = items[0].get_path_to(slot)
+
+
+func _on_continue() -> void:
+	if Transition.is_busy():
+		return
+	GameState.reset()
+	SfxPlayer.stop_music()
+	Transition.change_scene(STAFF_ROLL_SCENE)
 
 
 func _on_retry() -> void:
