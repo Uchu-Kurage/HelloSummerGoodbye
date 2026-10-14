@@ -13,6 +13,8 @@ var _hat_last_line := ""
 var _hat_missed_tap_ignored := false
 ## 会話で出たせりふ（_finish_talk が入れる）
 var _seen_lines: Array[String] = []
+## 親友 9日目、秘密の場所で話しはじめたときの、鳥居と山のてっぺんの重なり（-1＝まだ）
+var _spot_overlap := -1.0
 
 
 func _ready() -> void:
@@ -284,8 +286,9 @@ func _run() -> void:
 	for i in [7, 8]:
 		var b := _base_in(paths, i)
 		check(b != "", "base reused on day %d (%s)" % [i + 1, b])
-	for id in [&"takeru_base", &"takeru_festival", &"takeru_festival_home", &"takeru_dawn", &"takeru_trap", &"takeru_dive", &"takeru_road", &"takeru_capsule"]:
+	for id in [&"takeru_base", &"takeru_festival", &"takeru_festival_home", &"takeru_dawn", &"takeru_trap", &"takeru_dive", &"takeru_road", &"takeru_capsule", &"takeru_capsule_spot"]:
 		check(GameState.has_talked(id), "takeru talks on his own: %s" % id)
+	check(_spot_overlap > 0.5, "capsule: at Takeru's secret spot the torii and the peak overlap in the background (%.2f)" % _spot_overlap)
 	check(not GameState.has_talked(&"natsumi"), "natsumi was not talked to")
 	var bridge_npc: NpcData = load("res://data/npcs/natsumi_bridge.tres")
 	check(not GameState.has_flag(&"natsumi_declined") and not FlagCondition.met(bridge_npc.appear_if), "pencil not returned -> no natsumi on the day 3 bridge")
@@ -1802,6 +1805,13 @@ func _finish_talk(hud: Hud, box: TreasureBox) -> void:
 		guard += 1
 		if hud.is_message_open():
 			_seen_lines.append(hud._msg_text.text)
+		# 親友 9日目：秘密の場所での会話の最初に、鳥居と山のてっぺんが重なって見えているか
+		if _spot_overlap < 0.0 and hud._talk_data and hud._talk_data.id == &"takeru_capsule_spot":
+			var main := get_tree().current_scene
+			var view := main.get_node("Days").find_child("PeakView", true, false) as ToriiPeakView
+			if view:
+				_spot_overlap = view.overlap(view.cam_x_in_day())
+				print("spot overlap ", _spot_overlap, " cam ", view.cam_x_in_day())
 		if hud.minigame() is MinigameBase:
 			var mg: MinigameBase = hud.minigame()
 			await _play_mini(mg, not ROUTE_NORMAL_GAMES.has(mg.game_name), false)
