@@ -15,6 +15,8 @@ var _hat_missed_tap_ignored := false
 var _seen_lines: Array[String] = []
 ## 親友 9日目、秘密の場所で話しはじめたときの、鳥居と山のてっぺんの重なり（-1＝まだ）
 var _spot_overlap := -1.0
+## 章をタッチだけで通すとき true（縁側の場面の自動操作を止め、テストが画面をタップして進める）
+var _touch_only := false
 
 
 func _ready() -> void:
@@ -34,6 +36,10 @@ func _ready() -> void:
 		for r in EndingRecord.ROUTES:
 			EndingRecord.mark(r)
 		await _check_chapter()
+	elif OS.get_cmdline_user_args().has("touchplay"):
+		for r in EndingRecord.ROUTES:
+			EndingRecord.mark(r)
+		await _check_touch_chapter()
 	elif OS.get_cmdline_user_args().has("kyu"):
 		for r in EndingRecord.ROUTES:
 			EndingRecord.mark(r)
@@ -1286,7 +1292,7 @@ func _press_can(can: CanOpen, keyboard: bool) -> void:
 
 
 ## 病室で写真を見せていく。最後は必ず二人の写真
-func _drive_finale(tag: String) -> void:
+func _drive_finale(tag: String, touch := false) -> void:
 	var fin: HospitalFinale = get_tree().current_scene
 	await _wait(0.6)
 	var n := fin.bundle.size()
@@ -1301,7 +1307,7 @@ func _drive_finale(tag: String) -> void:
 			fin._panel.show_all()
 		if fin.index >= 0 and fin.index < n and reactions.size() == fin.index:
 			reactions.append(fin._panel.text_label.text)
-		TouchControls.fire_action(&"interact")
+		await _advance_finale(touch)
 		await _wait(0.12)
 	check(fin.phase == HospitalFinale.Phase.KEY and fin.shown_count == n, tag + "all %d photos are shown before the last one (%d)" % [n, fin.shown_count])
 	check(reactions == expected_reactions, tag + "Natsumi reacts to each photo by its kind %s" % str(reactions.slice(0, 3)))
@@ -1313,7 +1319,7 @@ func _drive_finale(tag: String) -> void:
 		if fin._panel.is_typing():
 			fin._panel.show_all()
 		lines.append(fin._panel.text_label.text)
-		TouchControls.fire_action(&"interact")
+		await _advance_finale(touch)
 		await _wait(0.12)
 	await _wait(0.2)
 	check(fin.phase == HospitalFinale.Phase.SKY, tag + "the climax reaches the sky")
@@ -1322,9 +1328,17 @@ func _drive_finale(tag: String) -> void:
 		check(all_text.contains(l), tag + "line shown: %s" % l)
 	if fin._panel.is_typing():
 		fin._panel.show_all()
-	TouchControls.fire_action(&"interact")
+	await _advance_finale(touch)
 	await _wait(0.2)
 	check(fin.phase == HospitalFinale.Phase.FADE, tag + "the screen goes white slowly")
+
+
+func _advance_finale(touch: bool) -> void:
+	if touch:
+		# 病室の画面のどこかをタップして進める
+		await _touch(_to_screen(Vector2(640, 300)))
+	else:
+		TouchControls.fire_action(&"interact")
 
 
 ## 章のスタッフロール：後ろに序の絵と写真の絵が流れる
@@ -1334,6 +1348,213 @@ func _check_staff_chapter(tag: String) -> void:
 	check(roll.slides.size() >= GameState.ALL_PHOTO_IDS.size() + 1, tag + "staff roll: backgrounds and %d photo pictures (%d slides)" % [GameState.ALL_PHOTO_IDS.size(), roll.slides.size()])
 	var cards := roll.slides.filter(func(sl): return not (sl is TextureRect))
 	check(cards.size() == GameState.ALL_PHOTO_IDS.size(), tag + "staff roll: all 23 photos, untaken ones too (%d)" % cards.size())
+
+
+## 章をタッチだけで通す：エンディングの「つづける」→ スタッフロール → 章題 → 病室から急の最後まで、画面のタップと押し続けだけで進める
+func _check_touch_chapter() -> void:
+	var keep_scale := Engine.time_scale
+	Engine.time_scale = 3.0
+	_touch_only = true
+	var tag := "touch play: "
+	DirAccess.remove_absolute(EPI_RECORD)
+	for r in EndingRecord.ROUTES:
+		EndingRecord.mark(r)
+	EndingRecord.set_capsule_item(&"blue_pencil")
+	GameState.reset()
+	get_tree().change_scene_to_file("res://ui/ending.tscn")
+	await _wait(1.0)
+	var ending := get_tree().current_scene
+	check(await _until(func(): return ending._list.modulate.a > 0.9, 20.0), tag + "the ending's menu is shown")
+	var first: MenuItem = ending._list.get_child(0)
+	check(first.text == Strings.ENDING_CONTINUE, tag + "つづける (%s)" % first.text)
+	await _touch(_to_screen(first.get_global_rect().get_center()))
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "StaffRoll", 8.0), tag + "tap つづける -> staff roll")
+	await _wait(0.8)
+	await _touch(_to_screen(Vector2(640, 360)))
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "ChapterTitle", 60.0), tag + "tap fast-forwards the staff roll to the chapter title")
+	await _wait(0.4)
+	await _touch(_to_screen(Vector2(640, 360)))
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Main" and GameState.chapter, 12.0), tag + "tap skips the title card, into the hospital")
+	await _wait(0.8)
+	var st := {"talk_taps": 0, "bubble_taps": 0, "engawa_taps": 0, "photos": 0, "dig_miss": false, "dig_hit": false, "pocket": false, "kb": false,
+		"days": {}, "film_at_end": -1, "title_call": false}
+	var attempted := {}
+	var holding := false
+	var last_scene: Node = null
+	var t := 0.0
+	var name := ""
+	while t < 4000.0:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		if InputMode.keyboard:
+			st["kb"] = true
+		var scene := get_tree().current_scene
+		name = scene.name if scene else ""
+		# 画面（シーン）が切りかわったら、押し続けていた指は新しい画面には引きつがれない
+		if scene != last_scene:
+			last_scene = scene
+			if holding:
+				await _touch_release()
+				holding = false
+		if int(t) % 20 == 0 and int(t) != st.get("last_print", -1):
+			st["last_print"] = int(t)
+			var px := -1.0
+			if name == "Main" and is_instance_valid(scene):
+				px = (scene.get_node("Player") as Node2D).global_position.x
+			print("PROGRESS t=%d scene=%s day=%d x=%.0f talking=%s film=%d" % [int(t), name, GameState.current_day_index, px, str(name == "Main" and scene.get_node("HUD").is_talking()), GameState.film_left])
+		if name == "Title" and EndingRecord.chapter_seen():
+			break
+		if name == "TitleCall":
+			st["title_call"] = true
+			if holding:
+				await _touch_release()
+				holding = false
+			await _touch(_to_screen(Vector2(640, 360)))
+			await _wait(0.5)
+			continue
+		if name == "CanOpen":
+			if holding:
+				await _touch_release()
+				holding = false
+			st["film_at_end"] = GameState.film_left
+			await _drive_can(tag, GameState.film_left, false)
+			await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "HospitalFinale", 8.0)
+			continue
+		if name == "HospitalFinale":
+			await _drive_finale(tag, true)
+			await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "StaffRoll", 20.0)
+			continue
+		if name == "StaffRoll":
+			await _wait(0.8)
+			await _touch(_to_screen(Vector2(640, 360)))
+			await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 120.0)
+			continue
+		if name != "Main" or not is_instance_valid(scene):
+			continue
+		var main := scene
+		var hud: Hud = main.get_node("HUD")
+		var player: Player = main.get_node("Player")
+		var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+		var day := GameState.current_day_index
+		st["days"][day] = true
+		# 縁側の場面：タップで進める。アイテム（カメラ）はタップで選ぶ（日の切り替わりの演出の中で出るので、演出が終わるのは待たない）
+		var eg: Engawa = main.engawa
+		if eg and eg.is_open():
+			if holding:
+				await _touch_release()
+				holding = false
+			if eg.phase == Engawa.Phase.PICK and eg._row.get_child_count() > 0 and eg._row.get_child(0) is ItemSlot:
+				await _touch(_to_screen((eg._row.get_child(0) as ItemSlot).get_global_rect().get_center()))
+			else:
+				await _touch(_to_screen(Vector2(640, 300)))
+			st["engawa_taps"] += 1
+			await _wait(0.25)
+			continue
+		if Transition.is_busy():
+			continue
+		# 会話：メッセージのパネルをタップして進める。選択肢はタップで選ぶ
+		if hud.is_talking():
+			if holding:
+				await _touch_release()
+				holding = false
+			if hud.is_choosing():
+				var items := hud._msg.choice_list.items()
+				if not items.is_empty():
+					await _touch(_to_screen(items[0].get_global_rect().get_center()))
+			elif hud.is_message_open():
+				await _touch(_to_screen(hud._msg.get_global_rect().get_center()))
+			st["talk_taps"] += 1
+			await _wait(0.12)
+			continue
+		if box.is_open:
+			await _touch(_to_screen(box._back.get_global_rect().get_center()))
+			await _wait(0.5)
+			continue
+		# 村に入ったら、ポケットのボタンをタップして開き、「もどる」で閉じる
+		if day == 2 and not st["pocket"] and GameState.chapter and not hud.is_talking():
+			if holding:
+				await _touch_release()
+				holding = false
+			var btns := get_tree().get_nodes_in_group("touch_ui")
+			var pocket_btn: Button = null
+			for b in btns:
+				if b is Button and (b as Button).text == Strings.POCKET and (b as Button).is_visible_in_tree():
+					pocket_btn = b
+			if pocket_btn:
+				await _touch(_to_screen(pocket_btn.get_global_rect().get_center()))
+				await _wait(1.0)
+				check(box.is_open and box._title.text == Strings.POCKET, tag + "the pocket opens from its touch button")
+				await _touch(_to_screen(box._back.get_global_rect().get_center()))
+				await _wait(0.8)
+				check(not box.is_open, tag + "もどる closes the pocket")
+				st["pocket"] = true
+				continue
+		# 吹き出しをタップして調べる・話す・撮る（人・調べるところは1回ずつ。写真のポイントは15か所のうち撮れるだけ）
+		var target := hud.current_target()
+		var tapped := false
+		if target and hud._bubble.visible:
+			var key := target.get_instance_id()
+			var want := not attempted.has(key)
+			if target is Npc and (target as Npc).npc_data and (target as Npc).npc_data.auto_talk:
+				want = false
+			if target is DigSpot:
+				var dig := target as DigSpot
+				var view := main.get_node("Days").find_child("PeakView", true, false) as ToriiPeakView
+				var overlap := view != null and view.is_overlapping()
+				# 重ならない場所では最初に1回だけ掘って、何も出ないことを確かめる。そのあとは重なる場所まで歩く
+				want = (not st["dig_miss"]) or overlap
+				if overlap:
+					want = true
+			if want:
+				if holding:
+					await _touch_release()
+					holding = false
+				await _touch(_to_screen(hud._bubble.get_global_rect().get_center()))
+				st["bubble_taps"] += 1
+				tapped = true
+				if target is DigSpot:
+					if (target as DigSpot).dug:
+						st["dig_hit"] = true
+					else:
+						st["dig_miss"] = true
+				else:
+					attempted[key] = true
+				await _wait(0.3)
+		if tapped:
+			continue
+		# 歩く：画面の右半分を押し続ける
+		if not holding:
+			await _touch_down(_to_screen(Vector2(1000, 420)))
+			holding = true
+	if holding:
+		await _touch_release()
+	check(name == "Title" and EndingRecord.chapter_seen(), tag + "the chapter ended in the title, recorded as seen")
+	var d: Dictionary = st["days"]
+	check(d.has(0) and d.has(1) and d.has(2) and d.has(3) and d.has(4) and d.has(5) and d.has(6) and d.has(7) and d.has(8), tag + "all 9 days were walked %s" % str(d.keys()))
+	check(st["title_call"], tag + "the title call was skipped by a tap")
+	check(st["pocket"], tag + "the pocket was opened and closed by touch")
+	check(st["engawa_taps"] > 0, tag + "the engawa nights were passed by tapping (%d taps)" % st["engawa_taps"])
+	check(st["bubble_taps"] > 10 and st["talk_taps"] > 50, tag + "talk and examine by tapping (%d bubble taps, %d message taps)" % [st["bubble_taps"], st["talk_taps"]])
+	check(st["dig_miss"] and st["dig_hit"], tag + "digging: nothing away from the overlap, the can at the overlap")
+	check(st["film_at_end"] >= 0, tag + "the can screen was reached (film left %d)" % st["film_at_end"])
+	check(not st["kb"], tag + "no keyboard input was needed (InputMode stayed touch)")
+	Engine.time_scale = keep_scale
+
+
+func _touch_down(pos: Vector2) -> void:
+	var ev := InputEventScreenTouch.new()
+	ev.position = pos
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	await get_tree().process_frame
+
+
+func _touch_release() -> void:
+	var ev := InputEventScreenTouch.new()
+	ev.position = _to_screen(Vector2(1000, 420))
+	ev.pressed = false
+	Input.parse_input_event(ev)
+	await get_tree().process_frame
 
 
 ## 急だけを、破を終えた状態から確かめる：フィルムののこり別に、撮った枚数とタケルの写真を作って始める
@@ -2269,7 +2490,7 @@ var _engawa_layout_checked := false
 
 func _process(_delta: float) -> void:
 	var scene := get_tree().current_scene
-	if _engawa_busy or scene == null or not ("engawa" in scene):
+	if _touch_only or _engawa_busy or scene == null or not ("engawa" in scene):
 		return
 	var e: Engawa = scene.engawa
 	if e and e.is_open():
