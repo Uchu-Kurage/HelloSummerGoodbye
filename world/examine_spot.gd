@@ -18,6 +18,10 @@ extends Npc
 ## 人として立たせる（なつみ・看護師など。仮の姿。向きも変える）。見た目の色と背丈は look から
 @export var as_person := false
 @export var look: NpcData
+## 近づいただけで話しはじめる（最初の1回）
+@export var auto_talk_on := false
+## これが立つまでは、いないことにする（なつみと話したあとに通りかかるタケル、など）
+@export var appear_flags: Array[StringName] = []
 
 
 func _ready() -> void:
@@ -38,6 +42,12 @@ func _ready() -> void:
 		d.pants_color = look.pants_color
 		d.hair_full = look.hair_full
 		d.stoop = look.stoop
+		d.sprite = look.sprite
+	d.auto_talk = auto_talk_on
+	if not appear_flags.is_empty():
+		var c := FlagCondition.new()
+		c.require_all = appear_flags
+		d.appear_if = c
 	npc_data = d
 	super()
 

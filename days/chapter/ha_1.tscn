@@ -1,0 +1,149 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r2"]
+[ext_resource type="Script" path="res://world/talk_cue.gd" id="r3"]
+[ext_resource type="PackedScene" path="res://world/house.tscn" id="r4"]
+[ext_resource type="Resource" path="res://data/npcs/grandma.tres" id="r5"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r6"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r7"]
+[ext_resource type="Script" path="res://world/indoor_zone.gd" id="r8"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r9"]
+[ext_resource type="Resource" path="res://data/npcs/aunt.tres" id="r10"]
+[ext_resource type="Resource" path="res://data/npcs/cousin.tres" id="r11"]
+[ext_resource type="Script" path="res://world/photo_spot.gd" id="r12"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa.tres" id="r13"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="r14"]
+
+[node name="HaDay1" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="Woods" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(100, 604)
+kind = 6
+width = 1500
+
+[node name="Okuribi1" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(1250, 604)
+kind = 17
+
+[node name="Okuribi2" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(1700, 604)
+kind = 17
+
+[node name="Wake" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(270, 604)
+lines = Array[String](["ぼく：（……本当に、戻ったのか）"])
+
+[node name="House" parent="Props" instance=ExtResource("r4")]
+position = Vector2(2000, 604)
+
+[node name="Grandma" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r7")
+position = Vector2(2230, 604)
+kind = 0
+lines = Array[String](["どこ行ってたの。心配したのよ"])
+speaker = "おばあちゃん"
+as_person = true
+look = ExtResource("r5")
+auto_talk_on = true
+
+[node name="Room" type="Node2D" parent="Props"]
+script = ExtResource("r8")
+position = Vector2(2330, 604)
+width = 1000
+
+[node name="Think" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(2450, 604)
+lines = Array[String](["（座敷から、親戚の笑い声が聞こえる）", "ぼく：（そうだ。あの夏、ばあちゃんはカメラを買っていた）", "ぼく：（誰も使わないまま、たんすにしまわれていたはずだ）"])
+
+[node name="Tansu" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r7")
+position = Vector2(2750, 604)
+kind = 7
+lines = Array[String](["（茶の間のたんすを調べた。上の引き出しは裁縫道具、真ん中は手紙の束）", "（一番下の引き出しに、箱に入ったままの使い捨てカメラがあった）", "@find chapter_camera", "ぼく：（あった……）", "（うしろから、祖母がのぞきこんだ）", "おばあちゃん：あら、それ。みんなで撮ろうと思って買ったのに、誰も使わないのよ", "おばあちゃん：使っていいよ。好きなもの、撮りなさい", "ぼく：……うん。ありがとう", "ぼく：（これで、なつみに見せてやれる）"])
+repeat_lines_text = Array[String](["（たんすの一番下は、もう空だ）"])
+spot_height = 260
+
+[node name="ZashikiTable" type="Node2D" parent="Props"]
+script = ExtResource("r9")
+position = Vector2(3050, 604)
+kind = 23
+
+[node name="Aunt1" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r7")
+position = Vector2(2950, 604)
+kind = 0
+lines = Array[String]([])
+as_person = true
+look = ExtResource("r10")
+
+[node name="Aunt2" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r7")
+position = Vector2(3170, 604)
+kind = 0
+lines = Array[String]([])
+as_person = true
+look = ExtResource("r11")
+
+[node name="P03" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r12")
+position = Vector2(3050, 604)
+kind = 26
+photo_id = &"p03_zashiki"
+
+[node name="P02" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r12")
+position = Vector2(3400, 604)
+kind = 22
+photo_id = &"p02_horse"
+spot_height = 100
+
+[node name="OkuribiGarden" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(3560, 604)
+kind = 17
+
+[node name="P01" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r12")
+position = Vector2(3540, 604)
+kind = 26
+photo_id = &"p01_mukaebi"
+spot_height = 200
+
+[node name="GrandpaTalk" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r7")
+position = Vector2(3660, 604)
+kind = 0
+lines = Array[String](["お盆になると、思い出すやつがいてな", "子どもの頃、いなくなっちまった友達だ", "ぼく：……きっと、待ってると思うよ", "ぼく：（その友達は今、ぼくの代わりに、あの子と遊んでいる）"])
+speaker = "おじいちゃん"
+as_person = true
+look = ExtResource("r13")
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("r14")
+
+[node name="G0" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r2")
+position = Vector2(1250, 604)
+kind = 18
+
+[node name="G1" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r2")
+position = Vector2(1700, 604)
+kind = 18
+
+[node name="G2" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r2")
+position = Vector2(3560, 604)
+kind = 18

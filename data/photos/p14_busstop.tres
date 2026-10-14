@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"p14_busstop"
+point_no = 14
+month = 8
+day = 16
+place = "バス停"
+shooter = 0
+boy_in_frame = false
+reaction = 3
+inner_voice = "（半月後、ここでみんなに見送られる）"
+placeholder_color = Color(0.788, 0.839, 0.753, 1)

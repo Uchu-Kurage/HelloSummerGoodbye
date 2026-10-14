@@ -1,0 +1,166 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="PackedScene" path="res://world/house.tscn" id="r2"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r3"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r4"]
+[ext_resource type="Script" path="res://world/photo_spot.gd" id="r5"]
+[ext_resource type="Resource" path="res://data/npcs/dagashi_obachan.tres" id="r6"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r7"]
+[ext_resource type="Resource" path="res://data/npcs/takeru.tres" id="r8"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r9"]
+[ext_resource type="Script" path="res://world/chapter_event.gd" id="r10"]
+[ext_resource type="Script" path="res://world/torii_peak_view.gd" id="r11"]
+[ext_resource type="Script" path="res://world/overlap_cue.gd" id="r12"]
+[ext_resource type="Script" path="res://world/talk_cue.gd" id="r13"]
+
+[node name="HaDay2" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="House" parent="Props" instance=ExtResource("r2")]
+position = Vector2(500, 604)
+
+[node name="Shop" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(1000, 604)
+kind = 0
+
+[node name="P04" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r5")
+position = Vector2(950, 604)
+kind = 26
+photo_id = &"p04_shop"
+spot_height = 200
+
+[node name="Obachan" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r7")
+position = Vector2(1130, 604)
+kind = 0
+lines = Array[String](["タケルちゃんと、遊んであげてね", "あの子も、寂しくなるからねえ"])
+speaker = "おばちゃん"
+as_person = true
+look = ExtResource("r6")
+auto_talk_on = true
+
+[node name="TakeruHouse" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(1600, 604)
+kind = 13
+
+[node name="Boxes" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(1740, 604)
+kind = 14
+
+[node name="P05" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r5")
+position = Vector2(1740, 604)
+kind = 26
+photo_id = &"p05_boxes"
+spot_height = 200
+
+[node name="TakeruDoor" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r7")
+position = Vector2(1950, 604)
+kind = 0
+lines = Array[String](["何撮ってんだよ", "ぼく：……いろいろ", "なんでそんなに撮るんだよ", "ぼく：……忘れたくないから", "変なやつ"])
+speaker = "タケル"
+as_person = true
+look = ExtResource("r8")
+auto_talk_on = true
+
+[node name="Base" type="Node2D" parent="Props"]
+script = ExtResource("r9")
+position = Vector2(2400, 604)
+kind = 20
+
+[node name="P06" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r5")
+position = Vector2(2350, 604)
+kind = 26
+photo_id = &"p06_base"
+after_lines = Array[String](["タケル：撮んなよ。恥ずかしいだろ"])
+spot_height = 200
+
+[node name="TakeruBase" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r7")
+position = Vector2(2540, 604)
+kind = 0
+lines = Array[String](["ぼく：（気づけば、タケルばかり撮っている）", "ぼく：（この子は、この冬に……）", "おまえも写れよ。貸して", "（タケルが腕を伸ばして、二人の写真を撮った）", "@event takeru_pair", "@flag takeru_pair_done"])
+speaker = "タケル"
+as_person = true
+look = ExtResource("r8")
+auto_talk_on = true
+
+[node name="ViewPair" type="Node2D" parent="Props"]
+script = ExtResource("r10")
+event_name = "takeru_pair"
+action = 5
+photo_id = &"takeru_pair"
+
+[node name="TakeruBeckon" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r7")
+position = Vector2(2800, 604)
+kind = 0
+lines = Array[String](["いいもん見せてやる。ここ立ってみ", "@flag secret_beckon"])
+speaker = "タケル"
+as_person = true
+look = ExtResource("r8")
+auto_talk_on = true
+appear_flags = Array[StringName]([&"takeru_pair_done"])
+
+[node name="PeakView" type="Node2D" parent="Props"]
+script = ExtResource("r11")
+overlap_cam_x = 3250
+screen_offset = 220
+
+[node name="SecretCue" type="Node2D" parent="Props"]
+script = ExtResource("r12")
+view = NodePath("../PeakView")
+require_flags = Array[StringName]([&"secret_beckon"])
+lines = Array[String](["タケル：……鳥居と、山のてっぺん。重なって見えるだろ", "ぼく：……ほんとだ", "タケル：おれの秘密の場所。大事なもんは、ここに埋めるって決めてんだ", "タケル：だれにも言うなよ", "ぼく：（……ここだったのか）", "ぼく：（タケルの地図は、最初からずれていたんだ）"])
+done_flag = &"secret_seen"
+
+[node name="River" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(3350, 604)
+kind = 2
+width = 500
+
+[node name="BackCue" type="Node2D" parent="Props"]
+script = ExtResource("r13")
+position = Vector2(3420, 604)
+lines = Array[String](["（背後で、カシャ、とシャッターの音がした）", "@event takeru_back"])
+
+[node name="ViewBack" type="Node2D" parent="Props"]
+script = ExtResource("r10")
+event_name = "takeru_back"
+action = 5
+photo_id = &"takeru_back"
+
+[node name="DiveRock" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(3560, 604)
+kind = 16
+
+[node name="P07" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r5")
+position = Vector2(3560, 604)
+kind = 26
+photo_id = &"p07_rock"
+spot_height = 200
+
+[node name="TakeruEnd" parent="Props" instance=ExtResource("r4")]
+script = ExtResource("r7")
+position = Vector2(3660, 604)
+kind = 0
+lines = Array[String](["おまえ、来年も来んのか？", "ぼく：……うん"])
+speaker = "タケル"
+as_person = true
+look = ExtResource("r8")
+auto_talk_on = true

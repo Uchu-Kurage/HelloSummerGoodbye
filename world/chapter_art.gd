@@ -26,6 +26,11 @@ enum Kind {
 	FIGURE_CHILD_PAINTING, ## 重なる：あぜで絵を描く子どものなつみ
 	BASE_OLD,         ## 重なる：板とトタンの秘密基地
 	LOOK_SKY,         ## 青年期：なつみが指さした空（見上げるところ）
+	SPIRIT_HORSE,     ## 縁側の精霊馬（きゅうりの馬となすの牛）
+	ZASHIKI,          ## 座敷の座卓（お酒とお皿）
+	EASEL,            ## なつみの描きかけの絵（青い空）
+	WATERMELON,       ## 縁側のスイカ
+	NONE,             ## 何も描かない（調べる・撮る範囲だけ）
 }
 
 const WALL := Color("#E6E0D2")
@@ -65,6 +70,11 @@ static func draw(ci: CanvasItem, kind: Kind, width := 160.0) -> void:
 		Kind.FIGURE_CHILD_PAINTING: _child_painting(ci)
 		Kind.BASE_OLD: _base_old(ci)
 		Kind.LOOK_SKY: _look_sky(ci)
+		Kind.SPIRIT_HORSE: _spirit_horse(ci)
+		Kind.ZASHIKI: _zashiki(ci)
+		Kind.EASEL: _easel(ci)
+		Kind.WATERMELON: _watermelon(ci)
+		Kind.NONE: pass
 
 
 static func _bed(ci: CanvasItem) -> void:
@@ -246,6 +256,55 @@ static func _look_sky(ci: CanvasItem) -> void:
 	ci.draw_line(Vector2(0, -10), Vector2(0, -60), Color(1.0, 0.9, 0.6, 0.8), 3.0)
 	ci.draw_line(Vector2(0, -60), Vector2(-9, -48), Color(1.0, 0.9, 0.6, 0.8), 3.0)
 	ci.draw_line(Vector2(0, -60), Vector2(9, -48), Color(1.0, 0.9, 0.6, 0.8), 3.0)
+
+
+static func _spirit_horse(ci: CanvasItem) -> void:
+	ci.draw_rect(Rect2(-70, -40, 140, 8), WOOD)
+	ci.draw_rect(Rect2(-60, -32, 6, 32), WOOD_DARK)
+	ci.draw_rect(Rect2(54, -32, 6, 32), WOOD_DARK)
+	# きゅうりの馬（細長い緑）となすの牛（丸い紫）
+	ci.draw_rect(Rect2(-56, -66, 56, 22), Color("#6E9A4E"))
+	ci.draw_rect(Rect2(-50, -44, 4, 14), Color("#C9B58A"))
+	ci.draw_rect(Rect2(-14, -44, 4, 14), Color("#C9B58A"))
+	ci.draw_circle(Vector2(36, -58), 20, Color("#5B3F6B"))
+	ci.draw_rect(Rect2(24, -40, 4, 10), Color("#C9B58A"))
+	ci.draw_rect(Rect2(46, -40, 4, 10), Color("#C9B58A"))
+
+
+static func _zashiki(ci: CanvasItem) -> void:
+	ci.draw_rect(Rect2(-110, -50, 220, 12), WOOD)
+	ci.draw_rect(Rect2(-100, -38, 8, 38), WOOD_DARK)
+	ci.draw_rect(Rect2(92, -38, 8, 38), WOOD_DARK)
+	ci.draw_rect(Rect2(-70, -78, 22, 28), Color("#C9D6D2"))
+	ci.draw_rect(Rect2(-20, -64, 48, 14), Color("#E6D8B8"))
+	ci.draw_rect(Rect2(50, -72, 22, 22), Color("#C9D6D2"))
+
+
+static func _easel(ci: CanvasItem) -> void:
+	ci.draw_line(Vector2(-30, 0), Vector2(-8, -150), WOOD_DARK, 5.0)
+	ci.draw_line(Vector2(30, 0), Vector2(8, -150), WOOD_DARK, 5.0)
+	ci.draw_rect(Rect2(-44, -140, 88, 64), PAPER)
+	ci.draw_rect(Rect2(-38, -134, 76, 28), Color("#7FB3E0"))
+
+
+static func _watermelon(ci: CanvasItem) -> void:
+	ci.draw_rect(Rect2(-60, -40, 120, 8), WOOD)
+	ci.draw_circle(Vector2(0, -58), 24, Color("#4E8A4A"))
+	ci.draw_circle(Vector2(0, -58), 20, Color("#D9504A"))
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(-20, -58), Vector2(20, -58), Vector2(0, -34)]), Color("#E6E0D2"))
+
+
+## 部屋の壁と床（x0〜x1。ふつうの日では DayBase が、屋外の日の中の一部の部屋では IndoorZone が使う）
+static func draw_room(ci: CanvasItem, x0: float, x1: float, road_top: float, top := -300.0) -> void:
+	var w := x1 - x0
+	ci.draw_rect(Rect2(x0, top, w, -top + road_top + 8.0), Color("#E4DCC9"))
+	ci.draw_rect(Rect2(x0, road_top - 90.0, w, 98.0), Color("#CDBFA3"))
+	ci.draw_rect(Rect2(x0, road_top + 8.0, w, 900), Color("#A98862"))
+	var x := x0
+	while x < x1:
+		ci.draw_line(Vector2(x, road_top + 8.0), Vector2(x, road_top + 140.0), Color("#8C6E4D"), 2.0)
+		x += 160.0
+	ci.draw_line(Vector2(x0, road_top + 8.0), Vector2(x1, road_top + 8.0), Color("#8C6E4D"), 4.0)
 
 
 ## 看板などの文字（仮素材。フォントはテーマの既定）

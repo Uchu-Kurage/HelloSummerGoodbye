@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"p13_house"
+point_no = 13
+month = 8
+day = 16
+place = "祖父母の家の外観"
+shooter = 0
+boy_in_frame = false
+reaction = 3
+inner_voice = "（この家も、今は空き家だ）"
+placeholder_color = Color(0.847, 0.788, 0.659, 1)

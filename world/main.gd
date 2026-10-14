@@ -94,7 +94,7 @@ func _change_day(next: int) -> void:
 	var ended := next - 1
 	# 章では、縁側の場面を出さない日がある
 	var interlude := Callable()
-	if GameState.engawa_kind(ended) == DayData.EngawaKind.NORMAL:
+	if GameState.engawa_kind(ended) != DayData.EngawaKind.NONE:
 		interlude = func(): await engawa.play(ended)
 	await Transition.play_day_change(GameState.day_date_text(d), GameState.day_title(d), on_dark, on_reveal, interlude)
 	player.locked = false
@@ -122,8 +122,15 @@ func advance_day() -> void:
 
 ## 老年期の神社で鈴が鳴り、景色が白くなって、タイトルコールへ（会話の @event white_out から）
 func start_title_call() -> void:
+	start_white_out(TITLE_CALL_SCENE)
+
+
+## 景色が白くなって、next_scene へ（鈴・煙が白くなる場面。章の場面のつなぎ）
+func start_white_out(next_scene: String) -> void:
 	if _ending:
 		return
+	# 章の途中でタイトルへもどるとき（いまは破の終わり。急はあとの段階）は、序の日の並びにもどす
+	var to_title := next_scene == TITLE_SCENE
 	_ending = true
 	player.locked = true
 	if hud.is_talking():
@@ -140,13 +147,15 @@ func start_title_call() -> void:
 	SfxPlayer.play("suzu")
 	await UiAnim.fade(white, 1.0, UiTokens.TIME_WHITE_OUT).finished
 	get_tree().paused = false
-	get_tree().change_scene_to_file(TITLE_CALL_SCENE)
+	if to_title:
+		GameState.reset()
+	get_tree().change_scene_to_file(next_scene)
 
 
 func _go_ending() -> void:
-	# 章は、いまは老年期の導入まで（神社の最後のタイトルコールへ）。急の最後はスタッフロール（あとの段階）
+	# 章は、いまは破の終わりまで（白くなってタイトルへ）。急の最後はスタッフロール（あとの段階）
 	if GameState.chapter:
-		start_title_call()
+		start_white_out(TITLE_SCENE)
 		return
 	_ending = true
 	player.locked = true

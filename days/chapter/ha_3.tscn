@@ -1,0 +1,89 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="Resource" path="res://data/npcs/natsumi.tres" id="r2"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r3"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r4"]
+[ext_resource type="Script" path="res://world/photo_spot.gd" id="r5"]
+[ext_resource type="Resource" path="res://data/npcs/takeru.tres" id="r6"]
+[ext_resource type="Script" path="res://world/chapter_event.gd" id="r7"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r8"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r9"]
+
+[node name="HaDay3" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="Natsumi" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r4")
+position = Vector2(900, 604)
+kind = 0
+lines = Array[String](["夏休みの思い出って、何描けばいいのかな", "……大人になったら、忘れちゃう？", "ぼく：忘れないよ", "ぼく：……なつみが忘れても、ぼくが覚えてる", "（なつみは少し笑って、青い色えんぴつで空を塗り始めた）", "写真より、絵のほうがいいと思うけど", "……まあ、いいよ。撮って", "@flag natsumi_day3_done"])
+speaker = "なつみ"
+as_person = true
+look = ExtResource("r2")
+auto_talk_on = true
+
+[node name="P08" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r5")
+position = Vector2(820, 604)
+kind = 26
+photo_id = &"p08_natsumi"
+spot_height = 200
+
+[node name="P09" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r5")
+position = Vector2(1080, 604)
+kind = 24
+photo_id = &"p09_easel"
+spot_height = 200
+
+[node name="TakeruBike" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r4")
+position = Vector2(1500, 604)
+kind = 0
+lines = Array[String](["（自転車のベルの音が、近づいてきた）", "いい空だぞ。撮ってやる", "（タケルが、ぼくの手からカメラを取り上げて、空に向けた）", "……よし。じゃあな", "@event takeru_sky", "@leave"])
+speaker = "タケル"
+as_person = true
+look = ExtResource("r6")
+auto_talk_on = true
+appear_flags = Array[StringName]([&"natsumi_day3_done"])
+
+[node name="ViewSky" type="Node2D" parent="Props"]
+script = ExtResource("r7")
+event_name = "takeru_sky"
+action = 5
+photo_id = &"takeru_sky"
+
+[node name="Kominkan" type="Node2D" parent="Props"]
+script = ExtResource("r8")
+position = Vector2(2200, 604)
+kind = 24
+
+[node name="Bill" type="Node2D" parent="Props"]
+script = ExtResource("r9")
+position = Vector2(2450, 604)
+kind = 12
+
+[node name="P10" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r5")
+position = Vector2(2450, 604)
+kind = 26
+photo_id = &"p10_board"
+spot_height = 200
+
+[node name="Torii" type="Node2D" parent="Props"]
+script = ExtResource("r8")
+position = Vector2(3150, 604)
+kind = 7
+
+[node name="P11" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r5")
+position = Vector2(3150, 604)
+kind = 26
+photo_id = &"p11_torii"
+spot_height = 200

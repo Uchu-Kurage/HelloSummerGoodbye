@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"p02_horse"
+point_no = 2
+month = 8
+day = 13
+place = "縁側の精霊馬"
+shooter = 0
+boy_in_frame = false
+reaction = 3
+inner_voice = "（きゅうりの馬。……早く帰ってこられるように）"
+placeholder_color = Color(0.788, 0.839, 0.753, 1)

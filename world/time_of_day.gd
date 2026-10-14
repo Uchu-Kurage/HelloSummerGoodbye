@@ -21,6 +21,8 @@ var otherworld := 0.0
 var day_otherworld := 0.0
 ## 家の中・病室の日（環境音を鳴らさない）
 var indoor := false
+## 屋外の日の中の部屋（IndoorZone）の中にいるあいだ true
+var zone_indoor := false
 var _ow_ambient := ""
 var _ow_source: Node
 ## 異界の場所がさいごに知らせてきたフレーム（知らせが止まったら、もとにもどす）
@@ -67,11 +69,15 @@ func _process(_delta: float) -> void:
 	var d := GameState.get_day(index)
 	var season := GameState.summer_progress_of(d)
 	day_otherworld = 1.0 if GameState.is_otherworld(d) else 0.0
-	indoor = GameState.is_indoor(d)
+	indoor = GameState.is_indoor(d) or zone_indoor
 	apply(GameState.day_time(d, progress), season)
 
 
 ## time は時間の値（早朝 -0.15〜夜の終わり 1.00）
+func set_zone_indoor(on: bool) -> void:
+	zone_indoor = on
+
+
 func apply(time: float, season: float) -> void:
 	var light := sample_light(time)
 	var sky := sky_color(time, season)

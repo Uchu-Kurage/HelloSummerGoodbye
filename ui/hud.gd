@@ -105,8 +105,38 @@ func _ready() -> void:
 	_build_bubble()
 	_build_message()
 	_build_hint()
+	_build_film()
 	InputMode.mode_changed.connect(func(_t): _refresh_texts())
 	_refresh_texts()
+
+
+# --- フィルムの残り（章の破：カメラを持っているあいだ、画面の隅に「のこり 12」）-----------------
+
+var _film_chip: PanelContainer
+var _film_label: Label
+
+
+func _build_film() -> void:
+	_film_chip = PanelContainer.new()
+	_film_chip.theme_type_variation = &"PaperChip"
+	_film_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_film_chip.anchor_top = 1.0
+	_film_chip.anchor_bottom = 1.0
+	_film_chip.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_film_chip.offset_left = UiTokens.SCREEN_MARGIN
+	_film_chip.offset_bottom = -UiTokens.SCREEN_MARGIN
+	_root.add_child(_film_chip)
+	_film_label = Label.new()
+	_film_label.theme_type_variation = &"SmallLabel"
+	_film_chip.add_child(_film_label)
+	GameState.film_changed.connect(_refresh_film)
+	GameState.item_collected.connect(func(_it): _refresh_film())
+	_refresh_film()
+
+
+func _refresh_film() -> void:
+	_film_chip.visible = GameState.has_camera()
+	_film_label.text = Strings.FILM_LEFT % GameState.film_left
 
 
 # --- 日付の札 ---------------------------------------------------------------

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"p06_base"
+point_no = 6
+month = 8
+day = 14
+place = "秘密基地とタケル"
+shooter = 0
+boy_in_frame = false
+reaction = 1
+inner_voice = "（ここに、あの缶が埋まる）"
+placeholder_color = Color(0.788, 0.839, 0.753, 1)
