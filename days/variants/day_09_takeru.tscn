@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://days/day_09.tscn" id="base"]
 [ext_resource type="Script" path="res://world/scenery_prop.gd" id="prop"]
@@ -7,6 +7,8 @@
 [ext_resource type="Resource" path="res://data/npcs/takeru_capsule.tres" id="npc_takeru_capsule"]
 [ext_resource type="Script" path="res://world/glow_layer.gd" id="glow"]
 [ext_resource type="Script" path="res://world/flashlight.gd" id="flashlight"]
+[ext_resource type="Resource" path="res://data/npcs/takeru_capsule_spot.tres" id="npc_takeru_spot"]
+[ext_resource type="Script" path="res://world/torii_peak_view.gd" id="peak_view"]
 
 [node name="Day09_takeru" instance=ExtResource("base")]
 
@@ -25,7 +27,7 @@ script = ExtResource("secret_base")
 mode = 2
 
 [node name="Mound" type="Node2D" parent="Props"]
-position = Vector2(2880, 604)
+position = Vector2(2960, 604)
 script = ExtResource("prop")
 kind = 23
 show_on_event = "buried"
@@ -33,6 +35,16 @@ show_on_event = "buried"
 [node name="Takeru" parent="Props" instance=ExtResource("npc")]
 position = Vector2(2560, 604)
 npc_data = ExtResource("npc_takeru_capsule")
+
+[node name="TakeruSpot" parent="Props" instance=ExtResource("npc")]
+position = Vector2(3040, 604)
+npc_data = ExtResource("npc_takeru_spot")
+
+[node name="PeakView" type="Node2D" parent="Props"]
+script = ExtResource("peak_view")
+overlap_cam_x = 3160.0
+tolerance = 120.0
+screen_offset = 220.0
 
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("glow")
