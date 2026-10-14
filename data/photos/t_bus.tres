@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"t_bus"
+point_no = 0
+month = 8
+day = 31
+place = "坂の上から見た、走り去るバス（タケルが撮った）"
+shooter = 1
+boy_in_frame = false
+reaction = 3
+placeholder_color = Color(0.82, 0.80, 0.70, 1)

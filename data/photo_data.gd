@@ -36,13 +36,40 @@ enum Reaction {
 @export var picture: Texture2D
 ## 仮のカードの色
 @export var placeholder_color: Color = Color("#D8C9A8")
+## 何も写っていない真っ黒な写真（残りのフィルムが5枚より多く余ったぶん。日付はない）
+@export var black := false
 ## 写真の裏の字（子どもが書いたもの。ひらがな）。空なら裏には何もない
 @export var back_text: String
 
 
 ## カメラの一覧に出す、日付と場所（絵は出さない）
 func label() -> String:
+	if black:
+		return place
 	return "%d/%d　%s" % [month, day, place]
+
+
+## 缶を開けたあと、写真の下に出す日付（漢字。真っ黒な写真は日付なし）
+func date_text() -> String:
+	return "" if black else "%d月 %d日" % [month, day]
+
+
+## 並べ替えの値（日付順）。真っ黒な写真はいちばん最後
+func date_key() -> int:
+	return 9999 if black else month * 100 + day
+
+
+## 何も写っていない写真
+static func make_black() -> PhotoData:
+	var p := PhotoData.new()
+	p.id = &"black"
+	p.black = true
+	p.place = "何も写っていない写真"
+	p.reaction = Reaction.BLACK
+	p.shooter = Shooter.TAKERU
+	p.inner_voice = "（……何も写っていない。それでも、捨てられない）"
+	p.placeholder_color = Color("#1E1B18")
+	return p
 
 
 ## 撮ったときに手に入る、現像前の写真（宝物と同じ枠に並べるための ItemData）

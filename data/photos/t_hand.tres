@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"t_hand"
+point_no = 0
+month = 8
+day = 23
+place = "タイムカプセルを埋める手（タケルが撮った）"
+shooter = 1
+boy_in_frame = false
+reaction = 3
+placeholder_color = Color(0.745, 0.69, 0.62, 1)

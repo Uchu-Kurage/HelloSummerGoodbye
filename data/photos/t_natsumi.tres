@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"t_natsumi"
+point_no = 0
+month = 8
+day = 24
+place = "田んぼ道のなつみ（タケルが撮った）"
+shooter = 1
+boy_in_frame = false
+reaction = 2
+placeholder_color = Color(0.78, 0.85, 0.90, 1)

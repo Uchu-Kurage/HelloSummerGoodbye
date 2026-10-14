@@ -98,6 +98,64 @@ const CAMERA_FILM := "フィルム のこり %d"
 const POCKET_EMPTY := "まだ なにも ない。"
 const CAMERA_EMPTY := "まだ とっていない。"
 const CAMERA_PHOTO_NAME := "げんぞう まえの しゃしん"
+## 造成地で掘る
+const DIG_KEY := "E"
+const DIG_TOUCH := "ほる"
+
+## 章「あの夏へ」の急：缶を開ける画面と、病室で写真を見せる画面
+const CAN_TITLE := "さびた 缶"
+const CAN_OPEN_LID := "ふたを あける"
+const CAN_LOOK_BOTTOM := "缶の底を しらべる"
+const CAN_BOTTOM_VOICE := "ぼく：（……奥に、何かある。ビニールに包まれた、封筒だ）"
+const CAN_FOUND_VOICE := "ぼく：（……タケル。見つけたよ）"
+const CAN_NO_PHOTO_VOICE := "ぼく：（写真は、ない）"
+const CAN_OPEN_ENVELOPE := "ふうとうを ひらく"
+const CAN_ENVELOPE_NAME := "ビニールに つつまれた ふうとう"
+const CAN_ENVELOPE_TEXT := "タケルの 手紙と、現像された 写真の 束が 入っている。"
+const CAN_NEXT := "つぎへ"
+const CAN_NEXT_PHOTO := "つぎの しゃしん"
+const CAN_DONE := "とじる"
+const CAN_PHOTO_FOUND := "ぼく：（手紙に、写真が1枚 くるまれている）"
+const CAN_PHOTO_BACK_VOICE := "ぼく：（……おれと おまえ。表は、まだ見られない）"
+const PHOTO_BACK_NAME := "しゃしんの うら"
+const BUNDLE_COUNT := "%d / %d"
+## タケルの手紙（子どもの字なのでひらがなのまま）。残したフィルムをタケルが使ったときだけ、「だから、ここに いれとく。」のあとに1行足す
+const LETTER_LINES: Array[String] = [
+	"おまえ、おぼんの とき、へんだったよな。",
+	"ずっと おれの こと みてた。",
+	"しゃしん、おまえの すきな ものばっかり だった。",
+	"だから、ここに いれとく。",
+	"じいさんに なった おまえへ。",
+	"なつみと、けっこん したか？",
+]
+const LETTER_EXTRA := "のこりは おれが とった。 なつみのやつは、おまけだ。"
+const LETTER_EXTRA_AFTER := 4
+## 病室：写真を見せる
+const HOSPITAL_TITLE := "病室"
+const HOSPITAL_KEY_VOICE := "ぼく：（最後の1枚。……手紙にくるまれていた、あの写真だ）"
+const HOSPITAL_START_VOICE := "ぼく：（なつみに、写真を見せよう）"
+const NATSUMI_REACTIONS := {
+	0: "……優しそうな人たちね",
+	1: "……元気な子",
+	2: "……きれいな青",
+	3: "……いいところね",
+	4: "（なつみは黙って、指で写真の表をなでる）",
+	5: "……誰かしら",
+	6: "……この子、知ってる気がする",
+}
+const NATSUMI_KEY_LINES: Array[String] = [
+	"なつみ：……この子",
+	"なつみ：……青い鉛筆、拾ってくれた子",
+	"（なつみが、隣に座る主人公の顔を見る）",
+	"なつみ：……あなた",
+	"ぼく：……うん",
+	"なつみ：……今日は、何したの？",
+	"ぼく：……あの夏に、行ってきたよ",
+	"なつみ：……そう",
+	"（なつみは小さく笑った）",
+	"（なつみが、窓の外の空を見上げる。隣で、同じ空を見上げた）",
+]
+
 ## 4つ目のエンディングのあと、章へ続くメニュー（章があることは知らせない）
 const ENDING_CONTINUE := "つづける"
 ## スタッフロール（仮。あとで中身を決める）。見出しの行は「# 」で始める

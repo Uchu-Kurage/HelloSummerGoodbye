@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DayList" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="DayList" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://data/day_list.gd" id="1"]
 [ext_resource type="Script" path="res://data/day_data.gd" id="2"]
@@ -9,7 +9,9 @@
 [ext_resource type="Resource" path="res://data/chapter/day_ha_2.tres" id="7"]
 [ext_resource type="Resource" path="res://data/chapter/day_ha_3.tres" id="8"]
 [ext_resource type="Resource" path="res://data/chapter/day_ha_4.tres" id="9"]
+[ext_resource type="Resource" path="res://data/chapter/day_kyu_1.tres" id="10"]
+[ext_resource type="Resource" path="res://data/chapter/day_kyu_2.tres" id="11"]
 
 [resource]
 script = ExtResource("1")
-days = Array[ExtResource("2")]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9")])
+days = Array[ExtResource("2")]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")])

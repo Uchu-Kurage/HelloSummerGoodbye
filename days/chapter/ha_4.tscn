@@ -115,7 +115,8 @@ auto_talk_on = true
 script = ExtResource("r12")
 event_name = "white_out_ha"
 action = 6
-next_scene = "res://ui/title.tscn"
+next_scene = "res://world/main.tscn"
+start_day = 7
 
 [node name="Glow" type="CanvasLayer" parent="Props"]
 script = ExtResource("r13")

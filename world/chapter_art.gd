@@ -31,6 +31,8 @@ enum Kind {
 	EASEL,            ## なつみの描きかけの絵（青い空）
 	WATERMELON,       ## 縁側のスイカ
 	NONE,             ## 何も描かない（調べる・撮る範囲だけ）
+	MOUND,            ## 造成地の土の山
+	EXCAVATOR,        ## 造成地のショベルカー
 }
 
 const WALL := Color("#E6E0D2")
@@ -75,6 +77,23 @@ static func draw(ci: CanvasItem, kind: Kind, width := 160.0) -> void:
 		Kind.EASEL: _easel(ci)
 		Kind.WATERMELON: _watermelon(ci)
 		Kind.NONE: pass
+		Kind.MOUND: _mound(ci, width)
+		Kind.EXCAVATOR: _excavator(ci)
+
+
+static func _mound(ci: CanvasItem, width: float) -> void:
+	var w := width * 0.5
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(-w, 0), Vector2(-w * 0.45, -70), Vector2(w * 0.1, -96), Vector2(w * 0.6, -58), Vector2(w, 0)]), Color("#9B7B55"))
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(-w * 0.2, 0), Vector2(w * 0.1, -96), Vector2(w * 0.6, -58), Vector2(w, 0)]), Color("#85673F"))
+
+
+static func _excavator(ci: CanvasItem) -> void:
+	ci.draw_rect(Rect2(-110, -34, 220, 34), Color("#3E3A36"))
+	ci.draw_rect(Rect2(-80, -90, 110, 56), WARN)
+	ci.draw_rect(Rect2(-64, -82, 40, 30), Color("#BFD6DC"))
+	ci.draw_line(Vector2(30, -70), Vector2(120, -130), WARN, 14.0)
+	ci.draw_line(Vector2(120, -130), Vector2(150, -52), WARN, 12.0)
+	ci.draw_colored_polygon(PackedVector2Array([Vector2(138, -56), Vector2(172, -56), Vector2(166, -28), Vector2(144, -28)]), Color("#6F6A63"))
 
 
 static func _bed(ci: CanvasItem) -> void:
