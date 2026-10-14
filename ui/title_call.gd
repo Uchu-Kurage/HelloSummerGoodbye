@@ -4,7 +4,7 @@ extends Control
 ## 白い画面に蝉の声が戻り、ゲームのタイトルロゴが大きく浮かぶ。少し止まって、夜の迎え火の森へ溶けていく（合計 約5秒）。
 ## 決定キー・タップで早送り。ロゴは仮素材（文字）。破の最初の場面は、あとの段階で続ける。
 
-const TITLE_SCENE := "res://ui/title.tscn"
+const MAIN_SCENE := "res://world/main.tscn"
 ## 戻ってきた蝉の声（音素材のある名前）
 const CICADA := "semi_minmin"
 
@@ -58,11 +58,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## 破の最初の場面へ続く（あとの段階）。いまは、章の途中までなのでタイトルへもどる
+## 夜の迎え火の森へ溶けていき、破の最初の場面（8/13 の夜、迎え火の森の入口で目を覚ます）へ続く
 func _finish() -> void:
 	if done:
 		return
 	done = true
 	SfxPlayer.set_ambient("")
-	GameState.reset()
-	Transition.change_scene(TITLE_SCENE)
+	GameState.start_day_index = GameState.CHAPTER_HA_START
+	Transition.change_scene(MAIN_SCENE)

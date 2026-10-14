@@ -48,6 +48,8 @@ var _hold_t := 0.0
 var _ambient_before := ""
 var _was_paused := false
 var _npc_cache := {}
+## 章の破：アイテムのかわりにカメラを見せる縁側の場面（DayData.engawa_kind＝カメラ）
+var _camera_night := false
 
 
 func _ready() -> void:
@@ -120,6 +122,7 @@ func _ready() -> void:
 ## index（0 始まり）の日の終わりの縁側の場面を出し、終わるまで待つ
 func play(index: int) -> void:
 	_day = GameState.get_day(index)
+	_camera_night = GameState.engawa_kind(index) == DayData.EngawaKind.CAMERA
 	empty = GameState.engawa_empty(index)
 	shown_item = null
 	lines = []
@@ -184,16 +187,22 @@ func pick(slot: ItemSlot) -> void:
 		UiAnim.fade(_hint, 1.0, UiTokens.TIME_SMALL)
 	else:
 		UiAnim.float_out(_hint)
-	var reply := EngawaReply.find(shown_item.id if shown_item else &"", GameState.current_route())
 	lines = []
-	if reply:
-		lines.append_array(reply.lines)
-	lines.append_array(GameState.engawa_extra_lines(_day))
+	if _camera_night:
+		# 破：カメラを見せたときの、その晩の言葉（日ごとに少し変わる）
+		lines.append_array(_day.engawa_reply)
+	else:
+		var reply := EngawaReply.find(shown_item.id if shown_item else &"", GameState.current_route())
+		if reply:
+			lines.append_array(reply.lines)
+		lines.append_array(GameState.engawa_extra_lines(_day))
 	if lines.is_empty():
 		_outro()
 		return
 	line_index = 0
 	_set_phase(Phase.REPLY)
+	if not _panel.visible:
+		UiAnim.panel_in(_panel)
 	_show_line(lines[0], shown_item)
 
 
@@ -206,8 +215,12 @@ func _set_phase(p: Phase) -> void:
 
 
 func _begin_ask() -> void:
+	# 破：最初の言葉がない晩は、すぐカメラの枠を出す
+	if _camera_night and _day.engawa_ask == "":
+		_begin_pick()
+		return
 	_set_phase(Phase.ASK)
-	_show_line(Strings.ENGAWA_ASK, null)
+	_show_line(_day.engawa_ask if _camera_night else Strings.ENGAWA_ASK, null)
 	UiAnim.panel_in(_panel)
 
 
@@ -216,6 +229,8 @@ func _begin_pick() -> void:
 	# 選んでいるあいだは、続きの印を出さない（会話の選択肢と同じ）
 	_panel.mark.modulate.a = 0.0
 	var items := GameState.engawa_items(_day)
+	if _camera_night:
+		items = [GameState.find_item(&"chapter_camera")]
 	if items.is_empty():
 		# 拾っていなければ「なんにも」だけ
 		var nothing := ItemData.new()

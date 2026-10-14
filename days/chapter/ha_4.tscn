@@ -1,0 +1,126 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r2"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r3"]
+[ext_resource type="Script" path="res://world/photo_spot.gd" id="r4"]
+[ext_resource type="Resource" path="res://data/npcs/grandma.tres" id="r5"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r6"]
+[ext_resource type="PackedScene" path="res://world/house.tscn" id="r7"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r8"]
+[ext_resource type="Resource" path="res://data/npcs/grandpa.tres" id="r9"]
+[ext_resource type="Resource" path="res://data/npcs/aunt.tres" id="r10"]
+[ext_resource type="Resource" path="res://data/npcs/chapter_fox.tres" id="r11"]
+[ext_resource type="Script" path="res://world/chapter_event.gd" id="r12"]
+[ext_resource type="Script" path="res://world/glow_layer.gd" id="r13"]
+
+[node name="HaDay4" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="Watermelon" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(500, 604)
+kind = 25
+
+[node name="P12" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r4")
+position = Vector2(560, 604)
+kind = 26
+photo_id = &"p12_suika"
+spot_height = 160
+
+[node name="GrandmaSuika" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r6")
+position = Vector2(700, 604)
+kind = 0
+lines = Array[String](["スイカ、冷えてるよ。食べなさい", "ぼく：（この人の「食べなさい」を、何十年ぶりに聞いた）"])
+speaker = "おばあちゃん"
+as_person = true
+look = ExtResource("r5")
+
+[node name="House" parent="Props" instance=ExtResource("r7")]
+position = Vector2(1500, 604)
+
+[node name="P13" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r4")
+position = Vector2(1500, 604)
+kind = 26
+photo_id = &"p13_house"
+spot_height = 300
+
+[node name="BusStop" type="Node2D" parent="Props"]
+script = ExtResource("r8")
+position = Vector2(2300, 604)
+kind = 20
+
+[node name="P14" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r4")
+position = Vector2(2300, 604)
+kind = 26
+photo_id = &"p14_busstop"
+spot_height = 260
+
+[node name="Okuribi" type="Node2D" parent="Props"]
+script = ExtResource("r8")
+position = Vector2(3200, 604)
+kind = 17
+
+[node name="Grandpa" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r6")
+position = Vector2(3100, 604)
+kind = 0
+lines = Array[String]([])
+as_person = true
+look = ExtResource("r9")
+
+[node name="Grandma" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r6")
+position = Vector2(3330, 604)
+kind = 0
+lines = Array[String]([])
+as_person = true
+look = ExtResource("r5")
+
+[node name="Aunt" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r6")
+position = Vector2(3440, 604)
+kind = 0
+lines = Array[String]([])
+as_person = true
+look = ExtResource("r10")
+
+[node name="P15" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r4")
+position = Vector2(3220, 604)
+kind = 26
+photo_id = &"p15_okuribi"
+spot_height = 200
+
+[node name="Fox" parent="Props" instance=ExtResource("r3")]
+script = ExtResource("r6")
+position = Vector2(3590, 604)
+kind = 0
+lines = Array[String](["時間だよ", "ぼく：……おじいちゃん、ありがとう", "おじいちゃん：なんだ、いきなり", "（カメラを、ぎゅっと握りしめた）", "ぼく：……これだけ、持っていけない？", "言ったでしょ。心だけ", "（煙が白くなる。カメラは、子どもの手の中に残る）", "@event white_out_ha"])
+speaker = "お面の子"
+as_person = true
+look = ExtResource("r11")
+auto_talk_on = true
+
+[node name="WhiteOutHa" type="Node2D" parent="Props"]
+script = ExtResource("r12")
+event_name = "white_out_ha"
+action = 6
+next_scene = "res://ui/title.tscn"
+
+[node name="Glow" type="CanvasLayer" parent="Props"]
+script = ExtResource("r13")
+
+[node name="G0" type="Node2D" parent="Props/Glow"]
+script = ExtResource("r8")
+position = Vector2(3200, 604)
+kind = 18

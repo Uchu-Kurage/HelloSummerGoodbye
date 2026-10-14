@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"p03_zashiki"
+point_no = 3
+month = 8
+day = 13
+place = "座敷で酒盛りをする親戚"
+shooter = 0
+boy_in_frame = false
+reaction = 0
+inner_voice = "（みんな、もういない人ばかりだ）"
+placeholder_color = Color(0.831, 0.753, 0.690, 1)

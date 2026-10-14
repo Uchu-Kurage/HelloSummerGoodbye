@@ -36,7 +36,7 @@ func _process(_delta: float) -> void:
 	me.id = StringName("cue_" + name)
 	me.display_name = ""
 	me.placeholder_color = WorldPalette.PLAYER_HAT
-	hud.start_talk(me, lines)
+	hud.start_talk(me, lines, null, self)
 
 
 func _draw() -> void:

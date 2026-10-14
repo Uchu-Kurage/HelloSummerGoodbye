@@ -59,6 +59,12 @@ const TALK_TOUCH := "はなす"
 const EXAMINE_KEY := "E"
 const EXAMINE_TOUCH := "しらべる"
 const FOUND_FORMAT := "%s を 見つけた"
+## 章「あの夏へ」の破：写真のポイント・フィルム
+const PHOTO_KEY := "E"
+const PHOTO_TOUCH := "とる"
+const NO_FILM := "フィルムが ない"
+const FILM_LEFT := "のこり %d"
+const CAMERA_ITEM_NAME := "使い捨てカメラ"
 ## 会話で「ぼく：」と書いたせりふの名前（主人公）
 const ME := "ぼく"
 const RECEIVED_FORMAT := "%s を もらった"

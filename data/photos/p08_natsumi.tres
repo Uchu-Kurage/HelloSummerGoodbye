@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PhotoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/photo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"p08_natsumi"
+point_no = 8
+month = 8
+day = 15
+place = "田んぼ道で絵を描くなつみ"
+shooter = 0
+boy_in_frame = false
+reaction = 2
+inner_voice = "（この子が、ぼくの妻になる）"
+placeholder_color = Color(0.749, 0.812, 0.847, 1)

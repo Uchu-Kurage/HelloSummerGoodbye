@@ -413,6 +413,7 @@ func _run() -> void:
 	await _check_cameos()
 	await _check_title_marks()
 	await _check_box_paging()
+	_check_torii_peak()
 	await _check_chapter()
 	await _check_minigames()
 
@@ -814,7 +815,7 @@ func _check_chapter() -> void:
 	await _wait(0.8)
 	var hud: Hud = main.get_node("HUD")
 	var player: Player = main.get_node("Player")
-	check(GameState.day_count() == 3 and GameState.current_day().title == "病室", "chapter: its own day list (hospital, home, village)")
+	check(GameState.day_count() == 7 and GameState.current_day().title == "病室", "chapter: its own day list (hospital, home, village, 破 x4)")
 	check(hud.card_text().contains("8月") and hud.card_text().contains("12"), "chapter: the date card is 8月 12日 (%s)" % hud.card_text())
 	check(player.form == DayData.Form.ELDER and not player.can_dash(), "chapter: the old man cannot dash")
 	# ダッシュできない：右を長押ししても歩く速さのまま。子どもに戻すと走れる
@@ -969,8 +970,136 @@ func _chapter_walk() -> void:
 	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "TitleCall", 12.0) or scene_name == "TitleCall", "chapter intro: the bell turns the world white, then the title call")
 	await _wait(0.5)
 	await _key(KEY_ENTER)
-	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 20.0), "chapter intro: the title call fast-forwards, then (for now) the title")
-	check(not GameState.chapter and GameState.day_count() == 10, "chapter intro: main days restored")
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Main" and GameState.chapter and GameState.current_day_index == GameState.CHAPTER_HA_START, 20.0),
+		"chapter intro: the title call fast-forwards, then the first night of the 破 (8/13)")
+	# そのまま破を、フィルムを全部のポイントで撮ろうとして歩く（12枚で終わり、残りは「フィルムが ない」）
+	_engawa_seen.clear()
+	await _ha_walk(15)
+	# 破を最初から、3か所だけ撮って歩く（9枚のこる）
+	GameState.start_chapter()
+	GameState.start_day_index = GameState.CHAPTER_HA_START
+	get_tree().change_scene_to_file("res://world/main.tscn")
+	await _wait(0.8)
+	_engawa_seen.clear()
+	await _ha_walk(3)
+
+
+## 破（8/13〜8/16）を、右へ歩きながら最後まで。写真のポイントは、先に着いたものから limit か所だけ撮ろうとする
+func _ha_walk(limit: int) -> void:
+	var tag := "ha (shoot %d): " % limit
+	_seen_lines.clear()
+	var main := get_tree().current_scene
+	var hud: Hud = main.get_node("HUD")
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	var player: Player = main.get_node("Player")
+	var L := GameState.DAY_LENGTH_PX
+	var attempted := {}
+	var days_seen := {}
+	var cards := {}
+	var film_chip_ok := false
+	var overlap_xs: Array[float] = []
+	var dash_ok := true
+	# 白くなって章の場面をはなれると、記録はもどされるので、歩いているあいだに控えておく
+	var snap_photos: Array[PhotoData] = []
+	var snap_takeru: Array[PhotoData] = []
+	var snap_flags := {}
+	var snap_film := -1
+	Input.action_press("move_right")
+	var t := 0.0
+	while t < 500.0 and is_instance_valid(main) and get_tree().current_scene == main:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		if not is_instance_valid(main) or not main.is_inside_tree():
+			break
+		var day := GameState.current_day_index
+		days_seen[day] = true
+		if not cards.has(day) and not Transition.is_busy():
+			cards[day] = hud.card_text()
+		snap_photos = GameState.photos.duplicate()
+		snap_takeru = GameState.takeru_photos.duplicate()
+		snap_flags = GameState.flags.duplicate()
+		snap_film = GameState.film_left
+		dash_ok = dash_ok and player.can_dash() and player.form == DayData.Form.CHILD
+		if GameState.has_camera() and GameState.film_left == GameState.FILM_MAX and hud._film_chip.visible and hud._film_label.text == Strings.FILM_LEFT % 12:
+			film_chip_ok = true
+		if day == GameState.CHAPTER_HA_START + 1:
+			var d2 := main.get_node("Days").get_node_or_null("HaDay2")
+			var view := d2.get_node_or_null("Props/PeakView") if d2 else null
+			if view and view.is_overlapping():
+				overlap_xs.append(player.global_position.x - day * L)
+		if hud.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		var target := hud.current_target()
+		if target is PhotoSpot:
+			var ps := target as PhotoSpot
+			if not attempted.has(ps.photo_id) and attempted.size() < limit and ps.can_interact():
+				attempted[ps.photo_id] = true
+				Input.action_release("move_right")
+				TouchControls.fire_action(&"interact")
+				await _wait(0.2)
+				await _finish_talk(hud, box)
+				Input.action_press("move_right")
+		elif target is Npc and not (target.get_parent() is Cameo) and not GameState.has_talked((target as Npc).npc_data.id) \
+				and not (target as Npc).npc_data.auto_talk and (target as Npc).can_interact():
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.2)
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	var first := GameState.CHAPTER_HA_START
+	check(days_seen.has(first) and days_seen.has(first + 1) and days_seen.has(first + 2) and days_seen.has(first + 3), tag + "four days 8/13-8/16 %s" % str(days_seen.keys()))
+	check(cards.get(first, "").contains("13") and cards.get(first + 1, "").contains("14") and cards.get(first + 2, "").contains("15") and cards.get(first + 3, "").contains("16"),
+		tag + "date cards 13/14/15/16 (%s)" % str(cards))
+	check(dash_ok, tag + "a child's body: dash allowed")
+	check(film_chip_ok, tag + "のこり 12 shows once the camera is in hand")
+	var shot := mini(limit, 12)
+	check(snap_photos.size() == shot and snap_film == 12 - shot, tag + "%d photos taken, film left %d (%d / %d)" % [shot, 12 - shot, snap_photos.size(), snap_film])
+	var ids := {}
+	for p in snap_photos:
+		ids[p.id] = true
+	check(ids.size() == snap_photos.size(), tag + "no photo taken twice")
+	var tids := snap_takeru.map(func(p): return String(p.id))
+	tids.sort()
+	check(tids == ["takeru_back", "takeru_pair", "takeru_sky"], tag + "takeru's 3 photos are always taken, apart from the film %s" % str(tids))
+	check(snap_photos.all(func(p): return p.shooter == PhotoData.Shooter.PLAYER) and snap_takeru.all(func(p): return p.shooter == PhotoData.Shooter.TAKERU),
+		tag + "photographers recorded")
+	check(limit <= 12 or _seen_lines.has(Strings.NO_FILM), tag + "when the film runs out: 「フィルムが ない」")
+	check(snap_flags.has(&"secret_beckon") and snap_flags.has(&"secret_seen"), tag + "the secret place was shown (beckoned, then seen where the two overlap)")
+	check(not overlap_xs.is_empty() and overlap_xs.max() - overlap_xs.min() < 260.0, tag + "the torii and the peak overlap only in one narrow spot (%s)" % (str([overlap_xs.min(), overlap_xs.max()]) if not overlap_xs.is_empty() else "never"))
+	for line in ["どこ行ってたの。心配したのよ", "（そうだ。あの夏、ばあちゃんはカメラを買っていた）", "あら、それ。みんなで撮ろうと思って買ったのに、誰も使わないのよ", "使っていいよ。好きなもの、撮りなさい",
+			"お盆になると、思い出すやつがいてな", "何撮ってんだよ", "おまえも写れよ。貸して", "いいもん見せてやる。ここ立ってみ", "夏休みの思い出って、何描けばいいのかな", "いい空だぞ。撮ってやる", "スイカ、冷えてるよ。食べなさい", "時間だよ", "言ったでしょ。心だけ"]:
+		check(_seen_lines.has(line) or _seen_lines.has(line.replace("（", "").replace("）", "")), tag + "line shown: %s" % line)
+	# 縁側の場面（8/13〜8/15の3晩だけ。8/16 にはない）：アイテムのかわりにカメラ
+	var nights: Dictionary = _engawa_seen.get("normal", {})
+	check(nights.keys().size() == 3, tag + "the engawa plays on 3 nights only %s" % str(nights.keys()))
+	for day_index in [first + 1, first + 2, first + 3]:
+		var rec: Dictionary = nights.get(day_index, {})
+		check(rec.get("items", []) == [&"chapter_camera"] or rec.get("mode", "") == "skip", tag + "engawa night %d shows the camera (%s)" % [day_index, str(rec.get("items", []))])
+	check(nights.get(first + 1, {}).get("lines", []) == ["ぼく：……忘れたくないもの"] or nights.get(first + 1, {}).get("mode", "") == "skip", tag + "engawa 8/13: ぼく：……忘れたくないもの")
+	check(nights.get(first + 2, {}).get("lines", []) == ["おじいちゃん：フィルム、大事に使えよ。現像も高いんだ"] or nights.get(first + 2, {}).get("mode", "") == "skip", tag + "engawa 8/14: grandpa")
+	check(nights.get(first + 3, {}).get("lines", []) == ["おばあちゃん：明日は送り火だねえ。……みんな、帰っちゃうね"] or nights.get(first + 3, {}).get("mode", "") == "skip", tag + "engawa 8/15: grandma")
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 20.0), tag + "the smoke turns white, then (for now) the title")
+	check(not GameState.chapter and GameState.day_count() == 10, tag + "main days restored")
+
+
+## 鳥居と山のてっぺんが重なる位置は、カメラの x で 1 か所だけ
+func _check_torii_peak() -> void:
+	var v := ToriiPeakView.new()
+	v.overlap_cam_x = 1000.0
+	check(is_equal_approx(v.overlap(1000.0), 1.0), "torii peak: fully overlapping at the chosen camera x")
+	var near := 0
+	var xs := range(0, 2500, 5)
+	for x in xs:
+		if v.overlap(float(x)) > 0.0:
+			near += 1
+	check(near > 0 and near * 5 < 300, "torii peak: overlaps only within a narrow band (%d px)" % (near * 5))
+	check(v.overlap(1000.0 - 400.0) == 0.0 and v.overlap(1000.0 + 400.0) == 0.0, "torii peak: not overlapping away from the spot")
+	check(v.torii_offset(1200.0) < v.peak_offset(1200.0) and v.torii_offset(800.0) > v.peak_offset(800.0), "torii peak: the nearer torii moves faster than the far peak")
+	v.free()
 
 
 # --- 他ルートの人物の顔出し ----------------------------------------------------
@@ -1916,7 +2045,7 @@ func _drive_engawa(e: Engawa) -> void:
 		await _until(func(): return not e.is_open())
 		rec["ms"] = (Time.get_ticks_msec() - t0) * Engine.time_scale
 		return
-	await _until(func(): return e.phase == Engawa.Phase.ASK)
+	await _until(func(): return e.phase == Engawa.Phase.ASK or e.phase == Engawa.Phase.PICK)
 	if n == 3:
 		# 「とばす」相当（ui_cancel）で場面ごととばす
 		rec["mode"] = "skip"

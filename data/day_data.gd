@@ -28,6 +28,9 @@ enum EngawaKind { NORMAL, NONE, CAMERA }
 @export var engawa_kind: EngawaKind = EngawaKind.NORMAL
 ## 家の中・病室など（外の景色・手前の枝・光の粒を出さず、壁と床を描く。環境音は鳴らさない）
 @export var indoor := false
+## カメラを見せる縁側の場面（engawa_kind＝カメラ）：おばあちゃん・おじいちゃんの最初の言葉（空ならカメラの枠をすぐ出す）と、見せたあとの返事
+@export var engawa_ask := ""
+@export var engawa_reply: Array[String] = []
 @export_group("時間帯")
 ## 時間帯のキー。x はその日の中の位置（0.0〜1.0）、y は時間の値（早朝 -0.15／朝 0.00／昼 0.25／夕方 0.60／夜 0.85／夜の終わり 1.00）。
 ## 空なら [(0, 0.00), (1, 1.00)]。x の小さい順に並べる。同じ x に2つ置くと、そこで時間が飛ぶ（暗転で隠す）

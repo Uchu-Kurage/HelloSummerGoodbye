@@ -9,6 +9,8 @@ signal day_changed(index: int)
 signal flags_changed
 ## 秘密基地のすき間に材料をはめたとき
 signal base_changed
+## 章「あの夏へ」：フィルムの枚数がかわったとき（カメラを手に入れたときも）
+signal film_changed
 
 ## 1日の横幅（px）。あとで調整する
 const DAY_LENGTH_PX := 3840.0
@@ -22,6 +24,8 @@ const BASE_PUZZLE_PATH := "res://data/base_puzzle.tres"
 const CHAPTER_LIST_PATH := "res://data/chapter/chapter_day_list.tres"
 ## 章のフィルムの枚数
 const FILM_MAX := 12
+## 章の日の並びの中で、破の最初の日（8/13）の番号（0 始まり）
+const CHAPTER_HA_START := 3
 const _MONTH_DAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 var day_list: DayList
@@ -32,6 +36,8 @@ var chapter := false
 ## 章のフィルムの残り（破で撮るたびに減る）と、撮った写真（撮った順の PhotoData）
 var film_left := FILM_MAX
 var photos: Array[PhotoData] = []
+## タケルが破で撮る写真（フィルム12枚とは別。カメラの一覧には出さない。急の束には日付順に入る）
+var takeru_photos: Array[PhotoData] = []
 var current_day_index := 0
 ## 本編をはじめる日（ふだんは 0。デバッグのジャンプで変える）
 var start_day_index := 0
@@ -111,6 +117,7 @@ func reset() -> void:
 	day_list = main_day_list
 	film_left = FILM_MAX
 	photos.clear()
+	takeru_photos.clear()
 	collected.clear()
 	received.clear()
 	gone.clear()
@@ -174,6 +181,44 @@ func pocket_items() -> Array[ItemData]:
 		if it and holds(it.id) and not out.has(it):
 			out.append(it)
 	return out
+
+
+## カメラを持っているか（破の 8/13、茶の間のたんすで見つける）
+func has_camera() -> bool:
+	return chapter and holds(&"chapter_camera")
+
+
+## 写真のデータ（data/photos/<id>.tres）
+static func photo_data(id: StringName) -> PhotoData:
+	return load("res://data/photos/%s.tres" % id) as PhotoData
+
+
+func photo_taken(id: StringName) -> bool:
+	for p in photos:
+		if p.id == id:
+			return true
+	for p in takeru_photos:
+		if p.id == id:
+			return true
+	return false
+
+
+## 写真のポイントで撮る。フィルムが残っていなければ false（撮り直しはできない）
+func take_photo(p: PhotoData) -> bool:
+	if p == null or film_left <= 0 or photo_taken(p.id):
+		return false
+	film_left -= 1
+	photos.append(p)
+	film_changed.emit()
+	return true
+
+
+## タケルが撮る写真（決まった場面。フィルムは減らさない）
+func take_takeru_photo(p: PhotoData) -> void:
+	if p == null or photo_taken(p.id):
+		return
+	takeru_photos.append(p)
+	film_changed.emit()
 
 
 ## 撮った写真（現像前）を、撮った順の宝物の形で
