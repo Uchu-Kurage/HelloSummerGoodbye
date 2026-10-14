@@ -221,6 +221,63 @@ func take_takeru_photo(p: PhotoData) -> void:
 	film_changed.emit()
 
 
+## 撮らずに残したフィルムを、老人の心が帰ったあとにタケルが撮る順（最大5枚）
+const REMAINING_IDS: Array[StringName] = [&"t_dive", &"t_natsumi", &"t_walk", &"t_hand", &"t_bus"]
+## 描く写真の全部（ポイント15・破のタケル3・残りのタケル5）。スタッフロールで流す
+const ALL_PHOTO_IDS: Array[StringName] = [
+	&"p01_mukaebi", &"p02_horse", &"p03_zashiki", &"p04_shop", &"p05_boxes", &"p06_base", &"p07_rock", &"p08_natsumi",
+	&"p09_easel", &"p10_board", &"p11_torii", &"p12_suika", &"p13_house", &"p14_busstop", &"p15_okuribi",
+	&"takeru_pair", &"takeru_back", &"takeru_sky", &"t_dive", &"t_natsumi", &"t_walk", &"t_hand", &"t_bus"]
+## 手紙にくるまれた二人の写真（束には入らない。表を見るのは病室）
+const KEY_PHOTO_ID := &"takeru_pair"
+
+
+## 造成地で缶を掘り当てたか（掘り当てたあとは、もう掘れない）
+func chapter_dug() -> bool:
+	return has_flag(&"chapter_can_found")
+
+
+## 残したフィルムをタケルが使ったか（手紙に一行足す）
+func takeru_used_film() -> bool:
+	return film_left > 0
+
+
+## 残したフィルムで、タケルが撮る写真（残りの枚数だけ、REMAINING_IDS の上から）
+func remaining_photos() -> Array[PhotoData]:
+	var out: Array[PhotoData] = []
+	for i in mini(film_left, REMAINING_IDS.size()):
+		out.append(photo_data(REMAINING_IDS[i]))
+	return out
+
+
+## 5枚より多く残ったぶんの、真っ黒な写真
+func black_photos() -> Array[PhotoData]:
+	var out: Array[PhotoData] = []
+	for i in maxi(film_left - REMAINING_IDS.size(), 0):
+		out.append(PhotoData.make_black())
+	return out
+
+
+## 缶の中の写真の束：日付順（同じ日はポイント→タケルの順）。二人の写真は入らない。真っ黒な写真は最後
+func photo_bundle() -> Array[PhotoData]:
+	var all: Array[PhotoData] = []
+	all.append_array(photos)
+	for p in takeru_photos:
+		if p.id != KEY_PHOTO_ID:
+			all.append(p)
+	all.append_array(remaining_photos())
+	# 並べ替えは安定しない：（日付, もとの順）で並べる
+	var keyed: Array = []
+	for i in all.size():
+		keyed.append([all[i].date_key(), i, all[i]])
+	keyed.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
+	var out: Array[PhotoData] = []
+	for k in keyed:
+		out.append(k[2])
+	out.append_array(black_photos())
+	return out
+
+
 ## 撮った写真（現像前）を、撮った順の宝物の形で
 func photo_items() -> Array[ItemData]:
 	var out: Array[ItemData] = []
@@ -303,7 +360,16 @@ func gone_note(id: StringName) -> String:
 
 ## id からアイテムを探す（ルートの差し替えのアイテムも含む）
 func find_item(id: StringName) -> ItemData:
-	for d in day_list.days:
+	return _find_item_in(day_list, id)
+
+
+## 序のアイテムを探す（章のあいだも、序の日の並びから。缶の中のビー玉・親友ルートで入れた宝物）
+func find_main_item(id: StringName) -> ItemData:
+	return _find_item_in(main_day_list, id)
+
+
+func _find_item_in(list: DayList, id: StringName) -> ItemData:
+	for d in list.days:
 		for it in d.items + d.extra_items:
 			if it and it.id == id:
 				return it

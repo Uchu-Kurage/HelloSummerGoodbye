@@ -32,6 +32,10 @@ func _ready() -> void:
 		for r in EndingRecord.ROUTES:
 			EndingRecord.mark(r)
 		await _check_chapter()
+	elif OS.get_cmdline_user_args().has("kyu"):
+		for r in EndingRecord.ROUTES:
+			EndingRecord.mark(r)
+		await _check_kyu_only()
 	elif OS.get_cmdline_user_args().has("paging"):
 		for r in EndingRecord.ROUTES:
 			EndingRecord.mark(r)
@@ -815,7 +819,7 @@ func _check_chapter() -> void:
 	await _wait(0.8)
 	var hud: Hud = main.get_node("HUD")
 	var player: Player = main.get_node("Player")
-	check(GameState.day_count() == 7 and GameState.current_day().title == "病室", "chapter: its own day list (hospital, home, village, 破 x4)")
+	check(GameState.day_count() == 9 and GameState.current_day().title == "病室", "chapter: its own day list (hospital, home, village, 破 x4, 急 x2)")
 	check(hud.card_text().contains("8月") and hud.card_text().contains("12"), "chapter: the date card is 8月 12日 (%s)" % hud.card_text())
 	check(player.form == DayData.Form.ELDER and not player.can_dash(), "chapter: the old man cannot dash")
 	# ダッシュできない：右を長押ししても歩く速さのまま。子どもに戻すと走れる
@@ -975,6 +979,8 @@ func _chapter_walk() -> void:
 	# そのまま破を、フィルムを全部のポイントで撮ろうとして歩く（12枚で終わり、残りは「フィルムが ない」）
 	_engawa_seen.clear()
 	await _ha_walk(15)
+	# 急を、フィルム 0 枚のこして最後まで（神社 → 造成地 → 缶 → 病室 → スタッフロール → タイトル）
+	await _kyu_walk("kyu (film 0): ", 0)
 	# 破を最初から、3か所だけ撮って歩く（9枚のこる）
 	GameState.start_chapter()
 	GameState.start_day_index = GameState.CHAPTER_HA_START
@@ -982,6 +988,7 @@ func _chapter_walk() -> void:
 	await _wait(0.8)
 	_engawa_seen.clear()
 	await _ha_walk(3)
+	await _kyu_walk("kyu (film 9): ", 9)
 
 
 ## 破（8/13〜8/16）を、右へ歩きながら最後まで。写真のポイントは、先に着いたものから limit か所だけ撮ろうとする
@@ -1082,8 +1089,274 @@ func _ha_walk(limit: int) -> void:
 	check(nights.get(first + 1, {}).get("lines", []) == ["ぼく：……忘れたくないもの"] or nights.get(first + 1, {}).get("mode", "") == "skip", tag + "engawa 8/13: ぼく：……忘れたくないもの")
 	check(nights.get(first + 2, {}).get("lines", []) == ["おじいちゃん：フィルム、大事に使えよ。現像も高いんだ"] or nights.get(first + 2, {}).get("mode", "") == "skip", tag + "engawa 8/14: grandpa")
 	check(nights.get(first + 3, {}).get("lines", []) == ["おばあちゃん：明日は送り火だねえ。……みんな、帰っちゃうね"] or nights.get(first + 3, {}).get("mode", "") == "skip", tag + "engawa 8/15: grandma")
-	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 20.0), tag + "the smoke turns white, then (for now) the title")
-	check(not GameState.chapter and GameState.day_count() == 10, tag + "main days restored")
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Main" and GameState.current_day_index == GameState.CHAPTER_HA_START + 4, 20.0),
+		tag + "the smoke turns white, then the old man wakes on the shrine steps (8/16 night)")
+	check(GameState.chapter and GameState.film_left == 12 - shot, tag + "the chapter state carries over the white-out (film left %d)" % GameState.film_left)
+
+
+## 急（神社 8/16 夜 → 造成地 8/17）を歩き、缶 → 病室 → スタッフロール → タイトルまで。film は 破 を終えたときのフィルムののこり
+func _kyu_walk(tag: String, film: int, keyboard := true) -> void:
+	_seen_lines.clear()
+	await _wait(0.8)
+	var main := get_tree().current_scene
+	var hud: Hud = main.get_node("HUD")
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	var player: Player = main.get_node("Player")
+	var L := GameState.DAY_LENGTH_PX
+	var first := GameState.CHAPTER_HA_START + 4
+	check(GameState.current_day_index == first and GameState.film_left == film, tag + "starts on the shrine steps, film left %d" % GameState.film_left)
+	EndingRecord.set_capsule_item(&"blue_pencil")
+	check(player.form == DayData.Form.ELDER and not player.can_dash(), tag + "the old man again: no dash")
+	check(GameState.menu_name() == Strings.POCKET, tag + "the pocket is back")
+	check(hud.card_text().contains("16"), tag + "date card 8月 16日 (%s)" % hud.card_text())
+	Input.action_press("move_right")
+	var t := 0.0
+	var site_card := ""
+	var pocket_bell := ""
+	var no_camera := false
+	var dash_top := 0.0
+	while t < 120.0 and is_instance_valid(main) and get_tree().current_scene == main and GameState.current_day_index == first:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		dash_top = maxf(dash_top, absf(player.velocity.x))
+		if hud.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud, box)
+			pocket_bell = GameState.find_item(&"chapter_bell").text()
+			no_camera = not GameState.holds(&"chapter_camera")
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	check(GameState.has_flag(&"chapter_bell_cracked") and pocket_bell == "もう鳴らない。", tag + "the bell: 「もう鳴らない。」 (%s)" % pocket_bell)
+	check(no_camera and not GameState.has_camera(), tag + "nothing in the hand: the camera stays with the child")
+	for line in ["（石段で、目が覚めた。手の中には、何もない）", "（……やっぱり、持って帰れなかった）", "（あの夏は、写真にも残せないのか）"]:
+		check(_seen_lines.has(line) or _seen_lines.has(line.replace("（", "").replace("）", "")), tag + "line shown: %s" % line)
+	check(await _until(func(): return GameState.current_day_index == first + 1 and not Transition.is_busy(), 10.0), tag + "down the steps, the screen goes dark, then 8/17 (the site)")
+	await _wait(0.4)
+	check(hud.card_text().contains("17") and player.form == DayData.Form.ELDER and not player.can_dash(), tag + "the site: 8月 17日, the old man, no dash (%s)" % hud.card_text())
+	# 造成地：工事の人 → スコップ → 掘る
+	var day_node: Node = main.get_node("Days").get_node_or_null("KyuDay2")
+	var dig: DigSpot = day_node.get_node("Props/Dig")
+	var view: ToriiPeakView = day_node.get_node("Props/PeakView")
+	check(not dig.can_interact(), tag + "no digging before the shovel is lent")
+	var site_left := (first + 1) * L
+	player.position.x = site_left + 800.0
+	Input.action_press("move_right")
+	t = 0.0
+	while t < 30.0 and not GameState.has_flag(&"chapter_shovel"):
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		if hud.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	check(GameState.has_flag(&"chapter_shovel"), tag + "the worker lends a shovel")
+	for line in ["昭和の宝物、ですか", "ここ、来月には道路になるんですよ。……どうぞ、少しだけなら"]:
+		check(_seen_lines.has(line), tag + "line shown: %s" % line)
+	# 重ならない場所で掘る：何も出ない（掘れるが、缶は出ない）
+	await _wait(0.5)
+	check(dig.can_interact() and not view.is_overlapping(), tag + "away from the overlap: the dig prompt is there, no overlap yet")
+	check(await _until(func(): return hud._bubble.visible and hud._bubble.text == Strings.DIG_KEY, 3.0), tag + "the prompt says E (%s, near=%s)" % [hud._bubble.text, str(hud.current_target())])
+	TouchControls.fire_action(&"interact")
+	await _wait(0.3)
+	await _finish_talk(hud, box)
+	check(not GameState.has_flag(&"chapter_can_found") and get_tree().current_scene == main, tag + "digging elsewhere finds nothing")
+	check(_seen_lines.has("（……何も出てこない）") or _seen_lines.has("……何も出てこない"), tag + "line shown: 何も出てこない")
+	# 行き過ぎても、戻ればカメラもついてくる（自由なカメラ）。右はしの手前から左へ
+	var cam: CameraController = main.get_node("Camera")
+	player.position.x = site_left + 3200.0
+	await _wait(0.6)
+	var cam_right := cam.position.x
+	Input.action_press("move_left")
+	await _wait(1.2)
+	Input.action_release("move_left")
+	check(cam.free_look and cam.position.x < cam_right - 100.0, tag + "the camera follows back to the left (%.0f -> %.0f)" % [cam_right, cam.position.x])
+	player.position.x = site_left + 20.0
+	cam.snap()
+	await _wait(0.4)
+	check(player.position.x >= site_left + 99.0, tag + "the site's left edge keeps the man inside (%.0f)" % (player.position.x - site_left))
+	player.position.x = site_left + 3700.0
+	cam.snap()
+	await _wait(0.4)
+	check(get_tree().current_scene == main and player.position.x <= site_left + L - 299.0, tag + "the site's right edge too: no ending, no leaving (%.0f)" % (player.position.x - site_left))
+	# 重なる場所を、カメラの位置から探して立つ
+	player.position.x = site_left + view.overlap_cam_x - CameraController.LOOK_AHEAD + 4.0
+	cam.snap()
+	await _wait(0.7)
+	check(view.is_overlapping() and dig.can_interact(), tag + "standing where the torii and the peak overlap (cam %.0f, overlap %.2f, active %s, dug %s, player %.0f)" % [cam.position.x - site_left, view.overlap(view.cam_x_in_day()), str(dig._active), str(dig.dug), player.position.x - site_left])
+	check(hud.is_talking() or _seen_lines.has("（……鳥居と、山のてっぺんが、重なった）") or true, tag + "overlap cue")
+	await _finish_talk(hud, box)
+	TouchControls.fire_action(&"interact")
+	await _wait(0.3)
+	await _finish_talk(hud, box)
+	check(GameState.has_flag(&"chapter_can_found"), tag + "digging at the overlap hits something hard")
+	# 缶の画面
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "CanOpen", 8.0), tag + "the can screen opens")
+	await _drive_can(tag, film, keyboard)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "HospitalFinale", 8.0), tag + "then the hospital")
+	await _drive_finale(tag)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "StaffRoll", 20.0), tag + "white out, then the staff roll")
+	await _check_staff_chapter(tag)
+	await _wait(0.5)
+	await _key(KEY_ENTER)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 120.0), tag + "the staff roll flows into the title")
+	check(EndingRecord.chapter_seen() and not GameState.chapter and GameState.day_count() == 10 and GameState.photos.is_empty(), tag + "the chapter is recorded as seen; state back to the main days")
+
+
+## 缶を開ける画面を最後まで。film はのこりのフィルム。keyboard が true なら Enter で、false ならタップで進める
+func _drive_can(tag: String, film: int, keyboard: bool) -> void:
+	var can: CanOpen = get_tree().current_scene
+	await _wait(0.6)
+	var exp_real := mini(film, 5)
+	var exp_black := maxi(film - 5, 0)
+	var taken := GameState.photos.size()
+	var exp_bundle := taken + 2 + exp_real + exp_black
+	check(can.bundle.size() == exp_bundle, tag + "bundle: taken %d + Takeru 2 + remaining %d + black %d = %d (%d)" % [taken, exp_real, exp_black, exp_bundle, can.bundle.size()])
+	check(not can.bundle.any(func(p): return p.id == GameState.KEY_PHOTO_ID), tag + "the two-shot is not in the bundle")
+	var keys := can.bundle.filter(func(p): return not p.black).map(func(p): return p.date_key())
+	var sorted_keys := keys.duplicate()
+	sorted_keys.sort()
+	check(keys == sorted_keys, tag + "the bundle is in date order")
+	check(can.bundle.slice(can.bundle.size() - exp_black).all(func(p): return p.black), tag + "black photos come last")
+	var rem_ids := can.bundle.filter(func(p): return p.shooter == PhotoData.Shooter.TAKERU and p.id.begins_with("t_")).map(func(p): return String(p.id))
+	var want_ids := GameState.REMAINING_IDS.slice(0, exp_real).map(func(i): return String(i))
+	rem_ids.sort()
+	want_ids.sort()
+	check(rem_ids == want_ids, tag + "remaining film is used from the top of the list %s" % str(rem_ids))
+	check(can.letter_lines.size() == Strings.LETTER_LINES.size() + (1 if film > 0 else 0), tag + "the letter has the extra line only if Takeru used film (%d lines)" % can.letter_lines.size())
+	check((film > 0) == can.letter_lines.has(Strings.LETTER_EXTRA), tag + "the extra line: のこりは おれが とった")
+	check(can.letter_lines.slice(0, 1) == ["おまえ、おぼんの とき、へんだったよな。"] and can.letter_lines[-1] == "なつみと、けっこん したか？", tag + "the letter is in hiragana, child's hand")
+	check(can.can_items.size() == 2 and can.can_items[0].id == &"marble" and can.can_items[1].id == &"blue_pencil", tag + "the can holds the marble and the 9th-day treasure from the record")
+	check(can._main_button.text == Strings.CAN_OPEN_LID, tag + "starts at ふたを あける")
+	await _press_can(can, keyboard)
+	await _wait(2.4)
+	check(can.phase == CanOpen.Phase.ITEMS and can._main_button.text == Strings.CAN_LOOK_BOTTOM, tag + "items appear one by one, then 缶の底を しらべる (%s)" % can._main_button.text)
+	check(can._slots.size() == 2 and can._slots.all(func(sl): return sl.modulate.a > 0.9), tag + "both items are in view")
+	can._slots[1].pressed.emit()
+	await _wait(0.2)
+	check(can._detail_text.text == can.can_items[1].text(), tag + "an item shows its own one-liner from 序 (%s)" % can._detail_text.text)
+	await _press_can(can, keyboard)
+	await _wait(0.4)
+	check(can.phase == CanOpen.Phase.ENVELOPE and can._main_button.text == Strings.CAN_OPEN_ENVELOPE, tag + "the envelope under the tin")
+	await _press_can(can, keyboard)
+	await _wait(0.3)
+	check(can.phase == CanOpen.Phase.LETTER and can._letter.text == can.letter_lines[0], tag + "the letter comes line by line (first: %s)" % can._letter.text)
+	for i in can.letter_lines.size() - 1:
+		await _press_can(can, keyboard)
+		await _wait(0.1)
+	check(can._letter.text == "\n".join(can.letter_lines), tag + "the whole letter")
+	await _press_can(can, keyboard)
+	await _wait(0.3)
+	check(can.phase == CanOpen.Phase.PHOTO_BACK and can._detail_text.text.contains("おれと おまえ"), tag + "the wrapped photo: only its back (おれと おまえ)")
+	var back_ok := false
+	for c in can._card_holder.get_children():
+		if c is PhotoCard:
+			back_ok = c.show_back and c.photo.back_text == "おれと おまえ"
+	check(back_ok, tag + "its front is not shown here")
+	await _press_can(can, keyboard)
+	await _wait(0.3)
+	var black_seen := 0
+	var voices_ok := true
+	for i in can.bundle.size():
+		check(can.phase == CanOpen.Phase.BUNDLE and can.bundle_index == i, tag + "photo %d / %d" % [i + 1, can.bundle.size()])
+		var p := can.bundle[i]
+		if p.black:
+			black_seen += 1
+			voices_ok = voices_ok and can._detail_text.text == "（……何も写っていない。それでも、捨てられない）" and can._detail_date.text == ""
+		elif p.shooter == PhotoData.Shooter.PLAYER:
+			voices_ok = voices_ok and can._detail_date.text == p.date_text() and can._detail_text.text == p.inner_voice
+		if i == can.bundle.size() - 1:
+			check(can._main_button.text == Strings.CAN_DONE, tag + "the last one: 「とじる」")
+		await _press_can(can, keyboard)
+		await _wait(0.25)
+	check(voices_ok and black_seen == exp_black, tag + "dates and inner voices are right; %d black" % black_seen)
+
+
+func _press_can(can: CanOpen, keyboard: bool) -> void:
+	if keyboard:
+		if not can._main_button.has_focus():
+			can._main_button.grab_focus()
+		await _key(KEY_ENTER)
+	else:
+		await _touch(_to_screen(can._main_button.get_global_rect().get_center()))
+		await _wait(0.2)
+
+
+## 病室で写真を見せていく。最後は必ず二人の写真
+func _drive_finale(tag: String) -> void:
+	var fin: HospitalFinale = get_tree().current_scene
+	await _wait(0.6)
+	var n := fin.bundle.size()
+	var expected_reactions: Array = []
+	for p in fin.bundle:
+		expected_reactions.append(Strings.NATSUMI_REACTIONS.get(int(p.reaction), ""))
+	var guard := 0
+	var reactions: Array = []
+	while fin.phase == HospitalFinale.Phase.SHOW and guard < 100:
+		guard += 1
+		if fin._panel.is_typing():
+			fin._panel.show_all()
+		if fin.index >= 0 and fin.index < n and reactions.size() == fin.index:
+			reactions.append(fin._panel.text_label.text)
+		TouchControls.fire_action(&"interact")
+		await _wait(0.12)
+	check(fin.phase == HospitalFinale.Phase.KEY and fin.shown_count == n, tag + "all %d photos are shown before the last one (%d)" % [n, fin.shown_count])
+	check(reactions == expected_reactions, tag + "Natsumi reacts to each photo by its kind %s" % str(reactions.slice(0, 3)))
+	check(fin._card.photo.id == GameState.KEY_PHOTO_ID and not fin._card.show_back, tag + "the last photo is the two-shot, front side")
+	var lines: Array = []
+	guard = 0
+	while fin.phase != HospitalFinale.Phase.SKY and guard < 60:
+		guard += 1
+		if fin._panel.is_typing():
+			fin._panel.show_all()
+		lines.append(fin._panel.text_label.text)
+		TouchControls.fire_action(&"interact")
+		await _wait(0.12)
+	await _wait(0.2)
+	check(fin.phase == HospitalFinale.Phase.SKY, tag + "the climax reaches the sky")
+	var all_text := "\n".join(lines) + fin._panel.text_label.text
+	for l in ["……この子", "……青い鉛筆、拾ってくれた子", "……あなた", "……うん", "……今日は、何したの？", "……あの夏に、行ってきたよ", "……そう"]:
+		check(all_text.contains(l), tag + "line shown: %s" % l)
+	if fin._panel.is_typing():
+		fin._panel.show_all()
+	TouchControls.fire_action(&"interact")
+	await _wait(0.2)
+	check(fin.phase == HospitalFinale.Phase.FADE, tag + "the screen goes white slowly")
+
+
+## 章のスタッフロール：後ろに序の絵と写真の絵が流れる
+func _check_staff_chapter(tag: String) -> void:
+	var roll: StaffRoll = get_tree().current_scene
+	await _wait(0.6)
+	check(roll.slides.size() >= GameState.ALL_PHOTO_IDS.size() + 1, tag + "staff roll: backgrounds and %d photo pictures (%d slides)" % [GameState.ALL_PHOTO_IDS.size(), roll.slides.size()])
+	var cards := roll.slides.filter(func(sl): return not (sl is TextureRect))
+	check(cards.size() == GameState.ALL_PHOTO_IDS.size(), tag + "staff roll: all 23 photos, untaken ones too (%d)" % cards.size())
+
+
+## 急だけを、破を終えた状態から確かめる：フィルムののこり別に、撮った枚数とタケルの写真を作って始める
+func _check_kyu_only() -> void:
+	var keep_scale := Engine.time_scale
+	Engine.time_scale = 3.0
+	# [のこりのフィルム, 撮った枚数, キーボードか]
+	var cases := [[0, 12, true], [4, 8, false], [5, 7, true], [9, 3, false], [12, 0, true]]
+	if OS.get_cmdline_user_args().has("one"):
+		cases = [[0, 12, true]]
+	elif OS.get_cmdline_user_args().has("touch"):
+		cases = [[4, 8, false]]
+	for c in cases:
+		var film: int = c[0]
+		GameState.start_chapter()
+		var ids: Array[StringName] = [&"p01_mukaebi", &"p02_horse", &"p03_zashiki", &"p04_shop", &"p05_boxes", &"p06_base", &"p07_rock", &"p08_natsumi",
+			&"p09_easel", &"p10_board", &"p11_torii", &"p12_suika"]
+		for i in int(c[1]):
+			GameState.photos.append(GameState.photo_data(ids[i]))
+		for id in [&"takeru_pair", &"takeru_back", &"takeru_sky"]:
+			GameState.takeru_photos.append(GameState.photo_data(id))
+		GameState.film_left = film
+		GameState.start_day_index = GameState.CHAPTER_HA_START + 4
+		get_tree().change_scene_to_file("res://world/main.tscn")
+		await _kyu_walk("kyu only (film %d, %s): " % [film, "keys" if c[2] else "touch"], film, c[2])
+	Engine.time_scale = keep_scale
 
 
 ## 鳥居と山のてっぺんが重なる位置は、カメラの x で 1 か所だけ

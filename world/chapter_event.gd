@@ -4,7 +4,7 @@ extends Node2D
 ## NEXT_DAY：次の日へ（暗転）／ TITLE_CALL：白くなってタイトルコールへ／ SET_FLAG：フラグを立てる（出る条件のある人が現れる）／
 ## REVEAL：target の小物をそっと出す／ SFX：音を鳴らす／ TAKERU_PHOTO：タケルが写真を撮る／ WHITE_OUT：白くなって next_scene へ。sfx を指定すれば、どの動作でも鳴らす。
 
-enum Action { NEXT_DAY, TITLE_CALL, SET_FLAG, REVEAL, SFX, TAKERU_PHOTO, WHITE_OUT }
+enum Action { NEXT_DAY, TITLE_CALL, SET_FLAG, REVEAL, SFX, TAKERU_PHOTO, WHITE_OUT, OPEN_CAN }
 
 @export var event_name := ""
 @export var action: Action = Action.NEXT_DAY
@@ -15,6 +15,8 @@ enum Action { NEXT_DAY, TITLE_CALL, SET_FLAG, REVEAL, SFX, TAKERU_PHOTO, WHITE_O
 @export var photo_id: StringName
 ## WHITE_OUT：白くなったあとに読み込む画面
 @export_file("*.tscn") var next_scene := ""
+## WHITE_OUT：次の画面が Main のとき、始める日の番号（-1 ならそのまま）
+@export var start_day := -1
 
 
 func on_talk_event(n: String) -> void:
@@ -31,7 +33,11 @@ func on_talk_event(n: String) -> void:
 			GameState.set_flag(flag)
 		Action.TAKERU_PHOTO:
 			GameState.take_takeru_photo(GameState.photo_data(photo_id))
+		Action.OPEN_CAN:
+			_main_call(&"open_can")
 		Action.WHITE_OUT:
+			if start_day >= 0:
+				GameState.start_day_index = start_day
 			var main := get_tree().current_scene
 			if main and main.has_method(&"start_white_out"):
 				main.call(&"start_white_out", next_scene)

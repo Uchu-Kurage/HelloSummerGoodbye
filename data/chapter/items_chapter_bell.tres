@@ -1,6 +1,12 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://data/item_data.gd" id="1"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+
+[sub_resource type="Resource" id="Cracked"]
+script = ExtResource("2")
+require_all = Array[StringName]([&"chapter_bell_cracked"])
+forbid_any = Array[StringName]([])
 
 [resource]
 script = ExtResource("1")
@@ -10,3 +16,5 @@ description = "振っても鳴らない。"
 day_number = 2
 placeholder_color = Color(0.72, 0.5, 0.32, 1)
 on_ground = false
+alt_if = SubResource("Cracked")
+alt_description = "もう鳴らない。"

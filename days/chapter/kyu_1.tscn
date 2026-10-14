@@ -1,0 +1,54 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r2"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r3"]
+[ext_resource type="Script" path="res://world/talk_cue.gd" id="r4"]
+[ext_resource type="Script" path="res://world/chapter_event.gd" id="r5"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r6"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r7"]
+[ext_resource type="Script" path="res://world/dig_spot.gd" id="r8"]
+[ext_resource type="Script" path="res://world/torii_peak_view.gd" id="r9"]
+[ext_resource type="Script" path="res://world/overlap_cue.gd" id="r10"]
+[ext_resource type="Script" path="res://world/free_camera.gd" id="r11"]
+[ext_resource type="Resource" path="res://data/npcs/chapter_worker.tres" id="r12"]
+
+[node name="KyuDay1" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="Torii" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(900, 604)
+kind = 7
+
+[node name="Lanterns" type="Node2D" parent="Props"]
+script = ExtResource("r3")
+position = Vector2(1500, 604)
+kind = 8
+width = 800
+
+[node name="Steps" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(3050, 604)
+kind = 17
+width = 300
+
+[node name="WakeCue" type="Node2D" parent="Props"]
+script = ExtResource("r4")
+position = Vector2(260, 604)
+lines = Array[String](["@take chapter_camera", "（石段で、目が覚めた。手の中には、何もない）", "@flag chapter_bell_cracked", "ぼく：（鈴にひびが入っている。……もう鳴らない）", "ぼく：（……やっぱり、持って帰れなかった）", "ぼく：（あの夏は、写真にも残せないのか）"])
+
+[node name="DownCue" type="Node2D" parent="Props"]
+script = ExtResource("r4")
+position = Vector2(2900, 604)
+lines = Array[String](["（石段を、ゆっくり下りていく）", "@event next_day"])
+
+[node name="NextDay" type="Node2D" parent="Props"]
+script = ExtResource("r5")
+event_name = "next_day"
+action = 0

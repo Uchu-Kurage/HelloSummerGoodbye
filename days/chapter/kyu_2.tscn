@@ -1,0 +1,90 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r2"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r3"]
+[ext_resource type="Script" path="res://world/talk_cue.gd" id="r4"]
+[ext_resource type="Script" path="res://world/chapter_event.gd" id="r5"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r6"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r7"]
+[ext_resource type="Script" path="res://world/dig_spot.gd" id="r8"]
+[ext_resource type="Script" path="res://world/torii_peak_view.gd" id="r9"]
+[ext_resource type="Script" path="res://world/overlap_cue.gd" id="r10"]
+[ext_resource type="Script" path="res://world/free_camera.gd" id="r11"]
+[ext_resource type="Resource" path="res://data/npcs/chapter_worker.tres" id="r12"]
+
+[node name="KyuDay2" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="FreeCamera" type="Node" parent="."]
+script = ExtResource("r11")
+
+[node name="Fence" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(760, 604)
+kind = 10
+width = 520
+
+[node name="Mound1" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(1500, 604)
+kind = 27
+width = 420
+
+[node name="Mound2" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(2900, 604)
+kind = 27
+width = 460
+
+[node name="Excavator" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(3350, 604)
+kind = 28
+
+[node name="Worker" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r7")
+position = Vector2(930, 604)
+kind = 0
+lines = Array[String](["ぼく：……すみません。昔、この山に埋めたものがあるんです", "昭和の宝物、ですか", "ここ、来月には道路になるんですよ。……どうぞ、少しだけなら", "（スコップを借りた）", "ぼく：（木も、基地も、もうない。地図は役に立たない）", "ぼく：（遠くに、神社の鳥居と、山のてっぺんが見える）", "ぼく：（鳥居と、山のてっぺんが重なるところ）", "@flag chapter_shovel"])
+speaker = "工事の人"
+repeat_lines_text = Array[String](["足もと、気をつけてくださいね"])
+as_person = true
+look = ExtResource("r12")
+auto_talk_on = true
+
+[node name="PeakView" type="Node2D" parent="Props"]
+script = ExtResource("r9")
+overlap_cam_x = 2300
+screen_offset = 200
+
+[node name="OverlapCue" type="Node2D" parent="Props"]
+script = ExtResource("r10")
+view = NodePath("../PeakView")
+require_flags = Array[StringName]([&"chapter_shovel"])
+lines = Array[String](["ぼく：（……鳥居と、山のてっぺんが、重なった）"])
+
+[node name="Dig" parent="Props" instance=ExtResource("r6")]
+script = ExtResource("r8")
+position = Vector2(300, 604)
+kind = 26
+spot_height = 130
+view = NodePath("../PeakView")
+hit_lines = Array[String](["ぼく：（……ここだ。スコップを、土に差した）", "@event dig_sfx", "ざく。", "@event dig_sfx", "ざく。", "@event dig_sfx", "ざく。", "ぼく：（……コツン。スコップの先に、硬いものが当たった）", "@flag chapter_can_found", "ぼく：（……あった）", "@event open_can"])
+miss_lines = Array[String](["ぼく：（スコップを、土に差した）", "@event dig_sfx", "ざく。", "ざく。", "（……何も出てこない）"])
+
+[node name="DigSfx" type="Node2D" parent="Props"]
+script = ExtResource("r5")
+event_name = "dig_sfx"
+action = 4
+sfx = "dig"
+
+[node name="OpenCan" type="Node2D" parent="Props"]
+script = ExtResource("r5")
+event_name = "open_can"
+action = 7

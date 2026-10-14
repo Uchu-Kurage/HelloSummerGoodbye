@@ -11,6 +11,7 @@ const START_X := 220.0
 const ENDING_SCENE := "res://ui/ending.tscn"
 const STAFF_ROLL_SCENE := "res://ui/staff_roll.tscn"
 const TITLE_CALL_SCENE := "res://ui/title_call.tscn"
+const CAN_SCENE := "res://ui/can_open.tscn"
 const ENGAWA_SCENE := preload("res://ui/engawa.tscn")
 const TITLE_SCENE := "res://ui/title.tscn"
 
@@ -125,11 +126,23 @@ func start_title_call() -> void:
 	start_white_out(TITLE_CALL_SCENE)
 
 
+## 造成地で缶を掘り当てた（会話の @event open_can から）。会話を読み終えてから、缶を開ける画面へ
+func open_can() -> void:
+	await get_tree().process_frame
+	if hud.is_talking():
+		await hud.talk_finished
+	if _ending:
+		return
+	_ending = true
+	player.locked = true
+	Transition.change_scene(CAN_SCENE)
+
+
 ## 景色が白くなって、next_scene へ（鈴・煙が白くなる場面。章の場面のつなぎ）
 func start_white_out(next_scene: String) -> void:
 	if _ending:
 		return
-	# 章の途中でタイトルへもどるとき（いまは破の終わり。急はあとの段階）は、序の日の並びにもどす
+	# 章の途中でタイトルへもどるときは、序の日の並びにもどす
 	var to_title := next_scene == TITLE_SCENE
 	_ending = true
 	player.locked = true
@@ -153,9 +166,8 @@ func start_white_out(next_scene: String) -> void:
 
 
 func _go_ending() -> void:
-	# 章は、いまは破の終わりまで（白くなってタイトルへ）。急の最後はスタッフロール（あとの段階）
+	# 章は日の終わりでは終わらない（急の最後は、造成地で缶を掘り当てて、缶の画面 → 病室 → スタッフロール）
 	if GameState.chapter:
-		start_white_out(TITLE_SCENE)
 		return
 	_ending = true
 	player.locked = true
