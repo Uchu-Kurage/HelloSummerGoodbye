@@ -96,6 +96,16 @@ const FLOAT_DISTANCE := 8.0
 const TIME_CHAPTER_IN := 0.9
 const TIME_CHAPTER_HOLD := 1.2
 const TIME_CHAPTER_OUT := 0.9
+## 老年期の村：子どものころが重なる（1〜2秒）と、回想に移る（温かい色）ときのフェード
+const TIME_MEMORY_GHOST := 1.4
+const TIME_MEMORY_FADE := 0.6
+## タイトルコール「To The Summer」：白からロゴが浮かぶ・静止・夜の森へ溶ける（合計 約5秒）と、白くなるまで
+const TIME_CALL_IN := 1.6
+const TIME_CALL_HOLD := 1.2
+const TIME_CALL_OUT := 1.6
+const TIME_WHITE_OUT := 1.4
+const FONT_LOGO := 120
+const WHITE_OUT := Color("#FFFFFF")
 ## スタッフロールの流れる速さ（px／秒）と、行の間隔
 const STAFF_SPEED := 56.0
 const STAFF_LINE_GAP := 12

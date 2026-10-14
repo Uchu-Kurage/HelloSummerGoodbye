@@ -788,6 +788,7 @@ func _check_chapter() -> void:
 	var ending := get_tree().current_scene
 	var first: MenuItem = ending._list.get_child(0)
 	check(ending.name == "Ending" and first.text == Strings.ENDING_RETRY, "chapter: 3 endings -> the ending offers もういちど (%s)" % first.text)
+	await _wait(1.5)
 	EndingRecord.mark(EndingRecord.ROUTES[3])
 	check(EndingRecord.chapter_pending(), "chapter: pending once all 4 endings are seen")
 	get_tree().change_scene_to_file("res://ui/ending.tscn")
@@ -813,7 +814,7 @@ func _check_chapter() -> void:
 	await _wait(0.8)
 	var hud: Hud = main.get_node("HUD")
 	var player: Player = main.get_node("Player")
-	check(GameState.day_count() == 1 and GameState.current_day().title == "病室", "chapter: its own day list")
+	check(GameState.day_count() == 3 and GameState.current_day().title == "病室", "chapter: its own day list (hospital, home, village)")
 	check(hud.card_text().contains("8月") and hud.card_text().contains("12"), "chapter: the date card is 8月 12日 (%s)" % hud.card_text())
 	check(player.form == DayData.Form.ELDER and not player.can_dash(), "chapter: the old man cannot dash")
 	# ダッシュできない：右を長押ししても歩く速さのまま。子どもに戻すと走れる
@@ -835,8 +836,18 @@ func _check_chapter() -> void:
 	Input.action_release("move_right")
 	check(player.can_dash() and top > Player.WALK_SPEED + 1.0, "chapter: the young man can dash (%.0f)" % top)
 	player.set_form(DayData.Form.ELDER)
-	# ポケット（宝箱のかわり）
+	# 調べるところ：タッチでは「しらべる」の吹き出し（72px 以上）を押して調べられる
 	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	player.position.x = 1800.0
+	await _touch(_to_screen(Vector2(8, 8)))
+	await _wait(0.6)
+	check(hud._bubble.visible and hud._bubble.text == Strings.EXAMINE_TOUCH, "chapter: the touch bubble says しらべる (%s)" % hud._bubble.text)
+	check(hud._bubble.size.x >= 72.0 and hud._bubble.size.y >= 72.0, "chapter: the bubble is at least 72px (%s)" % str(hud._bubble.size))
+	await _touch(_to_screen(hud._bubble.get_global_rect().get_center()))
+	await _wait(0.3)
+	check(hud.is_talking(), "chapter: tapping the bubble examines")
+	await _finish_talk(hud, box)
+	# ポケット（宝箱のかわり）
 	check(GameState.menu_name() == Strings.POCKET, "chapter: the pocket replaces the treasure box")
 	TouchControls.fire_action(&"open_box")
 	await _wait(1.0)
@@ -866,19 +877,100 @@ func _check_chapter() -> void:
 	await _key(KEY_ESCAPE)
 	await _wait(0.8)
 	day.menu_kind = DayData.Menu.POCKET
-	# 章のおわり：右はしへ行くと、スタッフロールを経てタイトルへ。章を終えたことが記録される
-	player.position.x = GameState.world_length() - main.END_MARGIN + 20.0
-	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "StaffRoll", 10.0), "chapter: the end of the chapter goes to the staff roll")
+	# 章のおわり（スタッフロール）：章を終えたことが記録される。タイトルへもどる
+	DirAccess.remove_absolute(EPI_RECORD)
+	for r in EndingRecord.ROUTES:
+		EndingRecord.mark(r)
+	GameState.start_chapter()
+	get_tree().change_scene_to_file("res://ui/staff_roll.tscn")
 	await _wait(0.8)
 	await _key(KEY_ENTER)
-	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 40.0), "chapter: then back to the title")
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 40.0), "chapter: the staff roll of the chapter goes back to the title")
 	check(EndingRecord.chapter_seen() and not EndingRecord.chapter_pending() and not GameState.chapter and GameState.day_count() == 10,
 		"chapter: finished is recorded; the main days are restored")
+	# 老年期の導入を通して歩く（病室 → 家 → 村 → 神社の鈴とお面の子 → タイトルコール）
+	await _chapter_walk()
 	# 終えたあとは、4つ目のエンディングでも章へ続かない
 	get_tree().change_scene_to_file("res://ui/ending.tscn")
 	await _wait(0.8)
 	check(get_tree().current_scene._list.get_child(0).text == Strings.ENDING_RETRY, "chapter: after finishing, the ending offers もういちど again")
 	Engine.time_scale = keep_scale
+
+
+## 章の導入（病室・家・村）を、右へ歩きながら最後まで。調べるところ・人には話しかけ、会話は最後まで送る
+func _chapter_walk() -> void:
+	GameState.start_chapter()
+	_seen_lines.clear()
+	get_tree().change_scene_to_file("res://world/main.tscn")
+	await _wait(0.8)
+	var main := get_tree().current_scene
+	var hud: Hud = main.get_node("HUD")
+	var box: TreasureBox = main.get_node("BoxLayer/TreasureBox")
+	var player: Player = main.get_node("Player")
+	var L := GameState.DAY_LENGTH_PX
+	var days_seen := {}
+	var zone_states := {}
+	var youth_frames := 0
+	var elder_outside := true
+	var cards := {}
+	var forms_by_day := {}
+	var item_text := ""
+	Input.action_press("move_right")
+	var t := 0.0
+	while t < 400.0 and is_instance_valid(main) and get_tree().current_scene == main:
+		await get_tree().physics_frame
+		t += get_physics_process_delta_time()
+		if not is_instance_valid(main) or not main.is_inside_tree():
+			break
+		var day := GameState.current_day_index
+		days_seen[day] = true
+		if not cards.has(day) and not Transition.is_busy():
+			cards[day] = hud.card_text()
+		forms_by_day[day] = player.form
+		if day == 2:
+			var village := main.get_node("Days").get_node_or_null("ChapterVillage")
+			if village:
+				for z in village.get_node("Props").get_children():
+					if z is MemoryZone:
+						zone_states[z.name] = z.state
+		if player.form == DayData.Form.YOUTH:
+			youth_frames += 1
+		if GameState.holds(&"chapter_bell") and item_text == "":
+			item_text = GameState.find_item(&"chapter_bell").text()
+		if hud.is_talking():
+			Input.action_release("move_right")
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+			continue
+		var target := hud.current_target()
+		if target is Npc and not (target.get_parent() is Cameo) and not GameState.has_talked((target as Npc).npc_data.id) \
+				and not (target as Npc).npc_data.auto_talk and (target as Npc).can_interact():
+			Input.action_release("move_right")
+			TouchControls.fire_action(&"interact")
+			await _wait(0.2)
+			await _finish_talk(hud, box)
+			Input.action_press("move_right")
+	Input.action_release("move_right")
+	check(days_seen.has(0) and days_seen.has(1) and days_seen.has(2), "chapter intro: hospital, home and village in order %s" % str(days_seen.keys()))
+	check(cards.get(0, "").contains("12") and cards.get(1, "").contains("12") and cards.get(2, "").contains("13") and cards.get(2, "").contains("月"),
+		"chapter intro: date cards 8月 12日 / 12日 / 13日 (%s)" % str(cards))
+	check(forms_by_day.get(2, -1) == DayData.Form.ELDER or youth_frames > 0, "chapter intro: the old man is the player")
+	for f in [&"chapter_natsumi_talked", &"home_closet", &"home_shelf", &"dig1", &"dig2", &"dig3", &"mem_road_talked", &"mem_f1", &"mem_f2", &"chapter_bell_rang"]:
+		check(GameState.has_flag(f), "chapter intro: flag %s" % f)
+	check(item_text == "振っても鳴らない。", "chapter intro: the bell is in the pocket ('%s')" % item_text)
+	check(GameState.collected.size() == 1, "chapter intro: digging finds nothing, only the bell is collected (%d)" % GameState.collected.size())
+	check(youth_frames > 60, "chapter intro: the young man was played in the memories (%d frames)" % youth_frames)
+	var all_done: bool = zone_states.size() == 5 and zone_states.values().all(func(v): return v == MemoryZone.State.DONE)
+	check(all_done, "chapter intro: all five memories ran and ended %s" % str(zone_states))
+	for line in ["……どちら様？", "ご主人、今日もありがとうございます", "……久しぶり。覚えてる？", "まだ、青い鉛筆で空を塗ってるの", "……ないね", "小さい展覧会だけど",
+			"今度は、最後まで落ちなかったね", "……久しぶり", "持って帰れるのは、心だけ"]:
+		check(_seen_lines.has(line), "chapter intro: line shown: %s" % line)
+	var scene_name: String = get_tree().current_scene.name if get_tree().current_scene else ""
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "TitleCall", 12.0) or scene_name == "TitleCall", "chapter intro: the bell turns the world white, then the title call")
+	await _wait(0.5)
+	await _key(KEY_ENTER)
+	check(await _until(func(): return get_tree().current_scene and get_tree().current_scene.name == "Title", 20.0), "chapter intro: the title call fast-forwards, then (for now) the title")
+	check(not GameState.chapter and GameState.day_count() == 10, "chapter intro: main days restored")
 
 
 # --- 他ルートの人物の顔出し ----------------------------------------------------

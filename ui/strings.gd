@@ -55,6 +55,10 @@ const PICKUP_TOUCH := "ひろう"
 const PICKED_FORMAT := "%s を ひろった"
 const TALK_KEY := "E"
 const TALK_TOUCH := "はなす"
+## 章「あの夏へ」：調べるところ（家具・絵・窓など）
+const EXAMINE_KEY := "E"
+const EXAMINE_TOUCH := "しらべる"
+const FOUND_FORMAT := "%s を 見つけた"
 ## 会話で「ぼく：」と書いたせりふの名前（主人公）
 const ME := "ぼく"
 const RECEIVED_FORMAT := "%s を もらった"

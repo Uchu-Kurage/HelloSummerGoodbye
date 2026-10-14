@@ -1,0 +1,304 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="Script" path="res://world/memory_zone.gd" id="r2"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r3"]
+[ext_resource type="Script" path="res://world/kamikakushi_prop.gd" id="r4"]
+[ext_resource type="Script" path="res://world/scenery_prop.gd" id="r5"]
+[ext_resource type="Resource" path="res://data/npcs/chapter_natsumi_young.tres" id="r6"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r7"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r8"]
+[ext_resource type="Script" path="res://world/senko_glow.gd" id="r9"]
+[ext_resource type="Script" path="res://world/chapter_event.gd" id="r10"]
+[ext_resource type="Resource" path="res://data/npcs/chapter_fox.tres" id="r11"]
+
+[node name="ChapterVillage" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Sign" parent="." index="2"]
+visible = false
+
+[node name="BusZone" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(300, 604)
+memory_event = "mem_bus_end"
+
+[node name="Now" type="Node2D" parent="Props/BusZone"]
+
+[node name="Ghost" type="Node2D" parent="Props/BusZone"]
+
+[node name="Memory" type="Node2D" parent="Props/BusZone"]
+
+[node name="Shelter" type="Node2D" parent="Props/BusZone/Now"]
+script = ExtResource("r3")
+position = Vector2(220, 604)
+kind = 8
+
+[node name="Hokora" type="Node2D" parent="Props/BusZone/Now"]
+script = ExtResource("r4")
+position = Vector2(400, 0)
+kind = 0
+
+[node name="OldBusStop" type="Node2D" parent="Props/BusZone/Ghost"]
+script = ExtResource("r5")
+position = Vector2(220, 0)
+kind = 20
+
+[node name="Grandparents" type="Node2D" parent="Props/BusZone/Ghost"]
+script = ExtResource("r3")
+position = Vector2(280, 0)
+kind = 18
+
+[node name="Bench" type="Node2D" parent="Props/BusZone/Memory"]
+script = ExtResource("r3")
+position = Vector2(300, 0)
+kind = 13
+
+[node name="Natsumi" parent="Props/BusZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(330, 0)
+kind = 0
+lines = Array[String](["……久しぶり。覚えてる？", "ぼく：……なつみ？", "町で、絵の勉強してるの", "夏休みだけ、帰ってきた", "@event mem_bus_end"])
+speaker = "なつみ"
+as_person = true
+look = ExtResource("r6")
+
+[node name="RoadZone" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(900, 604)
+memory_event = "mem_road_end"
+after_lines = Array[String](["ぼく：（今は、屋根ばかりだ）"])
+
+[node name="Now" type="Node2D" parent="Props/RoadZone"]
+
+[node name="Ghost" type="Node2D" parent="Props/RoadZone"]
+
+[node name="Memory" type="Node2D" parent="Props/RoadZone"]
+
+[node name="Houses" type="Node2D" parent="Props/RoadZone/Now"]
+script = ExtResource("r3")
+position = Vector2(150, 0)
+kind = 9
+width = 520
+
+[node name="ChildPainting" type="Node2D" parent="Props/RoadZone/Ghost"]
+script = ExtResource("r3")
+position = Vector2(330, 0)
+kind = 19
+
+[node name="Natsumi" parent="Props/RoadZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(330, 0)
+kind = 0
+lines = Array[String](["まだ、青い鉛筆で空を塗ってるの", "ぼく：あのときの？", "まさか。……でも、同じ色", "この色じゃないと、だめなの", "@flag mem_road_talked"])
+speaker = "なつみ"
+as_person = true
+look = ExtResource("r6")
+
+[node name="Sky" parent="Props/RoadZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(520, 0)
+kind = 21
+lines = Array[String](["（なつみが指さした空を、見上げた）", "ぼく：（夕焼けの空だ）", "@event mem_road_end"])
+require_flags = Array[StringName]([&"mem_road_talked"])
+spot_height = 120
+
+[node name="WoodsZone" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(1500, 604)
+memory_event = "mem_woods_end"
+after_lines = Array[String](["ぼく：（結局、見つけてやれなかった）"])
+
+[node name="Now" type="Node2D" parent="Props/WoodsZone"]
+
+[node name="Ghost" type="Node2D" parent="Props/WoodsZone"]
+
+[node name="Memory" type="Node2D" parent="Props/WoodsZone"]
+
+[node name="Fence" type="Node2D" parent="Props/WoodsZone/Now"]
+script = ExtResource("r3")
+position = Vector2(100, 0)
+kind = 10
+width = 520
+
+[node name="OldBase" type="Node2D" parent="Props/WoodsZone/Ghost"]
+script = ExtResource("r3")
+position = Vector2(330, 0)
+kind = 20
+
+[node name="Dig1" parent="Props/WoodsZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(160, 0)
+kind = 16
+lines = Array[String](["（タケルの地図を頼りに、スコップを入れた）", "（……何も出てこない）", "@flag dig1"])
+repeat_lines_text = Array[String](["（もう、掘った）"])
+spot_height = 80
+
+[node name="Dig2" parent="Props/WoodsZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(300, 0)
+kind = 16
+lines = Array[String](["（タケルの地図を頼りに、スコップを入れた）", "（……何も出てこない）", "@flag dig2"])
+repeat_lines_text = Array[String](["（もう、掘った）"])
+spot_height = 80
+
+[node name="Dig3" parent="Props/WoodsZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(440, 0)
+kind = 16
+lines = Array[String](["（タケルの地図を頼りに、スコップを入れた）", "（……何も出てこない）", "@flag dig3"])
+repeat_lines_text = Array[String](["（もう、掘った）"])
+spot_height = 80
+
+[node name="Natsumi" parent="Props/WoodsZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(580, 0)
+kind = 0
+lines = Array[String](["……ないね", "ぼく：タケルの地図、下手くそだったからな", "タケルくんの分も、いつか見つけようね", "@event mem_woods_end"])
+speaker = "なつみ"
+require_flags = Array[StringName]([&"dig1", &"dig2", &"dig3"])
+as_person = true
+look = ExtResource("r6")
+
+[node name="HallZone" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(2100, 604)
+memory_event = "mem_hall_end"
+after_lines = Array[String](["ぼく：（あの絵も、もうどこにもない）"])
+
+[node name="Now" type="Node2D" parent="Props/HallZone"]
+
+[node name="Ghost" type="Node2D" parent="Props/HallZone"]
+
+[node name="Memory" type="Node2D" parent="Props/HallZone"]
+
+[node name="Hall" type="Node2D" parent="Props/HallZone/Now"]
+script = ExtResource("r3")
+position = Vector2(250, 0)
+kind = 11
+
+[node name="Bill" type="Node2D" parent="Props/HallZone/Now"]
+script = ExtResource("r3")
+position = Vector2(450, 0)
+kind = 12
+
+[node name="RadioKids" type="Node2D" parent="Props/HallZone/Ghost"]
+script = ExtResource("r5")
+position = Vector2(250, 0)
+kind = 26
+width = 420
+
+[node name="Natsumi" parent="Props/HallZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(180, 0)
+kind = 0
+lines = Array[String](["小さい展覧会だけど", "@flag mem_hall_intro"])
+speaker = "なつみ"
+as_person = true
+look = ExtResource("r6")
+
+[node name="Frame1" parent="Props/HallZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(330, 0)
+kind = 14
+lines = Array[String](["（空と田んぼの絵だ。青が、あざやかだ）", "@flag mem_f1"])
+require_flags = Array[StringName]([&"mem_hall_intro"])
+spot_height = 210
+
+[node name="Frame2" parent="Props/HallZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(450, 0)
+kind = 14
+lines = Array[String](["（あの村のバス停の絵だ）", "@flag mem_f2"])
+require_flags = Array[StringName]([&"mem_f1"])
+spot_height = 210
+
+[node name="Frame3" parent="Props/HallZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(570, 0)
+kind = 15
+lines = Array[String](["（子どものころの、宿題の絵だ。題は『なつやすみの おもいで』）", "なつみ：これ、君にあげた絵の、もう一枚", "なつみ：約束したでしょ。もう一回描くって", "@event mem_hall_end"])
+require_flags = Array[StringName]([&"mem_f2"])
+spot_height = 210
+
+[node name="ShrineZone" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(2900, 604)
+memory_event = "mem_shrine_end"
+after_lines = Array[String](["ぼく：（……もう、あの夏はどこにもないのか）", "@event bell"])
+
+[node name="Now" type="Node2D" parent="Props/ShrineZone"]
+
+[node name="Ghost" type="Node2D" parent="Props/ShrineZone"]
+
+[node name="Memory" type="Node2D" parent="Props/ShrineZone"]
+
+[node name="Torii" type="Node2D" parent="Props/ShrineZone/Now"]
+script = ExtResource("r5")
+position = Vector2(300, 0)
+kind = 7
+
+[node name="Steps" type="Node2D" parent="Props/ShrineZone/Now"]
+script = ExtResource("r3")
+position = Vector2(430, 0)
+kind = 17
+width = 240
+
+[node name="Okuribi1" type="Node2D" parent="Props/ShrineZone/Now"]
+script = ExtResource("r5")
+position = Vector2(150, 0)
+kind = 17
+
+[node name="Okuribi2" type="Node2D" parent="Props/ShrineZone/Now"]
+script = ExtResource("r5")
+position = Vector2(720, 0)
+kind = 17
+
+[node name="Lanterns" type="Node2D" parent="Props/ShrineZone/Memory"]
+script = ExtResource("r5")
+position = Vector2(150, 0)
+kind = 8
+width = 620
+
+[node name="MemorySteps" type="Node2D" parent="Props/ShrineZone/Memory"]
+script = ExtResource("r3")
+position = Vector2(430, 0)
+kind = 17
+width = 240
+
+[node name="Senko" type="Node2D" parent="Props/ShrineZone/Memory"]
+script = ExtResource("r9")
+position = Vector2(470, 0)
+visible = false
+
+[node name="Natsumi" parent="Props/ShrineZone/Memory" instance=ExtResource("r7")]
+script = ExtResource("r8")
+position = Vector2(440, 0)
+kind = 0
+lines = Array[String](["（石段に並んで座って、線香花火に火をつけた）", "@event senko", "（ぱちぱちと、火花が散る……）", "（……火の玉は、最後まで落ちなかった）", "なつみ：今度は、最後まで落ちなかったね", "ぼく：なつみ。……結婚しよう", "（なつみは何も言わずに、うなずいた）", "@event mem_shrine_end"])
+as_person = true
+look = ExtResource("r6")
+
+[node name="Senko" type="Node2D" parent="Props"]
+script = ExtResource("r10")
+event_name = "senko"
+action = 3
+target = NodePath("../ShrineZone/Memory/Senko")
+
+[node name="Bell" type="Node2D" parent="Props"]
+script = ExtResource("r10")
+event_name = "bell"
+action = 2
+flag = &"chapter_bell_rang"
+sfx = "suzu"
+
+[node name="WhiteOut" type="Node2D" parent="Props"]
+script = ExtResource("r10")
+event_name = "white_out"
+action = 1
+
+[node name="Fox" parent="Props" instance=ExtResource("r7")]
+position = Vector2(3500, 604)
+npc_data = ExtResource("r11")

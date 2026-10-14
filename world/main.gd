@@ -10,6 +10,7 @@ const END_MARGIN := 240.0
 const START_X := 220.0
 const ENDING_SCENE := "res://ui/ending.tscn"
 const STAFF_ROLL_SCENE := "res://ui/staff_roll.tscn"
+const TITLE_CALL_SCENE := "res://ui/title_call.tscn"
 const ENGAWA_SCENE := preload("res://ui/engawa.tscn")
 const TITLE_SCENE := "res://ui/title.tscn"
 
@@ -39,6 +40,7 @@ func _ready() -> void:
 	camera.snap()
 	streamer.update_now()
 	player.set_form(GameState.player_form())
+	_apply_day_look()
 	hud.player = player
 	hud.box = box
 	hud.set_day(GameState.current_day())
@@ -86,6 +88,7 @@ func _change_day(next: int) -> void:
 		streamer.update_now()
 		GameState.set_current_day(next)
 		player.set_form(GameState.player_form())
+		_apply_day_look()
 	var on_reveal := func(): hud.flip_to_day(d)
 	# 暗転のあと、日付の前に、終わった日（next - 1）の縁側の場面。最後の日（帰る日）の終わりにはない
 	var ended := next - 1
@@ -98,11 +101,56 @@ func _change_day(next: int) -> void:
 	_changing_day = false
 
 
-func _go_ending() -> void:
+## 家の中・病室の日は、手前の枝と光の粒を出さない
+func _apply_day_look() -> void:
+	var indoor := GameState.is_indoor(GameState.current_day())
+	$Foreground.visible = not indoor
+	$SummerAir.visible = not indoor
+
+
+## 次の日へ（会話の @event next_day から。会話を読み終えてから暗転）
+func advance_day() -> void:
+	await get_tree().process_frame
+	if hud.is_talking():
+		await hud.talk_finished
+	if _changing_day or _ending:
+		return
+	var idx := streamer.player_day_index()
+	if idx < GameState.day_count() - 1:
+		_change_day(idx + 1)
+
+
+## 老年期の神社で鈴が鳴り、景色が白くなって、タイトルコールへ（会話の @event white_out から）
+func start_title_call() -> void:
+	if _ending:
+		return
 	_ending = true
 	player.locked = true
-	# 章の終わりはスタッフロールへ（急の最後。いまは仮のつなぎ）
-	Transition.change_scene(STAFF_ROLL_SCENE if GameState.chapter else ENDING_SCENE)
+	if hud.is_talking():
+		await hud.talk_finished
+	var layer := CanvasLayer.new()
+	layer.layer = 90
+	add_child(layer)
+	var white := ColorRect.new()
+	white.color = UiTokens.WHITE_OUT
+	white.set_anchors_preset(Control.PRESET_FULL_RECT)
+	white.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	white.modulate.a = 0.0
+	layer.add_child(white)
+	SfxPlayer.play("suzu")
+	await UiAnim.fade(white, 1.0, UiTokens.TIME_WHITE_OUT).finished
+	get_tree().paused = false
+	get_tree().change_scene_to_file(TITLE_CALL_SCENE)
+
+
+func _go_ending() -> void:
+	# 章は、いまは老年期の導入まで（神社の最後のタイトルコールへ）。急の最後はスタッフロール（あとの段階）
+	if GameState.chapter:
+		start_title_call()
+		return
+	_ending = true
+	player.locked = true
+	Transition.change_scene(ENDING_SCENE)
 
 
 func _input(event: InputEvent) -> void:

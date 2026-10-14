@@ -157,6 +157,11 @@ func player_form() -> DayData.Form:
 	return current_day().player_form if chapter else DayData.Form.CHILD
 
 
+## 家の中・病室の日か（章）。外の景色・手前の枝・光の粒・夏の環境音を出さない
+func is_indoor(d: DayData) -> bool:
+	return chapter and d.indoor
+
+
 ## 日の終わりの縁側の場面の種類（序はふつうの縁側）
 func engawa_kind(index: int) -> DayData.EngawaKind:
 	return get_day(index).engawa_kind if chapter else DayData.EngawaKind.NORMAL

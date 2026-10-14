@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DayData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/day_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+day_number = 3
+month = 8
+day = 13
+title = "村"
+scene_path = "res://days/chapter/village.tscn"
+player_form = 2
+menu_kind = 1
+engawa_kind = 1
+time_keys = Array[Vector2]([Vector2(0, 0), Vector2(1, 0.75)])
