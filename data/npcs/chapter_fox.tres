@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="NpcData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_fox_child.png" id="sprite"]
+[ext_resource type="Script" path="res://data/flag_condition.gd" id="2"]
+
+[sub_resource type="Resource" id="appear"]
+script = ExtResource("2")
+require_all = Array[StringName]([&"chapter_bell_rang"])
+
+[resource]
+script = ExtResource("1")
+id = &"chapter_fox"
+display_name = "お面の子"
+lines = Array[String](["……久しぶり", "大きくなったね。……違うか。年をとったね", "あの夏に、もう一度連れてってあげる", "でも、何も変えられないよ", "持って帰れるのは、心だけ", "送り火までね", "@event white_out"])
+appear_if = SubResource("appear")
+auto_talk = true
+sprite = ExtResource("sprite")
+placeholder_color = Color(0.851, 0.439, 0.353, 1)
+height = 150.0
+skin_color = Color(0.886, 0.722, 0.58, 1)
+hair_color = Color(0.165, 0.137, 0.125, 1)
+shirt_color = Color(0.29, 0.36, 0.5, 1)
+pants_color = Color(0.29, 0.36, 0.5, 1)
+hair_full = true

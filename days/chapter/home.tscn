@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://days/day_base.tscn" id="r1"]
+[ext_resource type="PackedScene" path="res://world/npc.tscn" id="r2"]
+[ext_resource type="Script" path="res://world/examine_spot.gd" id="r3"]
+[ext_resource type="Script" path="res://world/chapter_prop.gd" id="r4"]
+[ext_resource type="Script" path="res://world/chapter_event.gd" id="r5"]
+
+[node name="ChapterHome" instance=ExtResource("r1")]
+
+[node name="Tree" parent="Props" index="0"]
+visible = false
+
+[node name="Closet" parent="Props" instance=ExtResource("r2")]
+script = ExtResource("r3")
+position = Vector2(1000, 604)
+kind = 5
+lines = Array[String](["（押し入れの奥から、アルバムの箱を出した）", "（……からっぽだ）", "ぼく：（引っ越しのときに、なくしたんだったな）", "@flag home_closet"])
+repeat_lines_text = Array[String](["（アルバムの箱は、からっぽだ）"])
+spot_height = 280
+
+[node name="Shelf" parent="Props" instance=ExtResource("r2")]
+script = ExtResource("r3")
+position = Vector2(1900, 604)
+kind = 6
+lines = Array[String](["（本棚を探した）", "（なつみの絵は、一枚も残っていない）", "@flag home_shelf"])
+repeat_lines_text = Array[String](["（なつみの絵は、一枚も残っていない）"])
+spot_height = 280
+
+[node name="Tansu" parent="Props" instance=ExtResource("r2")]
+script = ExtResource("r3")
+position = Vector2(2800, 604)
+kind = 7
+lines = Array[String](["（祖父母の家から引き取った、古いたんすだ）", "（一番奥に、何かが転がっている）", "@find chapter_bell", "ぼく：（振っても鳴らない。……何も残ってない）", "ぼく：（……あの村に、行ってみるか）", "@event next_day"])
+require_flags = Array[StringName]([&"home_closet", &"home_shelf"])
+locked_lines = Array[String](["（まだ、探していない場所がある）"])
+spot_height = 260
+
+[node name="Door" type="Node2D" parent="Props"]
+script = ExtResource("r4")
+position = Vector2(3650, 604)
+kind = 3
+
+[node name="NextDay" type="Node2D" parent="Props"]
+script = ExtResource("r5")
+event_name = "next_day"
+action = 0

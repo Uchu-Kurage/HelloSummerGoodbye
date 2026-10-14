@@ -12,4 +12,5 @@ scene_path = "res://days/chapter/hospital.tscn"
 player_form = 2
 menu_kind = 1
 engawa_kind = 1
-time_keys = Array[Vector2]([Vector2(0, 0.6), Vector2(1, 0.6)])
+indoor = true
+time_keys = Array[Vector2]([Vector2(0, 0.6), Vector2(1, 0.62)])

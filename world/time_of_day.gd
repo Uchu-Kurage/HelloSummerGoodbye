@@ -19,6 +19,8 @@ var rain_ambient := WorldPalette.RAIN_AMBIENT
 var otherworld := 0.0
 ## 異界の日（is_otherworld）の強さ。その日にいるあいだは 1.0
 var day_otherworld := 0.0
+## 家の中・病室の日（環境音を鳴らさない）
+var indoor := false
 var _ow_ambient := ""
 var _ow_source: Node
 ## 異界の場所がさいごに知らせてきたフレーム（知らせが止まったら、もとにもどす）
@@ -65,6 +67,7 @@ func _process(_delta: float) -> void:
 	var d := GameState.get_day(index)
 	var season := GameState.summer_progress_of(d)
 	day_otherworld = 1.0 if GameState.is_otherworld(d) else 0.0
+	indoor = GameState.is_indoor(d)
 	apply(GameState.day_time(d, progress), season)
 
 
@@ -98,6 +101,8 @@ func apply(time: float, season: float) -> void:
 		amb = _ow_ambient
 	elif day_otherworld > 0.5:
 		amb = WorldPalette.OTHERWORLD_AMBIENT
+	if indoor:
+		amb = ""
 	if amb != _last_ambient:
 		_last_ambient = amb
 		SfxPlayer.set_ambient(amb)

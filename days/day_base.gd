@@ -21,6 +21,11 @@ func _ready() -> void:
 	if day_data == null:
 		return
 	_sign_label.text = GameState.day_date_text(day_data) + "\n" + GameState.day_title(day_data)
+	if GameState.is_indoor(day_data):
+		# 家の中・病室：外の景色の小物と看板は出さず、壁と床を描く
+		$Boundary.hide()
+		$Sign.hide()
+		$Props/Tree.hide()
 	if preview:
 		# タイトルの背景では景色だけを見せる
 		$Sign.hide()
@@ -95,8 +100,18 @@ const ROAD_TEX: Texture2D = preload("res://world/scenery/painted/road.png")
 const ROAD_TEX_DIRT := Vector2(40, 194)
 
 
+## 室内の壁と床の色（仮素材）
+const INDOOR_WALL := Color("#E4DCC9")
+const INDOOR_WALL_LOW := Color("#CDBFA3")
+const INDOOR_FLOOR := Color("#A98862")
+const INDOOR_FLOOR_LINE := Color("#8C6E4D")
+
+
 func _draw() -> void:
 	var L := GameState.DAY_LENGTH_PX
+	if day_data and GameState.is_indoor(day_data):
+		_draw_indoor(L)
+		return
 	var k := (ROAD_BOTTOM - ROAD_TOP) / (ROAD_TEX_DIRT.y - ROAD_TEX_DIRT.x)
 	var h := ROAD_TEX.get_height() * k
 	var top := ROAD_TOP - ROAD_TEX_DIRT.x * k
@@ -106,3 +121,15 @@ func _draw() -> void:
 	var tile := L / n
 	for i in n:
 		draw_texture_rect(ROAD_TEX, Rect2(i * tile - 1.0, top, tile + 2.0, h), false)
+
+
+## 室内：壁と床（高さは画面の上端から下端まで）
+func _draw_indoor(L: float) -> void:
+	draw_rect(Rect2(-1, -300, L + 2, 300 + ROAD_TOP + 8.0), INDOOR_WALL)
+	draw_rect(Rect2(-1, ROAD_TOP - 90.0, L + 2, 98.0), INDOOR_WALL_LOW)
+	draw_rect(Rect2(-1, ROAD_TOP + 8.0, L + 2, 900), INDOOR_FLOOR)
+	var x := 0.0
+	while x < L:
+		draw_line(Vector2(x, ROAD_TOP + 8.0), Vector2(x, ROAD_TOP + 140.0), INDOOR_FLOOR_LINE, 2.0)
+		x += 160.0
+	draw_line(Vector2(0, ROAD_TOP + 8.0), Vector2(L, ROAD_TOP + 8.0), INDOOR_FLOOR_LINE, 4.0)

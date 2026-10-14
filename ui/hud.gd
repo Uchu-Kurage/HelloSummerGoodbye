@@ -70,6 +70,8 @@ var _talk_lines: Array[String] = []
 var _talk_index := 0
 var _talk_data: NpcData
 var _talk_npc: Npc
+## 会話をはじめた場所（人でないとき。@event を、そのいる日のシーンへ届けるため）
+var _talk_ctx: Node
 var _next_show: ItemData
 var _choice_list: MenuList
 var _choosing := false
@@ -313,11 +315,12 @@ func show_item_message(item: ItemData) -> void:
 
 ## NPC との会話を始める。せりふを1つずつ送り、最後まで読むと閉じる。会話の間は立ち止まる。
 ## せりふの書き方（話す人・選択肢・アイテムのやりとり）は NpcData を参照
-func start_talk(data: NpcData, lines: Array[String], npc: Npc = null) -> void:
+func start_talk(data: NpcData, lines: Array[String], npc: Npc = null, ctx: Node = null) -> void:
 	if lines.is_empty():
 		return
 	_talk_data = data
 	_talk_npc = npc
+	_talk_ctx = ctx
 	_talk_lines = lines
 	_talk_index = 0
 	_last_grade = -1
@@ -329,12 +332,12 @@ func start_talk(data: NpcData, lines: Array[String], npc: Npc = null) -> void:
 
 
 ## 会話をして、終わるまで待つ（バスの場面など、シーンの演出から使う）
-func run_talk(data: NpcData, lines: Array[String]) -> void:
+func run_talk(data: NpcData, lines: Array[String], ctx: Node = null) -> void:
 	if is_talking():
 		await talk_finished
 	if _msg_open:
 		close_message()
-	start_talk(data, lines)
+	start_talk(data, lines, null, ctx)
 	if is_talking():
 		await talk_finished
 
@@ -410,6 +413,14 @@ func _run_command(e: String) -> _Step:
 				celebrate_item(it)
 				_open_message(Strings.RECEIVED_FORMAT % it.display_name, it.text(), it.placeholder_color, it.icon)
 				return _Step.WAIT
+		"find":
+			# 章「あの夏へ」：調べて見つけたアイテム（宝箱／ポケットに入る。「もらった」ではない）
+			var it := GameState.find_item(StringName(a))
+			if it and not GameState.is_collected(it.id):
+				GameState.collect(it)
+				celebrate_item(it)
+				_open_message(Strings.FOUND_FORMAT % it.display_name, it.text(), it.placeholder_color, it.icon)
+				return _Step.WAIT
 		"take":
 			var it := GameState.find_item(StringName(a))
 			if it:
@@ -445,7 +456,7 @@ func _jump(label: String) -> void:
 
 ## 話している人のいる日のシーン
 func _talk_day() -> DayBase:
-	var n: Node = _talk_npc
+	var n: Node = _talk_npc if _talk_npc else _talk_ctx
 	while n and not n is DayBase:
 		n = n.get_parent()
 	return n as DayBase
