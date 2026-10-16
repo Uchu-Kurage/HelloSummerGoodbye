@@ -503,7 +503,7 @@ func _show_line(e: String) -> void:
 		e = e.substr(colon + 1)
 		if speaker == Strings.ME:
 			color = WorldPalette.PLAYER_HAT
-			icon = _face(Player.FRAMES[0])
+			icon = _face(Player.face_frame(get_tree()))
 		elif speaker != _talk_data.display_name:
 			icon = null
 	if _next_show:

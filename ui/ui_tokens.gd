@@ -99,6 +99,8 @@ const TIME_CHAPTER_OUT := 0.9
 ## 老年期の村：子どものころが重なる（1〜2秒）と、回想に移る（温かい色）ときのフェード
 const TIME_MEMORY_GHOST := 1.4
 const TIME_MEMORY_FADE := 0.6
+## 回想に入る・出るときの白い光（白くなるまで。もどるのは TIME_MEMORY_FADE）
+const TIME_MEMORY_FLASH := 0.35
 ## タイトルコール「To The Summer」：白からロゴが浮かぶ・静止・夜の森へ溶ける（合計 約5秒）と、白くなるまで
 const TIME_CALL_IN := 1.6
 const TIME_CALL_HOLD := 1.2

@@ -2,7 +2,7 @@ class_name MemoryZone
 extends Node2D
 ## 老年期の村の「今 → 子どものころが一瞬重なる → 青年期の回想 → 今」（章「あの夏へ」）。足もとが原点。
 ## 子ノード：Now（いまの景色の小物）、Ghost（重なる子どものころの姿。回想より前の1〜2秒だけ）、Memory（青年期の回想の小物・人）。
-## 老人の主人公がここまで来ると、Ghost がゆらいで重なり、温かい色の回想へ移る（主人公は青年に）。
+## 老人の主人公がここまで来ると、Ghost がゆらいで重なり、白い光のあとに温かい色の回想へ移る（主人公は青年に。画面のふちは古い写真のように茶色くなる）。
 ## 回想の中の会話の @event で終わる（memory_event。または count_event が count_needed 回）。
 ## 終わると今にもどり（主人公は老人）、after_lines（心の声）を読む。決定キー・会話は ふだんどおり。
 
@@ -16,12 +16,19 @@ enum State { IDLE, GHOST, MEMORY, DONE }
 ## 今にもどってから読む心の声（「ぼく：（……）」の形。@event も使える）
 @export var after_lines: Array[String] = []
 ## 回想の温かい色（画面にかぶせる）
-@export var tint := Color(1.0, 0.78, 0.5, 0.2)
+@export var tint := Color(1.0, 0.78, 0.5, 0.22)
+
+## 回想のふちの色（古い写真のように、ふちを茶色く暗くする）
+const EDGE := Color(0.42, 0.26, 0.12, 0.7)
+## 回想に入る・出るときの光の色
+const FLASH := Color(1.0, 0.97, 0.88)
+const MEMORY_SHADER: Shader = preload("res://world/memory_tint.gdshader")
 
 var state := State.IDLE
 var _count := 0
 var _player: Player
 var _tint_rect: ColorRect
+var _flash_rect: ColorRect
 var _tint_layer: CanvasLayer
 
 
@@ -89,19 +96,36 @@ func _to_memory() -> void:
 	_ensure_tint()
 	var memory := _group("Memory")
 	var now := _group("Now")
+	# 白い光で、回想に入ったことをはっきり見せる（光のあいだに青年の姿・回想の景色へ切り替える）
+	await _flash_in()
 	if memory:
 		memory.visible = true
+		memory.modulate.a = 1.0
 		_set_active(memory, true)
-	_player.set_form(DayData.Form.YOUTH)
-	var tw := create_tween().set_parallel().set_trans(UiTokens.TRANS)
-	tw.tween_property(_tint_rect, "color:a", tint.a, UiTokens.TIME_MEMORY_FADE)
-	if memory:
-		tw.tween_property(memory, "modulate:a", 1.0, UiTokens.TIME_MEMORY_FADE)
 	if now:
-		tw.tween_property(now, "modulate:a", 0.0, UiTokens.TIME_MEMORY_FADE)
-	await tw.finished
-	if now:
+		now.modulate.a = 0.0
 		now.visible = false
+	_player.set_form(DayData.Form.YOUTH)
+	_set_tint(1.0)
+	await _flash_out()
+
+
+## 回想の色：画面全体の温かい色と、ふちを暗くした古い写真のような枠（amount 0〜1）
+func _set_tint(amount: float) -> void:
+	(_tint_rect.material as ShaderMaterial).set_shader_parameter("amount", amount)
+
+
+func _flash_in() -> void:
+	var peak := 0.6 if UiAnim.reduced() else 0.95
+	var tw := create_tween().set_trans(UiTokens.TRANS)
+	tw.tween_property(_flash_rect, "color:a", peak, UiTokens.TIME_MEMORY_FLASH)
+	await tw.finished
+
+
+func _flash_out() -> void:
+	var tw := create_tween().set_trans(UiTokens.TRANS)
+	tw.tween_property(_flash_rect, "color:a", 0.0, UiTokens.TIME_MEMORY_FADE)
+	await tw.finished
 
 
 func _ensure_tint() -> void:
@@ -111,10 +135,20 @@ func _ensure_tint() -> void:
 	_tint_layer.layer = 5
 	add_child(_tint_layer)
 	_tint_rect = ColorRect.new()
-	_tint_rect.color = Color(tint.r, tint.g, tint.b, 0.0)
 	_tint_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_tint_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = MEMORY_SHADER
+	mat.set_shader_parameter("tint", tint)
+	mat.set_shader_parameter("edge", EDGE)
+	mat.set_shader_parameter("amount", 0.0)
+	_tint_rect.material = mat
 	_tint_layer.add_child(_tint_rect)
+	_flash_rect = ColorRect.new()
+	_flash_rect.color = Color(FLASH, 0.0)
+	_flash_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tint_layer.add_child(_flash_rect)
 
 
 ## 会話の @event（DayBase.on_talk_event から）
@@ -140,19 +174,17 @@ func _end_memory() -> void:
 	_player.locked = true
 	var memory := _group("Memory")
 	var now := _group("Now")
-	if now:
-		now.visible = true
-	var tw := create_tween().set_parallel().set_trans(UiTokens.TRANS)
-	tw.tween_property(_tint_rect, "color:a", 0.0, UiTokens.TIME_MEMORY_FADE)
+	await _flash_in()
 	if memory:
-		tw.tween_property(memory, "modulate:a", 0.0, UiTokens.TIME_MEMORY_FADE)
-	if now:
-		tw.tween_property(now, "modulate:a", 1.0, UiTokens.TIME_MEMORY_FADE)
-	await tw.finished
-	if memory:
+		memory.modulate.a = 0.0
 		memory.visible = false
 		_set_active(memory, false)
+	if now:
+		now.visible = true
+		now.modulate.a = 1.0
+	_set_tint(0.0)
 	_player.set_form(DayData.Form.ELDER)
+	await _flash_out()
 	_player.locked = false
 	if hud and not after_lines.is_empty():
 		var me := NpcData.new()
