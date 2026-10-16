@@ -239,6 +239,7 @@ func _look_bottom() -> void:
 	env.id = &"chapter_envelope"
 	env.display_name = Strings.CAN_ENVELOPE_NAME
 	env.description = Strings.CAN_ENVELOPE_TEXT
+	env.icon = preload("res://data/items/icons/chapter_envelope.png")
 	env.placeholder_color = Color("#E9E2CF")
 	env.on_ground = false
 	_slots.clear()

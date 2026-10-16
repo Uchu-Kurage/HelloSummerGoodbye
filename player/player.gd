@@ -19,6 +19,23 @@ const FRAMES: Array[Texture2D] = [
 	preload("res://world/scenery/painted/player_4.png"),
 	preload("res://world/scenery/painted/player_5.png"),
 ]
+## 章「あの夏へ」：老人・青年の絵（子どもと同じく、0 が立ち姿、1〜4 が歩く絵）
+const ELDER_FRAMES: Array[Texture2D] = [
+	preload("res://world/scenery/painted/elder_1.png"),
+	preload("res://world/scenery/painted/elder_2.png"),
+	preload("res://world/scenery/painted/elder_3.png"),
+	preload("res://world/scenery/painted/elder_4.png"),
+	preload("res://world/scenery/painted/elder_5.png"),
+]
+const ELDER_HEAD_X := [58.5, 110.5, 70.5, 112.0, 68.0]
+const YOUTH_FRAMES: Array[Texture2D] = [
+	preload("res://world/scenery/painted/youth_1.png"),
+	preload("res://world/scenery/painted/youth_2.png"),
+	preload("res://world/scenery/painted/youth_3.png"),
+	preload("res://world/scenery/painted/youth_4.png"),
+	preload("res://world/scenery/painted/youth_5.png"),
+]
+const YOUTH_HEAD_X := [46.0, 100.0, 46.0, 102.0, 54.0]
 ## 絵ごとの頭のまん中（絵の中の x px）。ここを足もとの原点にそろえ、歩いても頭がぶれないようにする
 const FRAME_HEAD_X := [47.5, 75.0, 66.5, 87.0, 65.0]
 ## 画面での背の高さ（帽子のてっぺんまで）
@@ -32,9 +49,8 @@ var locked := false
 var body_scale := 1.0
 ## 姿（章「あの夏へ」：子ども／青年／老人）。老人だけダッシュできない。歩く速さは同じ
 var form: DayData.Form = DayData.Form.CHILD
-## 仮素材の姿ごとの背丈と色味（絵が入るまで）
+## 姿ごとの背丈（子どもを 1.0 とした倍率）
 const FORM_SCALE := {DayData.Form.CHILD: 1.0, DayData.Form.YOUTH: 1.3, DayData.Form.ELDER: 1.2}
-const FORM_TINT := {DayData.Form.CHILD: Color.WHITE, DayData.Form.YOUTH: Color(1.0, 0.93, 0.85), DayData.Form.ELDER: Color(0.68, 0.68, 0.78)}
 ## 会話の間は true（会話を閉じると歩ける）
 var talking := false
 ## カメラ画面の左端（見えない壁）。これより左へは行けない
@@ -71,7 +87,6 @@ func set_form(f: DayData.Form) -> void:
 	form = f
 	body_scale = FORM_SCALE[f]
 	if _visual:
-		_visual.modulate = FORM_TINT[f]
 		_visual.queue_redraw()
 
 
@@ -115,7 +130,16 @@ func _draw_body() -> void:
 	var frame := 0
 	if _walk_t > 0.0:
 		frame = 1 + int(_walk_t * WALK_FPS) % (FRAMES.size() - 1)
-	var tex: Texture2D = FRAMES[frame]
+	var frames := FRAMES
+	var heads := FRAME_HEAD_X
+	match form:
+		DayData.Form.ELDER:
+			frames = ELDER_FRAMES
+			heads = ELDER_HEAD_X
+		DayData.Form.YOUTH:
+			frames = YOUTH_FRAMES
+			heads = YOUTH_HEAD_X
+	var tex: Texture2D = frames[frame]
 	var k := BODY_HEIGHT / tex.get_height()
-	var head_x: float = FRAME_HEAD_X[frame]
+	var head_x: float = heads[frame]
 	_visual.draw_texture_rect(tex, Rect2(-head_x * k, -BODY_HEIGHT, tex.get_width() * k, BODY_HEIGHT), false)

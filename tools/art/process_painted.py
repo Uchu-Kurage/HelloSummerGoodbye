@@ -92,6 +92,18 @@ SPLITS = {
 	'grandma_mg1': 'grandma_mg1',
 	'cars': 'car',
 	'shoryouma_veg': 'shoryouma_veg',
+	# 章「あの夏へ」（プロンプトは tools/art/prompts_chapter.md）。歩く絵は 立ち姿＋4コマの5つ。人物の1枚絵は、使う1枚だけ残して、ほかは消す
+	'elder': 'elder',
+	'youth': 'youth',
+	'worker': 'chapter_worker',
+	'nurse': 'chapter_nurse',
+	'natsumi_young': 'chapter_natsumi_young',
+	'natsumi_old': 'chapter_natsumi_old',
+	'chapter_room': 'chapter_room',
+	'chapter_now': 'chapter_now',
+	'chapter_memory': 'chapter_memory',
+	'chapter_ha': 'chapter_ha',
+	'chapter_site': 'chapter_site',
 }
 ## 左右の端をぼかす幅：[左, 右]
 EDGE_FADES = {
@@ -170,6 +182,25 @@ def bleed(fg, alpha, solid=0.95, steps=14):
 	# 不透明なところから遠い細い線（笹の茎など）は、黒く残さず、もとの色のままにする
 	out[~filled] = fg[~filled]
 	return out
+
+
+def fix_fade(fg, alpha, start=0.62):
+	"""下へ向かってマゼンタにとけていく絵（遠くの山のふもと）：とけていく部分は桃色や緑がかった色になるので、
+	上（start の高さ）の山の色に寄せ、下へ向かって薄くなるようにかけなおす（山のかたちは、もとの絵のまま）"""
+	h, w = alpha.shape
+	rows = np.nonzero((alpha > 0.5).any(axis=1))[0]
+	top, bottom = int(rows[0]), int(rows[-1])
+	y0 = top + int((bottom - top) * start)
+	band = slice(max(y0 - int((bottom - top) * 0.1), 0), y0)
+	m = alpha[band] > 0.95
+	c = fg[band][m].mean(axis=0)
+	out = fg.copy()
+	out[y0:] = fg[y0:] * 0.25 + c[None, None, :] * 0.75
+	t = np.clip((np.arange(h) - y0) / float(max(bottom - y0, 1)), 0, 1)
+	fade = 1.0 - t * t * (3 - 2 * t)
+	al = alpha.copy()
+	al[y0:] = alpha[y0:] * fade[y0:, None]
+	return out, al
 
 
 def to_image(fg, alpha):
@@ -295,6 +326,8 @@ def main():
 	for arg in sys.argv[1:]:
 		name, path = arg.split('=', 1)
 		fg, al = key(path, CROPS.get(name), name in RATIO_KEY, name in KEEP_DARK)
+		if name == 'peak_far':
+			fg, al = fix_fade(fg, al)
 		if name.startswith('item_'):
 			im = item_icon(to_image(fg, al))
 			im.save(ITEM_OUT + name[5:] + '.png', optimize=True)

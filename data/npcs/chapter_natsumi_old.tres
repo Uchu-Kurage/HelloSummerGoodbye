@@ -1,14 +1,16 @@
-[gd_resource type="Resource" script_class="NpcData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="NpcData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://data/npc_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://world/scenery/painted/npc_chapter_natsumi_old.png" id="sprite"]
 
 [resource]
 script = ExtResource("1")
 id = &"chapter_natsumi_old"
 display_name = "なつみ"
 lines = Array[String](["……どちら様？"])
+sprite = ExtResource("sprite")
 placeholder_color = Color(0.78, 0.72, 0.82, 1)
-height = 150.0
+height = 158.0
 skin_color = Color(0.886, 0.722, 0.58, 1)
 hair_color = Color(0.85, 0.84, 0.82, 1)
 shirt_color = Color(0.78, 0.72, 0.82, 1)

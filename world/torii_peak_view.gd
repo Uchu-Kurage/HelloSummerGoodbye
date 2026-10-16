@@ -21,6 +21,7 @@ extends Node2D
 @export var horizon_y := 330.0
 
 const TORII_TEX: Texture2D = preload("res://world/scenery/painted/prop_torii.png")
+const PEAK_TEX: Texture2D = preload("res://world/scenery/painted/peak_far.png")
 
 var _cam: Camera2D
 
@@ -64,13 +65,12 @@ func _draw() -> void:
 	var cx := cam.global_position.x - _day_left()
 	var base := to_local(Vector2(cam.global_position.x, 604.0))
 	var ground := base.y
-	# 山のてっぺん：遠くの青い、とがった山（画面の下から数えた高さ）
+	# 山のてっぺん：遠くの青灰色の、ひとつだけとがった山（ふもとはかすんで消える）。てっぺんの真下に鳥居が立つ
 	var px := base.x + peak_offset(cx)
-	var top_y := ground - horizon_y - peak_height * 0.0 - 130.0
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(px - 260, ground - horizon_y + 40), Vector2(px, top_y), Vector2(px + 260, ground - horizon_y + 40)]), Color(0.52, 0.62, 0.72, 0.9))
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(px - 38, top_y + 62), Vector2(px, top_y), Vector2(px + 38, top_y + 62)]), Color(0.92, 0.94, 0.96, 0.95))
+	var peak_w := 660.0
+	var peak_h := peak_w * PEAK_TEX.get_height() / PEAK_TEX.get_width()
+	var base_y := ground - horizon_y + 60.0
+	draw_texture_rect(PEAK_TEX, Rect2(px - peak_w / 2.0, base_y - peak_h, peak_w, peak_h), false)
 	# 鳥居：山のてっぺんの真下あたりに立つ（重なると、てっぺんが鳥居の笠木の上に乗って見える）
 	var tx := base.x + torii_offset(cx)
 	var k := torii_height / TORII_TEX.get_height()

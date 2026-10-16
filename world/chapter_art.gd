@@ -1,7 +1,8 @@
 class_name ChapterArt
 extends RefCounted
-## 章「あの夏へ」の仮素材の絵（図形だけ）。病室・家の中・今の村・青年期の回想の小物。足もとが原点（上が -y）。
-## 絵が入るまでのつなぎ。ExamineSpot と ChapterProp が、同じ描き方を使う。
+## 章「あの夏へ」の小物の絵。病室・家の中・今の村・青年期の回想・破・造成地の小物。足もとが原点（上が -y）。
+## 水彩の絵（world/scenery/painted/chapter_*.png。プロンプトは tools/art/prompts_chapter.md）を描く。絵のないもの（回想の重なり・精霊馬・座敷）は図形のまま。
+## ExamineSpot と ChapterProp が、同じ描き方を使う。
 
 enum Kind {
 	BED,              ## 病室のベッド
@@ -33,7 +34,40 @@ enum Kind {
 	NONE,             ## 何も描かない（調べる・撮る範囲だけ）
 	MOUND,            ## 造成地の土の山
 	EXCAVATOR,        ## 造成地のショベルカー
+	STAKES,           ## 造成地の、測量のくいが刺さった小さな土の山
+	STUMPS,           ## 造成地の、切り株の残る地面
 }
+
+## 水彩の絵（preload。描くときに load すると、はじめの1回が白い四角になる）と置き方。anchor：足もとの中心（C）／左はし（L）。高さ（h）か幅（w）のどちらかで大きさを決める。
+## width が 0 でなければ、幅（w）は width に合わせる（住宅地・フェンス・石段・土の山）。lift：足もとから絵の下までの高さ
+const PAINTED := {
+	Kind.BED: [preload("res://world/scenery/painted/chapter_room_1.png"), "C", 0.0, 280.0, 0.0],
+	Kind.APPLE_TABLE: [preload("res://world/scenery/painted/chapter_room_2.png"), "C", 112.0, 0.0, 0.0],
+	Kind.WINDOW_SUNSET: [preload("res://world/scenery/painted/chapter_room_3.png"), "C", 180.0, 0.0, 100.0],
+	Kind.ROOM_DOOR: [preload("res://world/scenery/painted/chapter_room_4.png"), "C", 250.0, 0.0, 0.0],
+	Kind.CORRIDOR_LAMP: [preload("res://world/scenery/painted/chapter_room_6.png"), "C", 72.0, 0.0, 290.0],
+	Kind.CLOSET: [preload("res://world/scenery/painted/chapter_room_7.png"), "C", 250.0, 0.0, 0.0],
+	Kind.BOOKSHELF: [preload("res://world/scenery/painted/chapter_room_8.png"), "C", 260.0, 0.0, 0.0],
+	Kind.TANSU: [preload("res://world/scenery/painted/prop_tansu.png"), "C", 240.0, 0.0, 0.0],
+	Kind.SHELTER_NEW: [preload("res://world/scenery/painted/chapter_now_1.png"), "C", 200.0, 0.0, 0.0],
+	Kind.HOUSES_ROW: [preload("res://world/scenery/painted/chapter_now_2.png"), "L", 0.0, -1.0, 0.0],
+	Kind.FENCE_SIGN: [preload("res://world/scenery/painted/chapter_now_6.png"), "L", 0.0, -1.0, 0.0],
+	Kind.KOMINKAN_NEW: [preload("res://world/scenery/painted/chapter_now_4.png"), "C", 170.0, 0.0, 0.0],
+	Kind.BOARD_BILL: [preload("res://world/scenery/painted/chapter_now_5.png"), "C", 190.0, 0.0, 0.0],
+	Kind.BENCH: [preload("res://world/scenery/painted/chapter_memory_1.png"), "C", 0.0, 170.0, 0.0],
+	Kind.FRAME: [preload("res://world/scenery/painted/chapter_memory_2.png"), "C", 135.0, 0.0, 70.0],
+	Kind.FRAME_KID: [preload("res://world/scenery/painted/chapter_memory_3.png"), "C", 0.0, 130.0, 70.0],
+	Kind.DIG_SPOT: [preload("res://world/scenery/painted/chapter_memory_5.png"), "C", 0.0, 80.0, 0.0],
+	Kind.SHRINE_STEPS: [preload("res://world/scenery/painted/chapter_memory_4.png"), "L", 0.0, -1.0, 0.0],
+	Kind.EASEL: [preload("res://world/scenery/painted/chapter_ha_1.png"), "C", 160.0, 0.0, 0.0],
+	Kind.WATERMELON: [preload("res://world/scenery/painted/chapter_ha_2.png"), "C", 0.0, 170.0, 0.0],
+	Kind.MOUND: [preload("res://world/scenery/painted/chapter_site_1.png"), "C", 0.0, -0.55, 0.0],
+	Kind.EXCAVATOR: [preload("res://world/scenery/painted/chapter_site_3.png"), "C", 130.0, 0.0, 0.0],
+	Kind.STAKES: [preload("res://world/scenery/painted/chapter_site_2.png"), "C", 0.0, 220.0, 0.0],
+	Kind.STUMPS: [preload("res://world/scenery/painted/chapter_site_4.png"), "C", 0.0, 300.0, 0.0],
+}
+## 窓の外（夕焼け）を見せる範囲（窓の絵の中の割合。ガラスは透明にしてあり、カーテンは手前にかかる）
+const WINDOW_GLASS := Rect2(0.04, 0.08, 0.82, 0.84)
 
 const WALL := Color("#E6E0D2")
 const WALL_DARK := Color("#CFC7B4")
@@ -41,210 +75,22 @@ const WOOD := Color("#8E6A4A")
 const WOOD_DARK := Color("#6F513A")
 const CLOTH := Color("#F1EEE6")
 const SKY_SUNSET := Color("#F0A36B")
-const ROOF := Color("#7E7A78")
-const CONCRETE := Color("#B9B6AE")
 const PAPER := Color("#F6EEDC")
 const INK := Color("#3B3226")
-const WARN := Color("#C9A23A")
 
 
 static func draw(ci: CanvasItem, kind: Kind, width := 160.0) -> void:
+	if PAINTED.has(kind):
+		_painted(ci, kind, width)
+		return
 	match kind:
-		Kind.BED: _bed(ci)
-		Kind.APPLE_TABLE: _apple_table(ci)
-		Kind.WINDOW_SUNSET: _window(ci)
-		Kind.ROOM_DOOR: _door(ci)
-		Kind.CORRIDOR_LAMP: _lamp(ci)
-		Kind.CLOSET: _closet(ci)
-		Kind.BOOKSHELF: _bookshelf(ci)
-		Kind.TANSU: _tansu(ci)
-		Kind.SHELTER_NEW: _shelter(ci)
-		Kind.HOUSES_ROW: _houses(ci, width)
-		Kind.FENCE_SIGN: _fence(ci, width)
-		Kind.KOMINKAN_NEW: _kominkan(ci)
-		Kind.BOARD_BILL: _board(ci)
-		Kind.BENCH: _bench(ci)
-		Kind.FRAME: _frame(ci, false)
-		Kind.FRAME_KID: _frame(ci, true)
-		Kind.DIG_SPOT: _dig(ci)
-		Kind.SHRINE_STEPS: _steps(ci, width)
 		Kind.FIGURES_GRANDPARENTS: _figures(ci)
 		Kind.FIGURE_CHILD_PAINTING: _child_painting(ci)
 		Kind.BASE_OLD: _base_old(ci)
 		Kind.LOOK_SKY: _look_sky(ci)
 		Kind.SPIRIT_HORSE: _spirit_horse(ci)
 		Kind.ZASHIKI: _zashiki(ci)
-		Kind.EASEL: _easel(ci)
-		Kind.WATERMELON: _watermelon(ci)
 		Kind.NONE: pass
-		Kind.MOUND: _mound(ci, width)
-		Kind.EXCAVATOR: _excavator(ci)
-
-
-static func _mound(ci: CanvasItem, width: float) -> void:
-	var w := width * 0.5
-	ci.draw_colored_polygon(PackedVector2Array([Vector2(-w, 0), Vector2(-w * 0.45, -70), Vector2(w * 0.1, -96), Vector2(w * 0.6, -58), Vector2(w, 0)]), Color("#9B7B55"))
-	ci.draw_colored_polygon(PackedVector2Array([Vector2(-w * 0.2, 0), Vector2(w * 0.1, -96), Vector2(w * 0.6, -58), Vector2(w, 0)]), Color("#85673F"))
-
-
-static func _excavator(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-110, -34, 220, 34), Color("#3E3A36"))
-	ci.draw_rect(Rect2(-80, -90, 110, 56), WARN)
-	ci.draw_rect(Rect2(-64, -82, 40, 30), Color("#BFD6DC"))
-	ci.draw_line(Vector2(30, -70), Vector2(120, -130), WARN, 14.0)
-	ci.draw_line(Vector2(120, -130), Vector2(150, -52), WARN, 12.0)
-	ci.draw_colored_polygon(PackedVector2Array([Vector2(138, -56), Vector2(172, -56), Vector2(166, -28), Vector2(144, -28)]), Color("#6F6A63"))
-
-
-static func _bed(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-130, -70, 260, 16), WOOD_DARK)
-	ci.draw_rect(Rect2(-130, -54, 14, 54), WOOD_DARK)
-	ci.draw_rect(Rect2(116, -54, 14, 54), WOOD_DARK)
-	ci.draw_rect(Rect2(-124, -92, 248, 26), CLOTH)
-	ci.draw_rect(Rect2(-124, -108, 70, 20), Color("#FFFFFF"))
-
-
-static func _apple_table(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-60, -74, 120, 10), WOOD)
-	ci.draw_rect(Rect2(-52, -64, 8, 64), WOOD_DARK)
-	ci.draw_rect(Rect2(44, -64, 8, 64), WOOD_DARK)
-	ci.draw_circle(Vector2(-14, -88), 15, Color("#C8473A"))
-	ci.draw_circle(Vector2(18, -86), 13, Color("#D96A4E"))
-	ci.draw_rect(Rect2(-6, -78, 36, 6), Color("#EDE6D6"))
-
-
-static func _window(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-90, -270, 180, 170), WOOD_DARK)
-	ci.draw_rect(Rect2(-80, -260, 160, 150), SKY_SUNSET)
-	ci.draw_rect(Rect2(-80, -200, 160, 90), Color("#E58C5A"))
-	ci.draw_rect(Rect2(-3, -260, 6, 150), WOOD_DARK)
-	ci.draw_rect(Rect2(-80, -188, 160, 6), WOOD_DARK)
-
-
-static func _door(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-60, -250, 120, 250), WOOD_DARK)
-	ci.draw_rect(Rect2(-52, -242, 104, 242), Color("#B9A98C"))
-	ci.draw_circle(Vector2(38, -120), 6, WARN)
-
-
-static func _lamp(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-30, -330, 60, 12), WOOD_DARK)
-	ci.draw_rect(Rect2(-24, -318, 48, 8), Color("#FFF4C9"))
-
-
-static func _closet(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-130, -250, 260, 250), WOOD)
-	ci.draw_rect(Rect2(-124, -244, 122, 238), Color("#D9CCB0"))
-	ci.draw_rect(Rect2(2, -244, 122, 238), Color("#D9CCB0"))
-	ci.draw_rect(Rect2(-12, -130, 6, 40), WOOD_DARK)
-	ci.draw_rect(Rect2(6, -130, 6, 40), WOOD_DARK)
-
-
-static func _bookshelf(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-100, -260, 200, 260), WOOD)
-	for r in 4:
-		var y := -250.0 + r * 62.0
-		ci.draw_rect(Rect2(-92, y + 52, 184, 6), WOOD_DARK)
-		var x := -88.0
-		for b in 9:
-			var h := 36.0 + float((b * 7 + r * 3) % 5) * 3.0
-			ci.draw_rect(Rect2(x, y + 52 - h, 14, h), Color.from_hsv(0.08 + b * 0.05, 0.25, 0.7))
-			x += 19.0
-
-
-static func _tansu(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-85, -230, 170, 230), WOOD_DARK)
-	for r in 4:
-		var y := -222.0 + r * 55.0
-		ci.draw_rect(Rect2(-77, y, 154, 50), WOOD)
-		ci.draw_rect(Rect2(-12, y + 22, 24, 6), WARN)
-
-
-static func _shelter(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-110, -200, 220, 12), CONCRETE)
-	ci.draw_rect(Rect2(-104, -188, 6, 188), CONCRETE)
-	ci.draw_rect(Rect2(98, -188, 6, 188), CONCRETE)
-	ci.draw_rect(Rect2(-98, -150, 196, 90), Color(0.8, 0.9, 0.95, 0.55))
-	ci.draw_rect(Rect2(-60, -48, 120, 10), Color("#8C8A84"))
-
-
-static func _houses(ci: CanvasItem, w: float) -> void:
-	var x := 0.0
-	var i := 0
-	while x < w:
-		var hw := 120.0 + float((i * 37) % 40)
-		var hh := 150.0 + float((i * 23) % 30)
-		ci.draw_rect(Rect2(x, -hh, hw, hh), Color("#D8D2C4"))
-		ci.draw_colored_polygon(PackedVector2Array([Vector2(x - 8, -hh), Vector2(x + hw / 2.0, -hh - 46), Vector2(x + hw + 8, -hh)]), ROOF)
-		ci.draw_rect(Rect2(x + hw * 0.3, -70, 30, 70), Color("#9A8E78"))
-		x += hw + 24.0
-		i += 1
-
-
-static func _fence(ci: CanvasItem, w: float) -> void:
-	var x := 0.0
-	while x < w:
-		ci.draw_rect(Rect2(x, -150, 6, 150), CONCRETE)
-		x += 40.0
-	ci.draw_rect(Rect2(0, -140, w, 5), CONCRETE)
-	ci.draw_rect(Rect2(0, -70, w, 5), CONCRETE)
-	ci.draw_rect(Rect2(w * 0.4, -130, 130, 56), WARN)
-	ci.draw_rect(Rect2(w * 0.4 + 5, -125, 120, 46), PAPER)
-	_text(ci, Vector2(w * 0.4 + 14, -92), "立入禁止", 26)
-
-
-static func _kominkan(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-150, -200, 300, 200), Color("#D9D5CA"))
-	ci.draw_rect(Rect2(-160, -214, 320, 16), CONCRETE)
-	ci.draw_rect(Rect2(-30, -110, 60, 110), Color("#7FA0B4"))
-	for i in 3:
-		ci.draw_rect(Rect2(-130 + i * 8, -160, 0, 0), WALL)
-	ci.draw_rect(Rect2(60, -150, 70, 56), Color(0.8, 0.9, 0.95, 0.7))
-	ci.draw_rect(Rect2(-130, -150, 70, 56), Color(0.8, 0.9, 0.95, 0.7))
-
-
-static func _board(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-80, -170, 160, 120), WOOD_DARK)
-	ci.draw_rect(Rect2(-72, -162, 144, 104), Color("#D7C9A5"))
-	ci.draw_rect(Rect2(-60, -150, 56, 76), PAPER)
-	ci.draw_rect(Rect2(6, -150, 56, 50), PAPER)
-	ci.draw_rect(Rect2(-6, -50, 12, 50), WOOD_DARK)
-	_text(ci, Vector2(-56, -108), "体操", 18)
-
-
-static func _bench(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-80, -48, 160, 10), WOOD)
-	ci.draw_rect(Rect2(-80, -96, 160, 8), WOOD)
-	ci.draw_rect(Rect2(-72, -38, 8, 38), WOOD_DARK)
-	ci.draw_rect(Rect2(64, -38, 8, 38), WOOD_DARK)
-	ci.draw_rect(Rect2(-72, -96, 6, 50), WOOD_DARK)
-	ci.draw_rect(Rect2(66, -96, 6, 50), WOOD_DARK)
-
-
-static func _frame(ci: CanvasItem, kid: bool) -> void:
-	ci.draw_rect(Rect2(-60, -200, 120, 130), WOOD_DARK)
-	ci.draw_rect(Rect2(-52, -192, 104, 114), Color("#9DBBD9") if not kid else PAPER)
-	if kid:
-		ci.draw_rect(Rect2(-44, -184, 88, 56), Color("#8FB8DC"))
-		_text(ci, Vector2(-48, -98), "なつやすみの おもいで", 12)
-	else:
-		ci.draw_rect(Rect2(-52, -150, 104, 58), Color("#78A663"))
-	ci.draw_rect(Rect2(-4, -70, 8, 70), WOOD_DARK)
-
-
-static func _dig(ci: CanvasItem) -> void:
-	ci.draw_circle(Vector2(0, -4), 5, Color(0.45, 0.33, 0.22, 0.9))
-	ci.draw_rect(Rect2(-24, -6, 48, 8), Color(0.5, 0.38, 0.26, 0.55))
-	ci.draw_line(Vector2(-18, -18), Vector2(18, -18), Color(0.5, 0.38, 0.26), 3.0)
-	ci.draw_line(Vector2(0, -34), Vector2(0, -6), Color(0.5, 0.38, 0.26), 3.0)
-
-
-static func _steps(ci: CanvasItem, w: float) -> void:
-	var n := 7
-	for i in n:
-		var y := -float(i + 1) * 14.0
-		ci.draw_rect(Rect2(0, y, w - i * 18.0, 14), Color("#B7B1A2"))
-		ci.draw_rect(Rect2(0, y, w - i * 18.0, 3), Color("#8F8A7B"))
 
 
 static func _figures(ci: CanvasItem) -> void:
@@ -299,18 +145,26 @@ static func _zashiki(ci: CanvasItem) -> void:
 	ci.draw_rect(Rect2(50, -72, 22, 22), Color("#C9D6D2"))
 
 
-static func _easel(ci: CanvasItem) -> void:
-	ci.draw_line(Vector2(-30, 0), Vector2(-8, -150), WOOD_DARK, 5.0)
-	ci.draw_line(Vector2(30, 0), Vector2(8, -150), WOOD_DARK, 5.0)
-	ci.draw_rect(Rect2(-44, -140, 88, 64), PAPER)
-	ci.draw_rect(Rect2(-38, -134, 76, 28), Color("#7FB3E0"))
-
-
-static func _watermelon(ci: CanvasItem) -> void:
-	ci.draw_rect(Rect2(-60, -40, 120, 8), WOOD)
-	ci.draw_circle(Vector2(0, -58), 24, Color("#4E8A4A"))
-	ci.draw_circle(Vector2(0, -58), 20, Color("#D9504A"))
-	ci.draw_colored_polygon(PackedVector2Array([Vector2(-20, -58), Vector2(20, -58), Vector2(0, -34)]), Color("#E6E0D2"))
+## 水彩の絵を1つ描く（PAINTED の置き方で）
+static func _painted(ci: CanvasItem, kind: Kind, width: float) -> void:
+	var spec: Array = PAINTED[kind]
+	var tex: Texture2D = spec[0]
+	var h: float = spec[2]
+	var w: float = spec[3]
+	if w < 0.0:
+		# 幅を width に合わせる（-1 なら width そのまま、-0.55 なら width の 0.55 倍。土の山）
+		w = absf(width) * absf(w if w != -1.0 else 1.0)
+	elif w == 0.0:
+		w = h * tex.get_width() / tex.get_height()
+	if h == 0.0:
+		h = w * tex.get_height() / tex.get_width()
+	var bottom: float = spec[4]
+	var left := 0.0 if spec[1] == "L" else -w / 2.0
+	if kind == Kind.WINDOW_SUNSET:
+		# 窓の外は夕焼け。ガラスは透明なので、うしろに空の色を敷く
+		var g := WINDOW_GLASS
+		ci.draw_rect(Rect2(left + g.position.x * w, -bottom - h + g.position.y * h, g.size.x * w, g.size.y * h), SKY_SUNSET)
+	ci.draw_texture_rect(tex, Rect2(left, -bottom - h, w, h), false)
 
 
 ## 部屋の壁と床（x0〜x1。ふつうの日では DayBase が、屋外の日の中の一部の部屋では IndoorZone が使う）
@@ -324,9 +178,3 @@ static func draw_room(ci: CanvasItem, x0: float, x1: float, road_top: float, top
 		ci.draw_line(Vector2(x, road_top + 8.0), Vector2(x, road_top + 140.0), Color("#8C6E4D"), 2.0)
 		x += 160.0
 	ci.draw_line(Vector2(x0, road_top + 8.0), Vector2(x1, road_top + 8.0), Color("#8C6E4D"), 4.0)
-
-
-## 看板などの文字（仮素材。フォントはテーマの既定）
-static func _text(ci: CanvasItem, pos: Vector2, text: String, size: int) -> void:
-	var font := ThemeDB.fallback_font
-	ci.draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, INK)
