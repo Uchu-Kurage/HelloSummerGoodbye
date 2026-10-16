@@ -7,11 +7,16 @@ extends CanvasLayer
 signal closed
 
 const MAIN_SCENE := "res://world/main.tscn"
-const DAY_COLUMNS := 5
+## 日（10）と章の3つを同じ格子に並べる（7列×2段）。小さい画面（1024×576）でも縦にはみ出さないように
+const DAY_COLUMNS := 7
 ## 石切りの結果ごとの、いちばんよく跳ねた回数（デバッグでとぶときに入れておく）
 const ISHIKIRI_BEST := {&"win": 7, &"draw": 5, &"lose": 3}
 ## 初恋ルートで、なつみから「もらう」アイテム
 const NATSUMI_RECEIVED := [&"river_sketch", &"handkerchief", &"goldfish_bag", &"sakura_shell", &"movie_flyer", &"senko_ash", &"natsumi_drawing"]
+## 章「あの夏へ」の部（老年期の導入・破・急）の、はじめの日の番号（Strings.DEBUG_CHAPTER_PARTS と同じ順）
+const CHAPTER_STARTS := [0, GameState.CHAPTER_HA_START, GameState.CHAPTER_KYU_START]
+## 急からはじめるとき、破で撮ったことにする写真（ポイント7か所。フィルムは 5 枚のこる）
+const KYU_PHOTOS: Array[StringName] = [&"p01_mukaebi", &"p02_horse", &"p03_zashiki", &"p04_shop", &"p05_boxes", &"p06_base", &"p07_rock"]
 ## ルートごとの、その日を終えたときに立っているフラグ（キーは日の番号 day_number）。
 ## <ミニゲーム>_good ／ <ミニゲーム>_miss（GameState.GRADED_GAMES のもの）は、ミニゲームの結果（よくできた／ふつう）として
 ## その日のアイテムを拾う前に記録する（GameState.record_grade。アイテムの一言が結果で変わるため。初恋ルートは _good なら好感度 +1）。
@@ -81,6 +86,7 @@ var _panel: PanelContainer
 var _route_label: Label
 var _route_items: Array[MenuItem] = []
 var _day_items: Array[MenuItem] = []
+var _chapter_items: Array[MenuItem] = []
 var _back: Button
 var _route := 0
 
@@ -155,6 +161,26 @@ static func apply(route: int, day_index: int) -> void:
 	GameState.start_day_index = day_index
 
 
+## 章「あの夏へ」の part（0＝老年期・1＝破・2＝急）のはじめに来たときの状態を作る。
+## 急は、破を終えたあと（撮った写真・タケルが撮った3枚・のこりのフィルム）の状態から
+static func apply_chapter(part: int) -> void:
+	part = clampi(part, 0, CHAPTER_STARTS.size() - 1)
+	GameState.start_chapter()
+	GameState.start_day_index = CHAPTER_STARTS[part]
+	if CHAPTER_STARTS[part] == GameState.CHAPTER_KYU_START:
+		for id in KYU_PHOTOS:
+			GameState.take_photo(GameState.photo_data(id))
+		for id in [&"takeru_pair", &"takeru_back", &"takeru_sky"]:
+			GameState.take_takeru_photo(GameState.photo_data(id))
+
+
+static func jump_chapter(part: int) -> void:
+	if Transition.is_busy():
+		return
+	apply_chapter(part)
+	Transition.change_scene(MAIN_SCENE)
+
+
 static func jump(route: int, day_index: int) -> void:
 	if Transition.is_busy():
 		return
@@ -205,11 +231,18 @@ func _ready() -> void:
 	days.add_theme_constant_override("h_separation", UiTokens.TOUCH_GAP)
 	days.add_theme_constant_override("v_separation", UiTokens.TOUCH_GAP)
 	v.add_child(days)
-	for i in GameState.day_count():
-		var b := _make_item(Strings.DEBUG_DAY % GameState.get_day(i).day_number, _on_day.bind(i))
+	# 章のあいだに開いても、日は序の日の並びで出す（とぶと序の状態にもどる）
+	for i in GameState.main_day_list.days.size():
+		var b := _make_item(Strings.DEBUG_DAY % GameState.main_day_list.days[i].day_number, _on_day.bind(i))
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		days.add_child(b)
 		_day_items.append(b)
+	# 章「あの夏へ」の部：日のつづきに並べる（文字に「章」をつけて見分ける）
+	for i in Strings.DEBUG_CHAPTER_PARTS.size():
+		var b := _make_item(Strings.DEBUG_CHAPTER_PART % Strings.DEBUG_CHAPTER_PARTS[i], _on_chapter.bind(i))
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		days.add_child(b)
+		_chapter_items.append(b)
 
 	var hint := Label.new()
 	hint.text = Strings.DEBUG_HINT
@@ -248,7 +281,7 @@ func _make_item(text: String, cb: Callable) -> MenuItem:
 	return b
 
 
-## 矢印キーの移動：ルートの段は左右でぐるっと回り、下で日の1段目へ。日は5列×2段
+## 矢印キーの移動：ルートの段は左右でぐるっと回り、下で日の1段目へ。日と章は7列×2段
 func _link_focus() -> void:
 	var nr := _route_items.size()
 	for i in nr:
@@ -257,23 +290,27 @@ func _link_focus() -> void:
 		_link(b, "right", _route_items[(i + 1) % nr])
 		_link(b, "top", b)
 		_link(b, "bottom", _day_items[mini(i, _day_items.size() - 1)])
-	var n := _day_items.size()
+	# 日と章は、同じ格子（7列×2段）
+	var grid: Array[MenuItem] = []
+	grid.append_array(_day_items)
+	grid.append_array(_chapter_items)
+	var n := grid.size()
 	var rows := ceili(float(n) / DAY_COLUMNS)
 	for i in n:
-		var b := _day_items[i]
+		var b := grid[i]
 		var row := i / DAY_COLUMNS
 		var first := row * DAY_COLUMNS
 		var count := mini(DAY_COLUMNS, n - first)
 		var col := i - first
-		_link(b, "left", _day_items[first + (col - 1 + count) % count])
-		_link(b, "right", _day_items[first + (col + 1) % count])
-		var up: Control = _route_items[mini(col, nr - 1)] if row == 0 else _day_items[i - DAY_COLUMNS]
+		_link(b, "left", grid[first + (col - 1 + count) % count])
+		_link(b, "right", grid[first + (col + 1) % count])
+		var up: Control = _route_items[mini(col, nr - 1)] if row == 0 else grid[i - DAY_COLUMNS]
 		_link(b, "top", up)
 		var down := i + DAY_COLUMNS
-		_link(b, "bottom", _day_items[down] if row < rows - 1 and down < n else b)
+		_link(b, "bottom", grid[down] if row < rows - 1 and down < n else b)
 	var all: Array[Control] = []
 	all.append_array(_route_items)
-	all.append_array(_day_items)
+	all.append_array(grid)
 	for i in all.size():
 		all[i].focus_next = all[i].get_path_to(all[(i + 1) % all.size()])
 		all[i].focus_previous = all[i].get_path_to(all[(i - 1 + all.size()) % all.size()])
@@ -299,6 +336,13 @@ func _on_day(i: int) -> void:
 		return
 	is_open = false
 	jump(_route, i)
+
+
+func _on_chapter(part: int) -> void:
+	if not is_open:
+		return
+	is_open = false
+	jump_chapter(part)
 
 
 func _focus_first() -> void:

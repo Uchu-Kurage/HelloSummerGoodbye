@@ -26,6 +26,8 @@ const CHAPTER_LIST_PATH := "res://data/chapter/chapter_day_list.tres"
 const FILM_MAX := 12
 ## 章の日の並びの中で、破の最初の日（8/13）の番号（0 始まり）
 const CHAPTER_HA_START := 3
+## 急の最初の日（老年期の神社）の番号
+const CHAPTER_KYU_START := 7
 const _MONTH_DAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 var day_list: DayList
