@@ -50,7 +50,7 @@ var body_scale := 1.0
 ## 姿（章「あの夏へ」：子ども／青年／老人）。老人だけダッシュできない。歩く速さは同じ
 var form: DayData.Form = DayData.Form.CHILD
 ## 姿ごとの背丈（子どもを 1.0 とした倍率）
-const FORM_SCALE := {DayData.Form.CHILD: 1.0, DayData.Form.YOUTH: 1.3, DayData.Form.ELDER: 1.2}
+const FORM_SCALE := {DayData.Form.CHILD: 1.0, DayData.Form.YOUTH: 1.1, DayData.Form.ELDER: 1.06}
 ## 会話の間は true（会話を閉じると歩ける）
 var talking := false
 ## カメラ画面の左端（見えない壁）。これより左へは行けない
@@ -88,6 +88,18 @@ func set_form(f: DayData.Form) -> void:
 	body_scale = FORM_SCALE[f]
 	if _visual:
 		_visual.queue_redraw()
+
+
+## 会話の顔に使う立ち絵（いまの姿の、立ち止まった絵）。主人公がいなければ少年期
+static func face_frame(tree: SceneTree) -> Texture2D:
+	var p := tree.get_first_node_in_group("player") as Player if tree else null
+	if p:
+		match p.form:
+			DayData.Form.ELDER:
+				return ELDER_FRAMES[0]
+			DayData.Form.YOUTH:
+				return YOUTH_FRAMES[0]
+	return FRAMES[0]
 
 
 ## ダッシュできるか（老人はできない）

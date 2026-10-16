@@ -81,7 +81,7 @@ after_lines = Array[String](["ぼく：（今は、屋根ばかりだ）"])
 script = ExtResource("r3")
 position = Vector2(150, 0)
 kind = 9
-width = 520
+width = 640
 
 [node name="ChildPainting" type="Node2D" parent="Props/RoadZone/Ghost"]
 script = ExtResource("r3")

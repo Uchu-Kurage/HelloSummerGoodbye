@@ -295,7 +295,7 @@ func _show_line(line: String, item: ItemData) -> void:
 	var tex: Texture2D = null
 	if speaker == Strings.ME:
 		color = WorldPalette.PLAYER_HAT
-		tex = MessagePanel.face_of(Player.FRAMES[0])
+		tex = MessagePanel.face_of(Player.face_frame(get_tree()))
 	elif NPC_DATA.has(speaker):
 		var npc := _npc(speaker)
 		if npc:
