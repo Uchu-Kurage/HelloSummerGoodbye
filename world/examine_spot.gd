@@ -80,7 +80,8 @@ func interact(hud: Node) -> void:
 
 func _draw_body() -> void:
 	if as_person:
-		_draw_placeholder()
+		# 絵（look.sprite）があれば絵、なければ仮の姿
+		super()
 	else:
 		ChapterArt.draw(_visual, kind, width)
 

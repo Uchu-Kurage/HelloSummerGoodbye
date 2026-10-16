@@ -2,19 +2,20 @@
 
 章「あの夏へ」で、いま図形やカードで描いている仮の絵を、序と同じ水彩の絵（Google Gemini）に差し替えるためのプロンプト。
 コードの枠（```text）の中を、そのままコピーして Gemini に貼る（共通の約束は付けてある）。
-できた絵は `tools/art/process_painted.py` で切り抜いて置く。章の名前（`elder`・`youth`・`photo_*`・`bg_hospital` など）は、まだ `process_painted.py` の `SPLITS`／`BACKGROUNDS` に入っていないので、絵ができたら足す（コードへのつなぎ込みも、そのとき行う）。
+できた絵は `tools/art/process_painted.py` で切り抜いて置く。章の名前（`elder`・`youth`・`chapter_room` など）は `SPLITS` に入れてある。写真（`photo_*`）は、まだ入っていないので、絵ができたら足す（コードへのつなぎ込みも、そのとき行う）。人物の「1枚絵」は、切り分けた中から使う1枚だけ残して、ほかは消す。
 
 いまの状態：
 
 | 絵 | 状態 | 使っているところ |
 | --- | --- | --- |
-| 老人のぼく・青年のぼく | 子どものぼく（`player_1〜5`）を大きくして色を変えたもの | `player/player.gd` の `FORM_SCALE`・`FORM_TINT` |
-| 老人のなつみ・青年のなつみ・看護師・工事の人 | 図形の人（`NpcData` の色だけ） | `data/npcs/chapter_*.tres` |
-| 病室・家・今の村・造成地の小物 | 図形（`world/chapter_art.gd` の `ChapterArt.Kind`） | `days/chapter/*.tscn` |
-| 遠くの山のてっぺん | 図形の三角（鳥居は `prop_torii` を使っている） | `world/torii_peak_view.gd` |
-| 写真 23 枚 | 色の四角に場所の名前を書いたカード | `data/photos/*.tres` の `picture`（`ui/components/photo_card.gd`） |
-| 急の病室（写真を見せる場面） | 図形の部屋と人 | `ui/hospital_finale.gd` の `_draw_art` |
-| 使い捨てカメラ・缶の封筒 | 色の四角 | `data/chapter/items_chapter_camera.tres`、`ui/can_open.gd` |
+| 老人のぼく・青年のぼく | 水彩の絵にした（`elder_1〜5`・`youth_1〜5`） | `player/player.gd`（`ELDER_FRAMES`・`YOUTH_FRAMES`） |
+| 老人のなつみ・青年のなつみ・看護師・工事の人 | 水彩の絵にした（立ち姿1枚ずつ。`npc_chapter_*`） | `data/npcs/chapter_*.tres` の `sprite` |
+| 病室・家・今の村・青年期の回想・破・造成地の小物、古いたんす | 水彩の絵にした（`chapter_room_*`・`chapter_now_*`・`chapter_memory_*`・`chapter_ha_*`・`chapter_site_*`・`prop_tansu`） | `world/chapter_art.gd` の `PAINTED` |
+| 遠くの山のてっぺん | 水彩の絵にした（`peak_far`。ふもとは薄くして足してある） | `world/torii_peak_view.gd` |
+| 急の病室（写真を見せる場面） | 二人の絵と窓は水彩にした（`chapter_pair`・`chapter_room_3`）。壁と床は図形のまま（`bg_hospital` は、ベッドが二重になるので使っていない） | `ui/hospital_finale.gd` の `_draw_art` |
+| 使い捨てカメラ・缶の封筒 | 水彩のアイコンにした | `data/chapter/items_chapter_camera.tres`、`ui/can_open.gd` |
+| 写真 23 枚 | 色の四角に場所の名前を書いたカード（まだ） | `data/photos/*.tres` の `picture`（`ui/components/photo_card.gd`） |
+| 病室と二人（`hospital_pair` の枠内の人以外）、精霊馬・座敷・回想の重なり（祖父母・子どものなつみ・秘密基地） | 図形のまま | `world/chapter_art.gd` |
 
 もう絵があるので描かなくてよいもの：鳥居・祖父母の家・縁側・精霊馬・座敷と親戚・送り火・バス停・駄菓子屋・タケルの家・秘密基地の材料・川の飛び込み岩・祖父母・タケル・子どものなつみ・お面の子・子どものぼく・さびた鈴。
 

@@ -39,8 +39,17 @@ width = 420
 [node name="Mound2" type="Node2D" parent="Props"]
 script = ExtResource("r2")
 position = Vector2(2900, 604)
-kind = 27
-width = 460
+kind = 29
+
+[node name="Stumps1" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(2150, 604)
+kind = 30
+
+[node name="Stumps2" type="Node2D" parent="Props"]
+script = ExtResource("r2")
+position = Vector2(3550, 604)
+kind = 30
 
 [node name="Excavator" type="Node2D" parent="Props"]
 script = ExtResource("r2")

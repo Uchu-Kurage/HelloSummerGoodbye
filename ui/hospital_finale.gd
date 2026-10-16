@@ -46,6 +46,8 @@ func _ready() -> void:
 	_card_box.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_card_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_card_box.anchor_bottom = 0.5
+	# 二人のあいだ（ベッドと丸いすのあいだ）に写真を出す
+	_card_box.anchor_right = 0.84
 	_card_box.offset_top = UiTokens.SCREEN_MARGIN
 	add_child(_card_box)
 	var safe := UiAnim.make_safe_area()
@@ -193,34 +195,31 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-# --- 病室の絵（仮素材：図形だけ） ---------------------------------------------------
+# --- 病室の絵 ---------------------------------------------------------------------
+
+## 絵の高さ（画面の高さに対する割合）と、足もとの高さ
+const PAIR_HEIGHT := 0.74
+const PAIR_BOTTOM := 0.93
+const PAIR_TEX := preload("res://world/scenery/painted/chapter_pair.png")
+const WINDOW_TEX := preload("res://world/scenery/painted/chapter_room_3.png")
+
 
 func _draw_art() -> void:
 	var vs := size
-	var s := vs.y / 720.0
 	var floor_y := vs.y * 0.74
 	# 壁と床
 	_art.draw_rect(Rect2(0, 0, vs.x, floor_y), ChapterArt.WALL)
-	_art.draw_rect(Rect2(0, floor_y - 70.0 * s, vs.x, 78.0 * s), ChapterArt.WALL_DARK)
+	_art.draw_rect(Rect2(0, floor_y - 70.0 * vs.y / 720.0, vs.x, 78.0 * vs.y / 720.0), ChapterArt.WALL_DARK)
 	_art.draw_rect(Rect2(0, floor_y, vs.x, vs.y - floor_y), ChapterArt.WOOD)
 	_art.draw_line(Vector2(0, floor_y), Vector2(vs.x, floor_y), ChapterArt.WOOD_DARK, 4.0)
-	# 窓：夕焼けから、写真の青空と同じ青へ
-	var win := Rect2(vs.x * 0.70, vs.y * 0.10, 190.0 * s, 250.0 * s)
-	var sky := ChapterArt.SKY_SUNSET.lerp(UiTokens.SKY, _sky_t)
-	_art.draw_rect(win.grow(8.0 * s), ChapterArt.WOOD_DARK)
-	_art.draw_rect(win, sky)
-	_art.draw_line(Vector2(win.position.x + win.size.x / 2.0, win.position.y), Vector2(win.position.x + win.size.x / 2.0, win.end.y), ChapterArt.WOOD_DARK, 4.0)
-	# ベッドと、座るなつみ・隣に座る主人公（仮の姿）
-	var bed := Rect2(vs.x * 0.12, floor_y - 110.0 * s, vs.x * 0.40, 110.0 * s)
-	_art.draw_rect(bed, ChapterArt.CLOTH)
-	_art.draw_rect(Rect2(bed.position.x, bed.position.y - 70.0 * s, 18.0 * s, 70.0 * s + bed.size.y), ChapterArt.WOOD_DARK)
-	_figure(Vector2(bed.position.x + bed.size.x * 0.5, floor_y - 100.0 * s), s, NATSUMI_LOOK.shirt_color, Color("#E8E4DE"))
-	var me := ChapterArt.INK.lerp(Color("#6B6258"), 0.4)
-	_figure(Vector2(bed.end.x + 90.0 * s, floor_y - 6.0 * s), s * 1.1, Color("#7C8A8E"), me)
-
-
-## 座っている人の仮の姿：頭と胴
-func _figure(foot: Vector2, s: float, shirt: Color, hair: Color) -> void:
-	_art.draw_rect(Rect2(foot.x - 28.0 * s, foot.y - 100.0 * s, 56.0 * s, 100.0 * s), shirt)
-	_art.draw_circle(foot + Vector2(0, -122.0 * s), 24.0 * s, Color("#E2B894"))
-	_art.draw_arc(foot + Vector2(0, -126.0 * s), 25.0 * s, PI, TAU, 16, hair, 8.0 * s)
+	# 窓：夕焼けから、写真の青空と同じ青へ。ガラスは透明なので、うしろに空の色を敷く
+	var wh := vs.y * 0.36
+	var ww := wh * WINDOW_TEX.get_width() / WINDOW_TEX.get_height()
+	var win := Rect2(vs.x * 0.77, vs.y * 0.10, ww, wh)
+	var g := ChapterArt.WINDOW_GLASS
+	_art.draw_rect(Rect2(win.position + g.position * win.size, g.size * win.size), ChapterArt.SKY_SUNSET.lerp(UiTokens.SKY, _sky_t))
+	_art.draw_texture_rect(WINDOW_TEX, win, false)
+	# ベッドに腰かけたなつみと、丸いすに腰かけた主人公（ひとまとまりの絵）
+	var ph := vs.y * PAIR_HEIGHT
+	var pw := ph * PAIR_TEX.get_width() / PAIR_TEX.get_height()
+	_art.draw_texture_rect(PAIR_TEX, Rect2(vs.x * 0.02, vs.y * PAIR_BOTTOM - ph, pw, ph), false)
