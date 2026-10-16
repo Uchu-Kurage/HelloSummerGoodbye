@@ -16,6 +16,9 @@ const DEBUG_TITLE := "ルートと ひを えらぶ"
 const DEBUG_ROUTE := "ルート：%s"
 const DEBUG_HINT := "ひを えらぶと、その ひの はじめから はじまるよ"
 const DEBUG_DAY := "%dにちめ"
+## 章「あの夏へ」の部（老年期の導入・破・急）。章のあいだは漢字
+const DEBUG_CHAPTER_PART := "章 %s"
+const DEBUG_CHAPTER_PARTS: Array[String] = ["老年期", "破", "急"]
 
 const PAUSE_TITLE := "ひとやすみ"
 const PAUSE_RESUME := "つづける"

@@ -1867,6 +1867,31 @@ func _check_debug_jump() -> void:
 		if c is DayBase and c.day_data == GameState.get_day(7):
 			day8 = c
 	check(day8 != null and day8.scene_file_path.ends_with("day_08_takeru.tscn"), "debug: takeru day 8 scene")
+	# 章「あの夏へ」：老年期・破・急のはじめへ
+	DebugJump.apply_chapter(0)
+	check(GameState.chapter and GameState.start_day_index == 0 and GameState.photos.is_empty(), "debug chapter: 老年期 starts at the hospital")
+	DebugJump.apply_chapter(1)
+	check(GameState.chapter and GameState.start_day_index == GameState.CHAPTER_HA_START and GameState.film_left == GameState.FILM_MAX and GameState.photos.is_empty(),
+		"debug chapter: 破 starts on 8/13 with the full film")
+	DebugJump.apply_chapter(2)
+	check(GameState.chapter and GameState.start_day_index == GameState.CHAPTER_KYU_START and GameState.film_left == 5 and GameState.photos.size() == 7
+		and GameState.takeru_photos.size() == 3 and GameState.photo_bundle().size() == 7 + 2 + 5, "debug chapter: 急 starts after 破 (7 photos, film 5, Takeru's 3)")
+	get_tree().change_scene_to_file("res://ui/title.tscn")
+	await _wait(0.5)
+	title = get_tree().current_scene
+	dj = null
+	for c in title.get_children():
+		if c is DebugJump:
+			dj = c
+	title._on_debug()
+	await _wait(0.5)
+	check(dj != null and dj._chapter_items.size() == 3 and dj._day_items.size() == 10, "debug chapter: the jump screen has 3 chapter buttons next to the 10 days")
+	dj._chapter_items[2].pressed.emit()
+	await _wait(1.5)
+	main = get_tree().current_scene
+	check(main.name == "Main" and GameState.chapter and GameState.current_day_index == GameState.CHAPTER_KYU_START and main.get_node("Player").form == DayData.Form.ELDER,
+		"debug chapter: jumped into 急 as the old man")
+	GameState.reset()
 
 
 ## その日の差し替えシーンに秘密基地があるか（あればモードの名前）
